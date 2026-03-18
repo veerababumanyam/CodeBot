@@ -209,6 +209,13 @@ Plans:
   3. Code editor (Monaco) and terminal (xterm.js) are embedded in the dashboard for viewing generated code and running commands
   4. CLI can create projects with interactive prompts, start/pause/resume pipelines, and stream agent logs from the terminal
   5. Skill Creator, Hooks Creator, and Tools Creator agents allow extending the agent ecosystem without code changes
+**Plans**: 4 plans
+
+Plans:
+- [ ] 11-01-PLAN.md -- Dashboard foundation: Vite scaffold, Socket.IO, Zustand stores, React Flow pipeline graph (DASH-01, DASH-06)
+- [ ] 11-02-PLAN.md -- CLI application: Click + Rich + httpx, all commands, streaming logs (CLI-01, CLI-02, CLI-03, CLI-04)
+- [ ] 11-03-PLAN.md -- Dashboard advanced panels: monitoring, cost, Monaco editor, Yjs, xterm.js terminal, live preview (DASH-02, DASH-03, DASH-04, DASH-05, DASH-07, DASH-08)
+- [ ] 11-04-PLAN.md -- Creator agents: Skill Creator, Hooks Creator, Tools Creator with YAML configs (AGNT-09, AGNT-10, AGNT-11)
 
 ## Progress
 
@@ -227,4 +234,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 8. Security Pipeline + Worktree Manager | 0/4 | Not started | - |
 | 9. Full Agent Roster | 0/5 | Not started | - |
 | 10. FastAPI Server + API Layer | 0/2 | Not started | - |
-| 11. React Dashboard + CLI Application | 0/3 | Not started | - |
+| 11. React Dashboard + CLI Application | 0/4 | Not started | - |
