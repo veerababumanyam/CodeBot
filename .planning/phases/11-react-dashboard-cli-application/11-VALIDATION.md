@@ -2,7 +2,7 @@
 phase: 11
 slug: react-dashboard-cli-application
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-03-18
 ---
@@ -17,17 +17,17 @@ created: 2026-03-18
 
 | Property | Value |
 |----------|-------|
-| **Framework** | Vitest (dashboard), pytest 7.x (CLI + creator agents) |
-| **Config file** | `apps/dashboard/vitest.config.ts`, `pyproject.toml [tool.pytest]` |
-| **Quick run command** | `pnpm -F dashboard test -- --run` and `uv run pytest tests/unit/ -x -q` |
-| **Full suite command** | `pnpm -F dashboard test -- --run --coverage` and `uv run pytest tests/ -q` |
-| **Estimated runtime** | ~45 seconds (dashboard: ~20s, CLI+agents: ~25s) |
+| **Framework** | Vitest (dashboard + CLI), pytest 7.x (creator agents) |
+| **Config file** | `apps/dashboard/vitest.config.ts`, `apps/cli/vitest.config.ts`, `pyproject.toml [tool.pytest]` |
+| **Quick run command** | `pnpm -F dashboard test -- --run` and `pnpm -F cli test -- --run` and `uv run pytest tests/unit/ -x -q` |
+| **Full suite command** | `pnpm -F dashboard test -- --run --coverage` and `pnpm -F cli test -- --run --coverage` and `uv run pytest tests/ -q` |
+| **Estimated runtime** | ~45 seconds (dashboard: ~20s, CLI: ~10s, agents: ~15s) |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Run `pnpm -F dashboard test -- --run` or `uv run pytest tests/unit/ -x -q`
+- **After every task commit:** Run quick command for affected workspace
 - **After every plan wave:** Run full suite commands
 - **Before `/gsd:verify-work`:** Full suite must be green
 - **Max feedback latency:** 45 seconds
@@ -38,22 +38,14 @@ created: 2026-03-18
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 11-01-01 | 01 | 1 | DASH-01 | unit | `pnpm -F dashboard test -- pipeline-view` | ❌ W0 | ⬜ pending |
-| 11-01-02 | 01 | 1 | DASH-06 | integration | `pnpm -F dashboard test -- use-socket` | ❌ W0 | ⬜ pending |
-| 11-01-03 | 01 | 1 | DASH-01 | unit | `pnpm -F dashboard test -- agent-node` | ❌ W0 | ⬜ pending |
-| 11-02-01 | 02 | 1 | CLI-01 | unit | `uv run pytest tests/unit/cli/test_project.py` | ❌ W0 | ⬜ pending |
-| 11-02-02 | 02 | 1 | CLI-02 | unit | `uv run pytest tests/unit/cli/test_pipeline.py` | ❌ W0 | ⬜ pending |
-| 11-02-03 | 02 | 1 | CLI-03 | integration | `uv run pytest tests/integration/cli/test_streaming.py` | ❌ W0 | ⬜ pending |
-| 11-02-04 | 02 | 1 | CLI-04 | unit | `uv run pytest tests/unit/cli/test_config.py` | ❌ W0 | ⬜ pending |
-| 11-03-01 | 03 | 2 | DASH-02 | unit | `pnpm -F dashboard test -- agent-panel` | ❌ W0 | ⬜ pending |
-| 11-03-02 | 03 | 2 | DASH-03 | unit | `pnpm -F dashboard test -- code-editor` | ❌ W0 | ⬜ pending |
-| 11-03-03 | 03 | 2 | DASH-04 | unit | `pnpm -F dashboard test -- terminal-panel` | ❌ W0 | ⬜ pending |
-| 11-03-04 | 03 | 2 | DASH-05 | integration | `pnpm -F dashboard test -- collab` | ❌ W0 | ⬜ pending |
-| 11-03-05 | 03 | 2 | DASH-07 | unit | `pnpm -F dashboard test -- cost-breakdown` | ❌ W0 | ⬜ pending |
-| 11-03-06 | 03 | 2 | DASH-08 | unit | `pnpm -F dashboard test -- preview-frame` | ❌ W0 | ⬜ pending |
-| 11-03-07 | 03 | 2 | AGNT-09 | unit | `uv run pytest tests/unit/agents/test_skill_creator.py` | ❌ W0 | ⬜ pending |
-| 11-03-08 | 03 | 2 | AGNT-10 | unit | `uv run pytest tests/unit/agents/test_hooks_creator.py` | ❌ W0 | ⬜ pending |
-| 11-03-09 | 03 | 2 | AGNT-11 | unit | `uv run pytest tests/unit/agents/test_tools_creator.py` | ❌ W0 | ⬜ pending |
+| 11-01-01 | 01 | 1 | DASH-01, DASH-06 | unit | `pnpm -F dashboard test -- pipeline-view` | ❌ W0 | ⬜ pending |
+| 11-01-02 | 01 | 1 | DASH-01, DASH-06 | integration | `pnpm -F dashboard test -- --run` | ❌ W0 | ⬜ pending |
+| 11-02-01 | 02 | 1 | CLI-01 | unit | `pnpm -F cli test -- project` | ❌ W0 | ⬜ pending |
+| 11-02-02 | 02 | 1 | CLI-02, CLI-03, CLI-04 | unit | `pnpm -F cli test -- --run` | ❌ W0 | ⬜ pending |
+| 11-03-01 | 03 | 2 | DASH-02, DASH-07 | unit | `pnpm -F dashboard test -- agent-panel` | ❌ W0 | ⬜ pending |
+| 11-03-02 | 03 | 2 | DASH-03, DASH-04, DASH-05, DASH-08 | unit | `pnpm -F dashboard test -- code-editor` | ❌ W0 | ⬜ pending |
+| 11-04-01 | 04 | 1 | AGNT-09, AGNT-10 | unit | `uv run pytest tests/unit/agents/test_skill_creator.py tests/unit/agents/test_hooks_creator.py` | ❌ W0 | ⬜ pending |
+| 11-04-02 | 04 | 1 | AGNT-11 | unit | `uv run pytest tests/unit/agents/test_tools_creator.py` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -61,12 +53,13 @@ created: 2026-03-18
 
 ## Wave 0 Requirements
 
-- [ ] `apps/dashboard/vitest.config.ts` — Vitest config with React Testing Library
-- [ ] `apps/dashboard/src/test/setup.ts` — test setup (jsdom, mock Socket.IO)
-- [ ] `tests/unit/cli/conftest.py` — CLI test fixtures (Click CliRunner, mock API)
-- [ ] `tests/unit/agents/conftest.py` — Agent test fixtures (mock LLM, mock registries)
+- [ ] `apps/dashboard/vitest.config.ts` — Vitest config with React Testing Library (created inline by Plan 11-01 Task 1)
+- [ ] `apps/dashboard/src/test/setup.ts` — test setup with jsdom, mock Socket.IO (created inline by Plan 11-01 Task 1)
+- [ ] `apps/cli/vitest.config.ts` — Vitest config for CLI tests (created inline by Plan 11-02 Task 1)
+- [ ] `apps/cli/tests/setup.ts` — CLI test setup with fetch mocks (created inline by Plan 11-02 Task 1)
+- [ ] Agent test fixtures — defined inline in Plan 11-04 test files
 
-*If none: "Existing infrastructure covers all phase requirements."*
+*Wave 0 infrastructure is created inline within Wave 1 tasks (Plan 11-01 and 11-02 create test configs before running tests).*
 
 ---
 
@@ -83,11 +76,11 @@ created: 2026-03-18
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 45s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 45s
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending

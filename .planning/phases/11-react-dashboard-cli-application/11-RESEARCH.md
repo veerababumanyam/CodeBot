@@ -27,10 +27,10 @@ Phase 11 covers three workstreams: **React Dashboard** (DASH-01 through DASH-08)
 
 | ID | Requirement | Key Technology |
 |----|------------|----------------|
-| CLI-01 | Project creation with interactive prompts | Click 8.x + Rich |
-| CLI-02 | Pipeline execution commands (start, pause, resume, stop) | Click + httpx (async API client) |
-| CLI-03 | Agent status and log streaming from terminal | httpx + SSE/WebSocket streaming |
-| CLI-04 | Pipeline preset selection (full, quick, review-only) | Click options/arguments |
+| CLI-01 | Project creation with interactive prompts | commander + @inquirer/prompts |
+| CLI-02 | Pipeline execution commands (start, pause, resume, stop) | commander + native fetch |
+| CLI-03 | Agent status and log streaming from terminal | ws (WebSocket) + EventSource |
+| CLI-04 | Pipeline preset selection (full, quick, review-only) | commander options/arguments |
 
 ### 1.3 Creator Agent Requirements (AGNT-09 to AGNT-11)
 
@@ -67,9 +67,11 @@ All technologies are confirmed from `.planning/research/STACK.md` (license-audit
 
 | Technology | Version | License | Purpose |
 |-----------|---------|---------|---------|
-| Click | 8.x | BSD-3 | Python CLI framework |
-| Rich | latest | MIT | Terminal formatting, progress bars |
-| httpx | latest | BSD-3 | Async HTTP client for API communication |
+| commander | 12+ | MIT | Node.js CLI framework |
+| @inquirer/prompts | latest | MIT | Interactive terminal prompts |
+| chalk | 5+ | MIT | Terminal string styling |
+| ora | 8+ | MIT | Terminal spinners |
+| ws | 8+ | MIT | WebSocket client for log streaming |
 
 ---
 
@@ -142,20 +144,33 @@ Pipeline visualization maps directly to the graph engine's topology:
 
 ```
 apps/cli/
-  codebot/
-    __init__.py
-    main.py              # Click entry point
+  src/
+    index.ts             # commander entry point
     commands/
-      project.py         # create, list, delete, import
-      pipeline.py        # start, pause, resume, stop, status
-      agent.py           # list, logs, restart
-      config.py          # set, get, preset
+      project.ts         # create, list, delete, import
+      pipeline.ts        # start, pause, resume, stop, status
+      agent.ts           # list, logs, restart
+      config.ts          # set, get, preset
     client/
-      api.py             # httpx async API client (wraps Phase 10 REST endpoints)
-      streaming.py       # SSE/WebSocket log streaming
+      api.ts             # Native fetch API client (wraps Phase 10 REST endpoints)
+      streaming.ts       # WebSocket log streaming via ws
     output/
-      formatters.py      # Rich table/panel formatters
-      spinners.py        # Progress indicators
+      formatters.ts      # chalk table/panel formatters
+      spinners.ts        # ora progress indicators
+    config/
+      store.ts           # ~/.codebot/config.json read/write
+  tests/
+    commands/
+      project.test.ts    # Vitest CLI command tests
+      pipeline.test.ts
+      agent.test.ts
+      config.test.ts
+    client/
+      api.test.ts
+      streaming.test.ts
+  package.json           # ESM, pnpm workspace member
+  tsconfig.json          # TypeScript strict mode
+  vitest.config.ts       # Vitest config
 ```
 
 ### 3.5 Creator Agents Architecture
@@ -180,9 +195,9 @@ All three creator agents follow the existing BaseAgent pattern from Phase 3:
 
 ### 4.2 CLI <-> Server (Phase 10)
 
-- **REST API**: httpx async client wraps same SRVR-01 endpoints
-- **Streaming**: SSE or WebSocket for agent log streaming (CLI-03)
-- **Auth**: Token-based auth, stored in `~/.codebot/credentials`
+- **REST API**: Native fetch wraps same SRVR-01 endpoints
+- **Streaming**: WebSocket (ws) for agent log streaming (CLI-03)
+- **Auth**: Token-based auth, stored in `~/.codebot/config.json`
 
 ### 4.3 Creator Agents <-> Agent Framework (Phase 3)
 
@@ -232,7 +247,7 @@ All three creator agents follow the existing BaseAgent pattern from Phase 3:
 | Monaco + Yjs integration complexity for collaborative editing | MEDIUM | Use existing y-monaco binding library; fall back to view-only mode if CRDT sync fails |
 | Socket.IO reconnection handling during pipeline runs | HIGH | Implement reconnection with replay from last-seen event ID (NATS JetStream consumer position) |
 | xterm.js session management across multiple agents | LOW | Tabbed terminal interface with session pooling; max concurrent terminals limit |
-| CLI must handle both sync (CRUD) and async (streaming) in single framework | LOW | Click handles command dispatch; httpx async context for streaming commands |
+| CLI must handle both sync (CRUD) and async (streaming) in single framework | LOW | commander handles command dispatch; ws library for streaming commands |
 | Creator agents depend on mature agent framework (Phase 3) and tool registry | LOW | By Phase 11, framework is battle-tested through Phases 7-9 |
 
 ---
@@ -241,10 +256,11 @@ All three creator agents follow the existing BaseAgent pattern from Phase 3:
 
 **Wave 1 (parallel):**
 - Plan 11-01: Dashboard foundation -- React app setup, Socket.IO connection, pipeline graph view (DASH-01, DASH-06)
-- Plan 11-02: CLI application -- Click structure, API client, all commands (CLI-01 through CLI-04)
+- Plan 11-02: CLI application -- TypeScript CLI with commander, API client, all commands (CLI-01 through CLI-04)
+- Plan 11-04: Creator agents -- Skill Creator, Hooks Creator, Tools Creator (AGNT-09 through AGNT-11)
 
 **Wave 2 (depends on Wave 1):**
-- Plan 11-03: Dashboard advanced panels + Creator agents -- Monitoring, editor, terminal, cost dashboard, Yjs collaboration, live preview, and three creator agents (DASH-02 through DASH-08, AGNT-09 through AGNT-11)
+- Plan 11-03: Dashboard advanced panels -- Monitoring, editor, terminal, cost dashboard, Yjs collaboration, live preview (DASH-02 through DASH-08)
 
 ---
 
@@ -254,5 +270,5 @@ Phase 11 is well-defined with clear technology choices (all MIT/Apache-2.0), est
 1. React Flow for graph visualization with custom node types per graph engine NodeType
 2. Socket.IO namespaces for event separation (pipeline, agents, editor, terminal)
 3. Zustand + TanStack Query for client/server state split
-4. Click + httpx for CLI with streaming support
-5. Creator agents as standard BaseAgent subclasses with specialized tools and registries
+4. commander + ws for TypeScript CLI with streaming support
+5. Creator agents as @dataclass BaseAgent subclasses with specialized tools and registries
