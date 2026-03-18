@@ -33,7 +33,7 @@
 
 ## What is CodeBot?
 
-CodeBot is an **autonomous, end-to-end software development platform** that transforms a spark of an idea into a fully tested, reviewed, secured, and cloud-deployed application. It orchestrates **30 specialized AI agents** across an **11-stage SDLC pipeline** — covering every phase from brainstorming through production deployment.
+CodeBot is an **fully autonomous, end-to-end software development platform** that transforms a spark of an idea into a fully tested, reviewed, secured, and cloud-deployed application. It orchestrates **30 specialized AI agents** across an **11-stage SDLC pipeline** — covering every phase from brainstorming through production deployment.
 
 Built on the **MASFactory framework** (arXiv:2603.06007), CodeBot models multi-agent workflows as **directed computation graphs** where nodes execute agents and edges encode dependencies and message passing.
 
