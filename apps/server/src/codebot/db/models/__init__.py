@@ -1,10 +1,16 @@
 """ORM model barrel — imports Base and every model so Alembic autogenerate discovers all tables."""
 
 # Base and shared mixins
-from codebot.db.models.base import Base, TimestampMixin
+from codebot.db.models.agent import Agent, AgentExecution, AgentStatus, AgentType, ExecutionStatus
 
-# Core pipeline models (order matters: User before Project due to FK)
-from codebot.db.models.user import AuditLog, ApiKey, User, UserRole
+# Artifact and results
+from codebot.db.models.artifact import ArtifactOperation, CodeArtifact
+from codebot.db.models.base import Base, TimestampMixin
+from codebot.db.models.checkpoint import Checkpoint
+
+# System models
+from codebot.db.models.event import Event, EventType
+from codebot.db.models.experiment import ExperimentLog, ExperimentStatus
 
 # Project hierarchy
 from codebot.db.models.project import (
@@ -18,22 +24,19 @@ from codebot.db.models.project import (
     ProjectType,
 )
 
-# Work models
-from codebot.db.models.task import Task, TaskStatus
-from codebot.db.models.agent import Agent, AgentExecution, AgentStatus, AgentType, ExecutionStatus
-
-# Artifact and results
-from codebot.db.models.artifact import ArtifactOperation, CodeArtifact
-from codebot.db.models.test_result import TestResult, TestStatus
+# Settings audit trail
+from codebot.db.models.project_settings_history import ProjectSettingsHistory
+from codebot.db.models.review import CommentStatus, CommentType, ReviewComment
 
 # Quality models
 from codebot.db.models.security import FindingStatus, FindingType, SecurityFinding, Severity
-from codebot.db.models.review import CommentStatus, CommentType, ReviewComment
 
-# System models
-from codebot.db.models.event import Event, EventType
-from codebot.db.models.checkpoint import Checkpoint
-from codebot.db.models.experiment import ExperimentLog, ExperimentStatus
+# Work models
+from codebot.db.models.task import Task, TaskStatus
+from codebot.db.models.test_result import TestResult, TestStatus
+
+# Core pipeline models (order matters: User before Project due to FK)
+from codebot.db.models.user import ApiKey, AuditLog, User, UserRole
 
 __all__ = [
     # Base
@@ -81,4 +84,6 @@ __all__ = [
     "Checkpoint",
     "ExperimentLog",
     "ExperimentStatus",
+    # Settings
+    "ProjectSettingsHistory",
 ]

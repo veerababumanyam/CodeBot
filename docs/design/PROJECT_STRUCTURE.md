@@ -213,9 +213,27 @@ codebot/
 │   │   │       │
 │   │   │       ├── db/               # Database layer
 │   │   │       │   ├── __init__.py
-│   │   │       │   ├── models.py          # SQLAlchemy models
+│   │   │       │   ├── models/            # SQLAlchemy models
+│   │   │       │   │   ├── __init__.py
+│   │   │       │   │   ├── base.py             # Declarative base & mixins
+│   │   │       │   │   ├── project.py          # Project model
+│   │   │       │   │   ├── agent.py            # Agent execution model
+│   │   │       │   │   ├── task.py             # Task model
+│   │   │       │   │   ├── artifact.py         # Artifact model
+│   │   │       │   │   ├── checkpoint.py       # Checkpoint model
+│   │   │       │   │   ├── event.py            # Event model
+│   │   │       │   │   ├── experiment.py       # Experiment model
+│   │   │       │   │   ├── review.py           # Review model
+│   │   │       │   │   ├── security.py         # Security scan model
+│   │   │       │   │   ├── test_result.py      # Test result model
+│   │   │       │   │   ├── user.py             # User model
+│   │   │       │   │   └── project_settings_history.py  # Settings audit trail
 │   │   │       │   ├── session.py         # Database session management
 │   │   │       │   └── migrations/        # Alembic migrations
+│   │   │       │
+│   │   │       ├── services/         # Business logic services
+│   │   │       │   ├── __init__.py
+│   │   │       │   └── project_settings.py  # Settings CRUD service (Phase 10)
 │   │   │       │
 │   │   │       ├── websocket/        # Real-time communication
 │   │   │       │   ├── __init__.py
@@ -303,6 +321,7 @@ codebot/
 │   │   └── tests/                    # Server tests
 │   │       ├── conftest.py
 │   │       ├── unit/
+│   │       │   └── test_project_settings.py  # ProjectSettings schema tests
 │   │       ├── integration/
 │   │       └── e2e/
 │   │
@@ -427,12 +446,22 @@ codebot/
 │   ├── agent-sdk/                    # Agent SDK (Python)
 │   │   ├── pyproject.toml
 │   │   └── src/
-│   │       └── codebot_agent_sdk/
+│   │       └── agent_sdk/
 │   │           ├── __init__.py
 │   │           ├── agent.py          # Agent base classes
 │   │           ├── tools.py          # Tool definitions
 │   │           ├── context.py        # Context utilities
-│   │           └── types.py          # Shared type definitions
+│   │           ├── types.py          # Shared type definitions
+│   │           └── models/
+│   │               ├── __init__.py
+│   │               ├── enums.py              # Shared enumerations
+│   │               ├── agent.py              # Agent data models
+│   │               ├── agent_config.py       # Agent configuration models
+│   │               ├── events.py             # Event data models
+│   │               ├── pipeline.py           # Pipeline data models
+│   │               ├── project.py            # Project data models
+│   │               ├── task.py               # Task data models
+│   │               └── project_settings.py   # Typed project settings (8 categories)
 │   │
 │   ├── shared-types/                 # Shared TypeScript types
 │   │   ├── package.json

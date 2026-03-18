@@ -825,6 +825,42 @@ Import an existing codebase (brownfield/inflight project).
 
 ---
 
+### Project Settings Endpoints (Phase 10)
+
+Typed project settings management. Settings are organized into categories (e.g., `tech_stack`, `branding`, `ui_ux`, `accessibility`, `i18n`, `deployment`, `visibility`, `pipeline_settings`) and follow the `ProjectSettings` Pydantic model defined in [DATA_MODELS.md](../design/DATA_MODELS.md).
+
+> **Note:** The existing `POST /api/v1/projects` endpoint accepts an optional `settings` field in the request body containing typed `ProjectSettings`. These dedicated endpoints provide granular settings management after project creation.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/projects/{id}/settings` | Get full project settings |
+| PUT | `/api/v1/projects/{id}/settings` | Replace all settings |
+| PATCH | `/api/v1/projects/{id}/settings` | Partial merge update |
+| GET | `/api/v1/projects/{id}/settings/history` | Get settings change history |
+| GET | `/api/v1/projects/{id}/settings/{category}` | Get single category |
+| PUT | `/api/v1/projects/{id}/settings/{category}` | Replace single category |
+
+**Authentication:** Bearer token (role: `user`, `admin`)
+
+**Path Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Project ID (e.g., `prj_d4e5f6`) |
+| `category` | string | Settings category slug (e.g., `tech_stack`, `branding`, `i18n`) |
+
+**Status Codes:**
+
+| Code | Description |
+|------|-------------|
+| 200 | Settings retrieved or updated |
+| 400 | Validation error (invalid category or value) |
+| 401 | Unauthorized |
+| 404 | Project or category not found |
+| 409 | Conflict (concurrent update detected) |
+
+---
+
 ## 4. Pipeline Management API
 
 Pipelines orchestrate the multi-agent execution graph that builds the project.

@@ -769,6 +769,69 @@ WcagLevel: A | AA | AAA
 └──────────────────────────────────────────┘
 ```
 
+### 2.20 ProjectSettings (Pydantic Schema)
+
+The `ProjectSettings` schema lives in `libs/agent-sdk/src/agent_sdk/models/project_settings.py` and is serialized into the existing `Project.config` JSON column. It provides typed, validated access to user preferences across 8 categories.
+
+```
+┌──────────────────────────────────────────┐
+│           ProjectSettings                │
+├──────────────────────────────────────────┤
+│ version: int = 1                         │
+│ tech_stack: TechStackSettings            │
+│ branding: BrandingSettings               │
+│ ui_ux: UIUXSettings                      │
+│ i18n: I18nSettings                       │
+│ visibility: VisibilitySettings           │
+│ deployment: DeploymentSettings           │
+│ pipeline: PipelineSettings               │
+│ accessibility: AccessibilitySettings     │
+│ custom: dict[str, Any] = {}              │
+├──────────────────────────────────────────┤
+│ @property project_archetype: str         │
+└──────────────────────────────────────────┘
+```
+
+**Sub-model key fields:**
+
+| Category | Key Fields |
+|----------|-----------|
+| TechStackSettings | primary_language, frontend_framework, backend_framework, css_framework, database_primary, orm, package_manager |
+| BrandingSettings | brand_name, logo_url, primary/secondary/accent/error/warning/success colors, font_heading/body/mono, border_radius |
+| UIUXSettings | design_system, theme_mode, layout_strategy, responsive_approach, animation_preference, density, sidebar_style |
+| I18nSettings | enabled, primary_locale, supported_locales, rtl_support, date/time/number formats, i18n_framework |
+| VisibilitySettings | visibility (public/private/internal), license, open_source, readme_template |
+| DeploymentSettings | hosting_provider, hosting_tier, environments, domain, ssl_enabled, cdn_enabled, region |
+| PipelineSettings | preset, enable_tests/security/a11y/performance/i18n, approval_gates, llm_preference, cost_budget_usd |
+| AccessibilitySettings | wcag_level, color_contrast_mode, focus_management, keyboard_navigation, screen_reader_optimization |
+
+All sub-models use `extra="forbid"` to reject unknown keys at the API boundary.
+
+**Design notes:**
+- `ProjectSettings()` with no arguments is always valid (all fields have defaults)
+- Stored in the existing `Project.config` JSON column — no schema migration needed
+- `project_archetype` is a computed property (e.g. `"python-fastapi-react-tailwind-postgresql"`)
+- The `custom` dict provides an escape hatch for user extensions
+
+### 2.21 ProjectSettingsHistory
+
+```
+┌──────────────────────────────────────────┐
+│       ProjectSettingsHistory             │
+├──────────────────────────────────────────┤
+│ id: UUID (PK)                            │
+│ project_id: UUID (FK → Project, indexed) │
+│ version: int                             │
+│ settings_snapshot: JSON                  │
+│ changed_by: UUID (nullable)              │
+│ change_source: String(50)               │
+│ change_summary: Text                     │
+│ created_at: DateTime                     │
+└──────────────────────────────────────────┘
+```
+
+Tracks every settings change with full JSON snapshots for point-in-time reconstruction. The `change_source` field identifies the origin (e.g. `"api"`, `"agent:BRAINSTORM_FACILITATOR"`, `"pipeline:S0"`).
+
 ---
 
 ## 3. Entity Relationship Diagram

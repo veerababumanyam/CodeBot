@@ -17,6 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation Infrastructure** - Monorepo, Docker, NATS, shared models, DB schema
 - [x] **Phase 2: Graph Engine** - Directed graph runtime with all node types, parallel execution, validation, and checkpointing (completed 2026-03-18)
 - [ ] **Phase 3: Agent Framework** - BaseAgent with PRA cycle, AgentNode, state machine, YAML config, isolation, and metrics
+- [x] **Phase 3.5: Project Settings** - Typed, versioned project preferences system (8 categories, SharedState integration, L0Context, audit trail) (INSERTED, completed 2026-03-18)
 - [ ] **Phase 4: Multi-LLM Abstraction** - Provider-agnostic LLM interface with routing, fallbacks, cost tracking, and streaming
 - [x] **Phase 5: Context Management** - 3-tier context system (L0/L1/L2), vector store, Tree-sitter indexing, and compression (completed 2026-03-18)
 - [ ] **Phase 6: Pipeline Orchestration** - Temporal durable workflows, pipeline lifecycle, gates, presets, and checkpoint/resume
@@ -77,6 +78,15 @@ Plans:
 Plans:
 - [ ] 03-01-PLAN.md — BaseAgent with PRA cycle, state machine, recovery strategies, metrics, config models, and protocol stubs
 - [ ] 03-02-PLAN.md — AgentNode graph adapter, YAML agent configs, config loader, and integration tests
+
+### Phase 3.5: Project Settings (INSERTED)
+**Goal**: Typed, versioned project preferences that flow into every agent's context
+**Depends on**: Phase 1, Phase 2, Phase 5
+**Status**: Complete (2026-03-18)
+**Plans**: 1 plan (COMPLETE)
+
+Plans:
+- [x] 03.5-01-PLAN.md -- ProjectSettings schema, SharedState/L0Context integration, history ORM, tests, docs
 
 ### Phase 4: Multi-LLM Abstraction
 **Goal**: Any agent can call any supported LLM provider through a unified interface with intelligent routing and cost awareness
@@ -220,13 +230,14 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11
+Phases execute in numeric order: 1 -> 2 -> 3 -> 3.5 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation Infrastructure | 3/3 | Complete | 2026-03-18 |
 | 2. Graph Engine | 3/3 | Complete   | 2026-03-18 |
 | 3. Agent Framework | 1/2 | In Progress|  |
+| 3.5. Project Settings | 1/1 | Complete | 2026-03-18 |
 | 4. Multi-LLM Abstraction | 0/2 | Not started | - |
 | 5. Context Management | 3/3 | Complete   | 2026-03-18 |
 | 6. Pipeline Orchestration | 0/3 | Not started | - |

@@ -19,3 +19,4 @@ class SharedState(TypedDict):
     node_outputs: Annotated[dict[str, Any], merge_dicts]
     execution_trace: Annotated[list[dict[str, Any]], add]
     errors: Annotated[list[dict[str, Any]], add]
+    project_settings: Annotated[dict[str, Any], merge_dicts]

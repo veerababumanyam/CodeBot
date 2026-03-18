@@ -28,6 +28,7 @@
 16. [Agent Scaling Strategy](#agent-scaling-strategy)
 17. [Agent Extension Points](#agent-extension-points)
 18. [Agent Template Configurations](#agent-template-configurations)
+19. [Settings Consumption by Agent](#settings-consumption-by-agent)
 
 ---
 
@@ -4046,6 +4047,29 @@ pipeline:
       timeout_minutes: 20
       parallel: true
 ```
+
+---
+
+## Settings Consumption by Agent
+
+### Settings Consumption by Agent Role
+
+Each agent in the pipeline reads from specific `ProjectSettings` categories to guide its behavior. The table below maps which categories each agent consumes and how settings influence execution.
+
+| Agent | Stage | Settings Categories Consumed | Behavior |
+|-------|-------|------------------------------|----------|
+| Orchestrator | S0 | tech_stack, pipeline_settings, deployment | Initializes ProjectSettings with defaults, accepts user overrides |
+| Brainstorm Facilitator | S1 | All (proposes) | Proposes settings refinements via state_updates |
+| Tech Stack Advisor | S1 | tech_stack | Writes tech_stack category based on user preferences |
+| Designer | S3 | branding, ui_ux, accessibility | Consumes design settings for UI decisions |
+| Architect | S3 | tech_stack, deployment, visibility | Reads stack preferences for architecture decisions |
+| Frontend Dev | S5 | tech_stack, branding, ui_ux, i18n, accessibility | Implements according to design system and branding |
+| Backend Dev | S5 | tech_stack, deployment, i18n | Follows ORM, framework, and deployment preferences |
+| Mobile Dev | S5 | tech_stack, branding, ui_ux, i18n, accessibility | Cross-platform with branding and a11y compliance |
+| Security Auditor | S6 | tech_stack, visibility, deployment | Scans based on stack-specific rules |
+| Accessibility Auditor | S6 | accessibility, ui_ux, branding | Validates WCAG compliance per settings |
+| I18N Specialist | S6 | i18n, ui_ux | Validates locale support and RTL |
+| Doc Writer | S9 | tech_stack, branding, visibility | Generates docs matching project branding |
 
 ---
 

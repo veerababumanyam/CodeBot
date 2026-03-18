@@ -156,6 +156,7 @@ class TestSharedState:
         assert "node_outputs" in hints
         assert "execution_trace" in hints
         assert "errors" in hints
+        assert "project_settings" in hints
 
 
 # --- ExecutionRecord ---
