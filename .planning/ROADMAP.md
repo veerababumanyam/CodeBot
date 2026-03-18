@@ -91,7 +91,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md -- LLM schemas, YAML config, provider registry, and task-based model router
+- [x] 04-01-PLAN.md -- LLM schemas, YAML config, provider registry, and task-based model router
 - [ ] 04-02-PLAN.md -- LLMService facade, fallback chains, cost tracking, budget enforcement, and streaming
 
 ### Phase 5: Context Management
@@ -229,8 +229,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 |-------|----------------|--------|-----------|
 | 1. Foundation Infrastructure | 3/3 | Complete | 2026-03-18 |
 | 2. Graph Engine | 3/3 | Complete   | 2026-03-18 |
-| 3. Agent Framework | 1/2 | In Progress|  |
-| 4. Multi-LLM Abstraction | 0/2 | Not started | - |
+| 3. Agent Framework | 2/2 | Complete | 2026-03-18 |
+| 4. Multi-LLM Abstraction | 1/2 | In Progress | - |
 | 5. Context Management | 3/3 | Complete   | 2026-03-18 |
 | 6. Pipeline Orchestration | 0/3 | Not started | - |
 | 7. Vertical Slice | 0/4 | Not started | - |

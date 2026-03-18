@@ -37,12 +37,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Multi-LLM Abstraction
 
-- [ ] **LLM-01**: System provides provider-agnostic interface via LiteLLM supporting Anthropic, OpenAI, Google, and self-hosted (Ollama/vLLM)
-- [ ] **LLM-02**: System routes tasks to optimal model by task type, complexity, privacy, cost, and latency via RouteLLM
+- [x] **LLM-01**: System provides provider-agnostic interface via LiteLLM supporting Anthropic, OpenAI, Google, and self-hosted (Ollama/vLLM)
+- [x] **LLM-02**: System routes tasks to optimal model by task type, complexity, privacy, cost, and latency via RouteLLM
 - [ ] **LLM-03**: System supports fallback chains (primary model fails → fallback model)
 - [ ] **LLM-04**: System tracks token usage and cost per agent, per stage, per model
 - [ ] **LLM-05**: System supports streaming responses for real-time output
-- [ ] **LLM-06**: System can operate fully air-gapped with self-hosted models only
+- [x] **LLM-06**: System can operate fully air-gapped with self-hosted models only
 - [ ] **LLM-07**: Cost estimates provided before pipeline execution begins
 - [ ] **LLM-08**: Budget limits can halt execution when cost threshold exceeded
 
@@ -265,12 +265,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGNT-10 | Phase 11 | Pending |
 | AGNT-11 | Phase 11 | Pending |
 | AGNT-12 | Phase 3 | Complete |
-| LLM-01 | Phase 4 | Pending |
-| LLM-02 | Phase 4 | Pending |
+| LLM-01 | Phase 4 | Complete |
+| LLM-02 | Phase 4 | Complete |
 | LLM-03 | Phase 4 | Pending |
 | LLM-04 | Phase 4 | Pending |
 | LLM-05 | Phase 4 | Pending |
-| LLM-06 | Phase 4 | Pending |
+| LLM-06 | Phase 4 | Complete |
 | LLM-07 | Phase 4 | Pending |
 | LLM-08 | Phase 4 | Pending |
 | PIPE-01 | Phase 6 | Pending |

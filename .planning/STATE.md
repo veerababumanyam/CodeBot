@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-03-18T11:28:49.317Z"
-last_activity: 2026-03-18 -- Completed 03-02 (AgentNode adapter, YAML config loader)
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-03-18T18:39:30.000Z"
+last_activity: 2026-03-18 -- Completed 04-01 (LLM schemas, config, router)
 progress:
   total_phases: 11
   completed_phases: 4
   total_plans: 34
-  completed_plans: 9
-  percent: 29
+  completed_plans: 10
+  percent: 32
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** User describes an idea in natural language, gets working, tested, security-scanned code autonomously through a multi-agent pipeline
-**Current focus:** Phase 3 - Agent Framework
+**Current focus:** Phase 4 - Multi-LLM Abstraction
 
 ## Current Position
 
-Phase: 3 of 11 (Agent Framework) -- COMPLETE
-Plan: 2 of 2 in current phase
-Status: Phase Complete
-Last activity: 2026-03-18 -- Completed 03-02 (AgentNode adapter, YAML config loader)
+Phase: 4 of 11 (Multi-LLM Abstraction)
+Plan: 1 of 3 in current phase
+Status: In Progress
+Last activity: 2026-03-18 -- Completed 04-01 (LLM schemas, config, router)
 
-Progress: [███░░░░░░░] 29%
+Progress: [████░░░░░░] 32%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2)
-- Average duration: 7min (Phases 2+3+5)
-- Total execution time: 55min (Phases 2+3+5, Phase 1 pre-GSD)
+- Total plans completed: 12 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 1)
+- Average duration: 7min (Phases 2+3+4+5)
+- Total execution time: 64min (Phases 2+3+4+5, Phase 1 pre-GSD)
 
 **By Phase:**
 
@@ -46,10 +46,11 @@ Progress: [███░░░░░░░] 29%
 | 1. Foundation | 3/3 | N/A | N/A |
 | 2. Graph Engine | 3/3 | 20min | 7min |
 | 3. Agent Framework | 2/2 | 14min | 7min |
+| 4. Multi-LLM Abstraction | 1/3 | 9min | 9min |
 | 5. Context Management | 3/3 | 21min | 7min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (5min), 02-02 (10min), 02-03 (5min), 03-01 (8min), 03-02 (6min)
+- Last 5 plans: 02-03 (5min), 03-01 (8min), 03-02 (6min), 04-01 (9min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -98,6 +99,12 @@ Recent decisions affecting current work:
 - [Phase 3-02]: AgentNode on_event callback is synchronous (not async) for simple hot path
 - [Phase 3-02]: _-prefixed YAML files skipped by AgentConfigLoader for documentation templates
 - [Phase 1-SOC2]: SOC 2 compliance retroactively added to AuditLog (content_hash, compliance_framework, evidence_type, retention_until) and EventType enum
+- [Phase 4-01]: frozen=True ConfigDict on immutable Pydantic models (TokenUsage, BudgetDecision, RoutingRule, LLMResponse)
+- [Phase 4-01]: Three-tier model classification (PREMIUM/STANDARD/ECONOMY) for automatic downgrade routing
+- [Phase 4-01]: DOWNGRADE_MAP for premium-to-standard model mapping (opus->sonnet, gpt-4o->gpt-4o-mini, gemini-pro->gemini-flash)
+- [Phase 4-01]: Complexity threshold 0.3 for downgrade, 0.7 for ensuring premium
+- [Phase 4-01]: Provider unhealthy after 3 consecutive failures (_UNHEALTHY_THRESHOLD = 3)
+- [Phase 4-01]: tiktoken already present from Phase 5 -- not re-added to dependencies
 
 ### Pending Todos
 
@@ -111,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-18T11:22:17Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-03-18T18:39:30Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None
