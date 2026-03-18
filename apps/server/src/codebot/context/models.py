@@ -226,6 +226,38 @@ class AgentContext:
         """Remaining token budget (never negative)."""
         return self._budget.remaining
 
+    def replace_item_content(self, item_id: str, new_content: str) -> None:
+        """Replace the content of an item and recalculate its token count.
+
+        This is used by the compressor to replace verbose content with
+        a summarized version while keeping the same item identity and
+        priority.
+
+        Args:
+            item_id: The ID of the item to update.
+            new_content: The new (compressed) content.
+
+        Raises:
+            KeyError: If no item with *item_id* exists.
+        """
+        for idx, item in enumerate(self._items):
+            if item.id == item_id:
+                old_tokens = item.token_count
+                new_tokens = self._budget.count(new_content)
+                self._items[idx] = ContextItem(
+                    id=item.id,
+                    content=new_content,
+                    priority=item.priority,
+                    token_count=new_tokens,
+                    source=item.source,
+                )
+                # Adjust the budget: release old tokens, consume new ones
+                self._budget.release(old_tokens)
+                self._budget._used_tokens += new_tokens
+                return
+        msg = f"No context item with id={item_id!r}"
+        raise KeyError(msg)
+
     @property
     def items(self) -> list[ContextItem]:
         """Current list of context items (read-only copy)."""
