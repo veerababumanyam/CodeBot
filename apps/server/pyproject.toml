@@ -39,6 +39,11 @@ dependencies = [
     "tree-sitter-typescript>=0.23.0",
     "tree-sitter-javascript>=0.23.0",
 
+    # LLM Abstraction
+    "litellm>=1.82.0",
+    "langfuse>=2.0.0",
+    "pyyaml>=6.0.0",
+
     # Agent SDK
     "agent-sdk",
 ]
