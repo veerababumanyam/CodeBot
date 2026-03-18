@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+from graph_engine.engine.checkpoint import (
+    CheckpointManager,
+    create_checkpointer,
+    resume_from_checkpoint,
+)
 from graph_engine.engine.compiler import GateFailedError, GraphCompiler
 from graph_engine.engine.executor import ExecutionEngine
 from graph_engine.engine.validator import GraphValidator, ValidationResult
@@ -16,6 +21,7 @@ from graph_engine.yaml.loader import load_graph_definition, load_graph_definitio
 __version__ = "0.1.0"
 
 __all__ = [
+    "CheckpointManager",
     "EdgeDefinition",
     "EdgeType",
     "ExecutionEngine",
@@ -31,7 +37,9 @@ __all__ = [
     "RetryPolicy",
     "SharedState",
     "ValidationResult",
+    "create_checkpointer",
     "load_graph_definition",
     "load_graph_definition_from_string",
     "merge_dicts",
+    "resume_from_checkpoint",
 ]
