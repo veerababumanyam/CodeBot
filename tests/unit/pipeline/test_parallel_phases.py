@@ -9,15 +9,17 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from unittest.mock import MagicMock, patch
 
-import pytest
 from temporalio import activity
-from temporalio.client import Client
 from temporalio.testing import WorkflowEnvironment
-from temporalio.worker import Worker
+from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
 from codebot.pipeline.checkpoint import PhaseInput, PhaseResult, PipelineInput
+
+
+# Use unsandboxed runner for tests to avoid sandbox restrictions on
+# transitive imports (e.g. pathlib.Path.resolve in loader.py).
+_UNSANDBOXED = UnsandboxedWorkflowRunner()
 
 
 # ---------------------------------------------------------------------------
@@ -25,7 +27,7 @@ from codebot.pipeline.checkpoint import PhaseInput, PhaseResult, PipelineInput
 # ---------------------------------------------------------------------------
 
 EXECUTED_PHASES: list[str] = []
-EMITTED_EVENTS: list[dict] = []
+EMITTED_EVENTS: list[dict] = []  # type: ignore[type-arg]
 
 
 @activity.defn(name="load_pipeline_config")
@@ -129,6 +131,27 @@ async def mock_resume_execute(phase_input: PhaseInput) -> PhaseResult:
 
 
 # ---------------------------------------------------------------------------
+# Helper
+# ---------------------------------------------------------------------------
+
+
+def _make_worker(
+    client: object,
+    task_queue: str,
+    workflows: list[type],
+    activities: list[object],
+) -> Worker:
+    """Create a Worker with unsandboxed runner for tests."""
+    return Worker(
+        client,  # type: ignore[arg-type]
+        task_queue=task_queue,
+        workflows=workflows,
+        activities=activities,  # type: ignore[arg-type]
+        workflow_runner=_UNSANDBOXED,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
 
@@ -145,7 +168,7 @@ class TestSDLCPipelineWorkflowSequential:
 
         async with await WorkflowEnvironment.start_time_skipping() as env:
             task_queue = f"test-seq-{uuid.uuid4().hex[:8]}"
-            async with Worker(
+            async with _make_worker(
                 env.client,
                 task_queue=task_queue,
                 workflows=[SDLCPipelineWorkflow, PhaseAgentWorkflow],
@@ -183,7 +206,7 @@ class TestSDLCPipelineWorkflowParallel:
 
         async with await WorkflowEnvironment.start_time_skipping() as env:
             task_queue = f"test-par-{uuid.uuid4().hex[:8]}"
-            async with Worker(
+            async with _make_worker(
                 env.client,
                 task_queue=task_queue,
                 workflows=[SDLCPipelineWorkflow, PhaseAgentWorkflow],
@@ -222,7 +245,7 @@ class TestSDLCPipelineWorkflowSignals:
 
         async with await WorkflowEnvironment.start_time_skipping() as env:
             task_queue = f"test-sig-{uuid.uuid4().hex[:8]}"
-            async with Worker(
+            async with _make_worker(
                 env.client,
                 task_queue=task_queue,
                 workflows=[SDLCPipelineWorkflow, PhaseAgentWorkflow],
@@ -243,8 +266,11 @@ class TestSDLCPipelineWorkflowSignals:
                     task_queue=task_queue,
                 )
 
-                # Send gate approval signal
-                await handle.signal(SDLCPipelineWorkflow.approve_gate, "gate_design", "approved")
+                # Send gate approval signal (multi-arg signals use args=[...])
+                await handle.signal(
+                    SDLCPipelineWorkflow.approve_gate,
+                    args=["gate_design", "approved"],
+                )
 
                 # Wait for workflow completion
                 result = await handle.result()
@@ -260,7 +286,7 @@ class TestSDLCPipelineWorkflowSignals:
 
         async with await WorkflowEnvironment.start_time_skipping() as env:
             task_queue = f"test-pause-{uuid.uuid4().hex[:8]}"
-            async with Worker(
+            async with _make_worker(
                 env.client,
                 task_queue=task_queue,
                 workflows=[SDLCPipelineWorkflow, PhaseAgentWorkflow],
@@ -312,7 +338,7 @@ class TestSDLCPipelineWorkflowQuery:
 
         async with await WorkflowEnvironment.start_time_skipping() as env:
             task_queue = f"test-query-{uuid.uuid4().hex[:8]}"
-            async with Worker(
+            async with _make_worker(
                 env.client,
                 task_queue=task_queue,
                 workflows=[SDLCPipelineWorkflow, PhaseAgentWorkflow],
@@ -350,7 +376,7 @@ class TestSDLCPipelineWorkflowResume:
 
         async with await WorkflowEnvironment.start_time_skipping() as env:
             task_queue = f"test-resume-{uuid.uuid4().hex[:8]}"
-            async with Worker(
+            async with _make_worker(
                 env.client,
                 task_queue=task_queue,
                 workflows=[SDLCPipelineWorkflow, PhaseAgentWorkflow],
@@ -387,7 +413,7 @@ class TestSDLCPipelineWorkflowContinueAsNew:
 
     async def test_calls_continue_as_new_when_suggested(self) -> None:
         """SDLCPipelineWorkflow calls continue_as_new when is_continue_as_new_suggested is True."""
-        from codebot.pipeline.workflows import PhaseAgentWorkflow, SDLCPipelineWorkflow
+        from codebot.pipeline.workflows import SDLCPipelineWorkflow
 
         # This test verifies the code path exists. In real Temporal,
         # is_continue_as_new_suggested() is controlled by the server.
@@ -397,3 +423,13 @@ class TestSDLCPipelineWorkflowContinueAsNew:
         source = inspect.getsource(SDLCPipelineWorkflow.run)
         assert "is_continue_as_new_suggested" in source
         assert "continue_as_new" in source
+
+    async def test_continue_as_new_preserves_project_id(self) -> None:
+        """continue_as_new call includes project_id and resume_from_phase."""
+        from codebot.pipeline.workflows import SDLCPipelineWorkflow
+
+        import inspect
+
+        source = inspect.getsource(SDLCPipelineWorkflow.run)
+        assert "resume_from_phase=idx + 1" in source
+        assert "project_id=input.project_id" in source
