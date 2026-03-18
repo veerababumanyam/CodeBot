@@ -51,6 +51,10 @@ Recent decisions affecting current work:
 - [Phase 5-01]: AgentContext is a regular class (not Pydantic) for in-place mutation
 - [Phase 5-01]: L0 context capped at 2500 tokens, conventions truncated first
 - [Phase 5-01]: Role-to-file glob patterns for flexible L1 file selection
+- [Phase 5-02]: tree-sitter 0.25.x uses Query() constructor + QueryCursor instead of deprecated language.query().captures()
+- [Phase 5-02]: TypeScript grammar uses type_identifier (not identifier) for class names
+- [Phase 5-02]: LanceDB sync API wrapped in asyncio.to_thread() (async API not fully mature)
+- [Phase 5-02]: Qdrant hybrid_search falls back to vector-only (BM25 index deferred)
 
 ### Pending Todos
 
@@ -65,5 +69,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 05-01-PLAN.md (Context core types, token budget, three-tier loader)
+Stopped at: Completed 05-02-PLAN.md (Vector store backends and Tree-sitter code indexer)
 Resume file: None
