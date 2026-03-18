@@ -156,12 +156,13 @@ Plans:
   3. Dependency allowlist prevents installation of hallucinated or malicious packages
   4. Each coding agent runs in its own git worktree with isolated filesystem, and worktrees are created and cleaned up automatically
   5. Parallel coding agents operate without port conflicts or shared-resource contention via per-worktree Docker profiles and dynamic port allocation
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 08-01: TBD
-- [ ] 08-02: TBD
-- [ ] 08-03: TBD
+- [ ] 08-01-PLAN.md — Security scanner adapters (Semgrep, Trivy, Gitleaks), gate, allowlist, and Pydantic models
+- [ ] 08-02-PLAN.md — WorktreePool, PortAllocator, BranchStrategy, and CommitManager
+- [ ] 08-03-PLAN.md — SecurityOrchestrator with parallel fan-out and integration test scaffold
+- [ ] 08-04-PLAN.md — CLI agent adapters (Claude Code, Codex, Gemini), CLIAgentRunner, and Docker profiles
 
 ### Phase 9: Full Agent Roster
 **Goal**: All 30 specialized agents are implemented across all 10 SDLC stages, completing the full pipeline from brainstorming through documentation
@@ -223,7 +224,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 5. Context Management | 3/3 | Complete   | 2026-03-18 |
 | 6. Pipeline Orchestration | 0/3 | Not started | - |
 | 7. Vertical Slice | 0/4 | Not started | - |
-| 8. Security Pipeline + Worktree Manager | 0/3 | Not started | - |
+| 8. Security Pipeline + Worktree Manager | 0/4 | Not started | - |
 | 9. Full Agent Roster | 0/5 | Not started | - |
 | 10. FastAPI Server + API Layer | 0/2 | Not started | - |
 | 11. React Dashboard + CLI Application | 0/3 | Not started | - |
