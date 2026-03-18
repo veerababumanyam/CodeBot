@@ -3,6 +3,9 @@ name = "codebot-workspace"
 version = "0.1.0"
 description = "CodeBot monorepo root — Python workspace config"
 requires-python = ">=3.12"
+dependencies = [
+    "temporalio>=1.23.0",
+]
 
 [tool.uv.workspace]
 members = [

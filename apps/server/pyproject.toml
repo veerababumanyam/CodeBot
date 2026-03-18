@@ -44,6 +44,9 @@ dependencies = [
     "langfuse>=2.0.0",
     "pyyaml>=6.0.0",
 
+    # Pipeline Orchestration
+    "temporalio>=1.23.0",
+
     # Agent SDK
     "agent-sdk",
 ]
