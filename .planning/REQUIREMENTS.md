@@ -9,11 +9,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Graph Engine
 
-- [ ] **GRPH-01**: System can execute directed graphs with typed nodes and edges in topological order
-- [ ] **GRPH-02**: System supports node types: AGENT, SUBGRAPH, LOOP, SWITCH, HUMAN_IN_LOOP, PARALLEL, MERGE, CHECKPOINT, TRANSFORM
-- [ ] **GRPH-03**: System provides SharedState for graph-level data flow between nodes
-- [ ] **GRPH-04**: System can load and validate graph definitions from YAML
-- [ ] **GRPH-05**: System detects cycles, missing dependencies, and invalid edge types during validation
+- [x] **GRPH-01**: System can execute directed graphs with typed nodes and edges in topological order
+- [x] **GRPH-02**: System supports node types: AGENT, SUBGRAPH, LOOP, SWITCH, HUMAN_IN_LOOP, PARALLEL, MERGE, CHECKPOINT, TRANSFORM
+- [x] **GRPH-03**: System provides SharedState for graph-level data flow between nodes
+- [x] **GRPH-04**: System can load and validate graph definitions from YAML
+- [x] **GRPH-05**: System detects cycles, missing dependencies, and invalid edge types during validation
 - [ ] **GRPH-06**: System can checkpoint graph state and resume execution from checkpoint
 - [ ] **GRPH-07**: System traces execution with timing, token usage, and output per node
 - [ ] **GRPH-08**: System executes parallel branches concurrently via asyncio TaskGroup
@@ -243,11 +243,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GRPH-01 | Phase 2 | Pending |
-| GRPH-02 | Phase 2 | Pending |
-| GRPH-03 | Phase 2 | Pending |
-| GRPH-04 | Phase 2 | Pending |
-| GRPH-05 | Phase 2 | Pending |
+| GRPH-01 | Phase 2 | Complete |
+| GRPH-02 | Phase 2 | Complete |
+| GRPH-03 | Phase 2 | Complete |
+| GRPH-04 | Phase 2 | Complete |
+| GRPH-05 | Phase 2 | Complete |
 | GRPH-06 | Phase 2 | Pending |
 | GRPH-07 | Phase 2 | Pending |
 | GRPH-08 | Phase 2 | Pending |

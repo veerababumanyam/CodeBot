@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Completed 05-03-PLAN.md (Context compressor and adapter) -- Phase 5 complete
-last_updated: "2026-03-18T10:30:48.243Z"
-last_activity: 2026-03-18 -- Completed 05-03 (Context compressor and adapter)
+status: in_progress
+stopped_at: Completed 02-01-PLAN.md (Domain models, YAML loader, graph validator)
+last_updated: "2026-03-18T10:31:22.000Z"
+last_activity: 2026-03-18 -- Completed 02-01 (Domain models, YAML loader, graph validator)
 progress:
   total_phases: 11
   completed_phases: 1
   total_plans: 29
-  completed_plans: 3
-  percent: 50
+  completed_plans: 5
+  percent: 17
 ---
 
 # Project State
@@ -21,33 +21,34 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** User describes an idea in natural language, gets working, tested, security-scanned code autonomously through a multi-agent pipeline
-**Current focus:** Phase 5 - Context Management
+**Current focus:** Phase 2 - Graph Engine
 
 ## Current Position
 
-Phase: 5 of 11 (Context Management) -- COMPLETE
-Plan: 3 of 3 in current phase
-Status: Phase Complete
-Last activity: 2026-03-18 -- Completed 05-03 (Context compressor and adapter)
+Phase: 2 of 11 (Graph Engine)
+Plan: 1 of 3 in current phase
+Status: In Progress
+Last activity: 2026-03-18 -- Completed 02-01 (Domain models, YAML loader, graph validator)
 
-Progress: [=====-----] 50%
+Progress: [██░░░░░░░░] 17%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6 (Phase 1: 3, Phase 5: 3)
-- Average duration: 7min (Phase 5 only)
-- Total execution time: 21min (Phase 5 only, Phase 1 pre-GSD)
+- Total plans completed: 7 (Phase 1: 3, Phase 5: 3, Phase 2: 1)
+- Average duration: 7min (Phases 2+5)
+- Total execution time: 26min (Phases 2+5, Phase 1 pre-GSD)
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Foundation | 3/3 | N/A | N/A |
+| 2. Graph Engine | 1/3 | 5min | 5min |
 | 5. Context Management | 3/3 | 21min | 7min |
 
 **Recent Trend:**
-- Last 5 plans: 05-01 (8min), 05-02 (8min), 05-03 (5min)
+- Last 5 plans: 05-01 (8min), 05-02 (8min), 05-03 (5min), 02-01 (5min)
 - Trend: Improving
 
 *Updated after each plan completion*
@@ -75,6 +76,10 @@ Recent decisions affecting current work:
 - [Phase 5-03]: CRITICAL items never touched by compressor, even if over budget
 - [Phase 5-03]: L2 vector retrieval uses placeholder embedding (sentence-transformers integration deferred)
 - [Phase 5-03]: Vector store errors caught silently -- L2 is best-effort
+- [Phase 2-01]: StrEnum instead of (str, Enum) per ruff UP042 for Python 3.12+ target
+- [Phase 2-01]: noqa TC001 for Pydantic model imports that must stay at runtime
+- [Phase 2-01]: Kahn's algorithm with sorted initial queue for deterministic layer ordering
+- [Phase 2-01]: Loop back-edge detection via BFS descendant check from LOOP node
 
 ### Pending Todos
 
@@ -89,5 +94,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 05-03-PLAN.md (Context compressor and adapter) -- Phase 5 complete
+Stopped at: Completed 02-01-PLAN.md (Domain models, YAML loader, graph validator)
 Resume file: None
