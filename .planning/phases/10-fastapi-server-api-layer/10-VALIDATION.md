@@ -17,18 +17,18 @@ created: 2026-03-18
 
 | Property | Value |
 |----------|-------|
-| **Framework** | pytest 7.x with httpx.AsyncClient |
-| **Config file** | `pyproject.toml` [tool.pytest] section |
-| **Quick run command** | `uv run pytest tests/unit/server/api/ -x -q` |
-| **Full suite command** | `uv run pytest tests/unit/server/api/ tests/integration/server/api/ -v` |
+| **Framework** | pytest 8.x with httpx.AsyncClient |
+| **Config file** | `apps/server/pyproject.toml` [tool.pytest.ini_options] section |
+| **Quick run command** | `cd apps/server && uv run pytest tests/api/ -x -q` |
+| **Full suite command** | `cd apps/server && uv run pytest tests/api/ tests/websocket/ -v` |
 | **Estimated runtime** | ~15 seconds |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Run `uv run pytest tests/unit/server/api/ -x -q`
-- **After every plan wave:** Run `uv run pytest tests/unit/server/api/ tests/integration/server/api/ -v`
+- **After every task commit:** Run `cd apps/server && uv run pytest tests/api/ -x -q`
+- **After every plan wave:** Run `cd apps/server && uv run pytest tests/api/ tests/websocket/ -v`
 - **Before `/gsd:verify-work`:** Full suite must be green
 - **Max feedback latency:** 15 seconds
 
@@ -38,26 +38,27 @@ created: 2026-03-18
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 10-01-01 | 01 | 1 | SRVR-01 | unit | `uv run pytest tests/unit/server/api/test_projects.py -x` | ❌ W0 | ⬜ pending |
-| 10-01-02 | 01 | 1 | SRVR-01 | unit | `uv run pytest tests/unit/server/api/test_pipelines.py -x` | ❌ W0 | ⬜ pending |
-| 10-02-01 | 02 | 1 | SRVR-02 | unit+integration | `uv run pytest tests/unit/server/api/test_websocket.py -x` | ❌ W0 | ⬜ pending |
-| 10-03-01 | 01 | 1 | SRVR-03 | unit | `uv run pytest tests/unit/server/api/test_auth.py -x` | ❌ W0 | ⬜ pending |
-| 10-04-01 | 01 | 1 | SRVR-04 | unit | `uv run pytest tests/unit/server/api/test_pipeline_config.py -x` | ❌ W0 | ⬜ pending |
-| 10-05-01 | 02 | 2 | SRVR-05 | unit | `uv run pytest tests/unit/server/api/test_agents.py -x` | ❌ W0 | ⬜ pending |
+| 10-01-01 | 01 | 1 | SRVR-03 | unit | `cd apps/server && uv run pytest tests/api/test_auth.py -x` | No -- W0 | pending |
+| 10-01-02 | 01 | 1 | SRVR-01 | unit | `cd apps/server && uv run pytest tests/api/test_projects.py -x` | No -- W0 | pending |
+| 10-02-01 | 02 | 2 | SRVR-04 | integration | `cd apps/server && uv run pytest tests/api/test_pipelines.py -x` | No -- W0 | pending |
+| 10-02-02 | 02 | 2 | SRVR-05 | integration | `cd apps/server && uv run pytest tests/api/test_agents.py -x` | No -- W0 | pending |
+| 10-02-03 | 02 | 2 | SRVR-02 | unit+integration | `cd apps/server && uv run pytest tests/websocket/ -x` | No -- W0 | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `tests/unit/server/api/conftest.py` — shared fixtures (async client, test DB, mock NATS)
-- [ ] `tests/unit/server/api/test_projects.py` — stubs for SRVR-01 project CRUD
-- [ ] `tests/unit/server/api/test_pipelines.py` — stubs for SRVR-01 pipeline control
-- [ ] `tests/unit/server/api/test_websocket.py` — stubs for SRVR-02 WebSocket events
-- [ ] `tests/unit/server/api/test_auth.py` — stubs for SRVR-03 auth/authz
-- [ ] `tests/unit/server/api/test_pipeline_config.py` — stubs for SRVR-04 preset config
-- [ ] `tests/unit/server/api/test_agents.py` — stubs for SRVR-05 agent management
+- [ ] `apps/server/tests/api/__init__.py` -- test package
+- [ ] `apps/server/tests/api/conftest.py` -- shared fixtures (async client, auth headers, test user factory)
+- [ ] `apps/server/tests/api/test_auth.py` -- covers SRVR-03 (auth, RBAC, API keys)
+- [ ] `apps/server/tests/api/test_projects.py` -- covers SRVR-01 (project CRUD)
+- [ ] `apps/server/tests/api/test_pipelines.py` -- covers SRVR-01 (pipeline lifecycle), SRVR-04 (preset selection)
+- [ ] `apps/server/tests/api/test_agents.py` -- covers SRVR-05 (agent start/stop/restart/configure)
+- [ ] `apps/server/tests/websocket/__init__.py` -- test package
+- [ ] `apps/server/tests/websocket/test_manager.py` -- covers SRVR-02 (WebSocket connection, JWT auth)
+- [ ] `apps/server/tests/websocket/test_bridge.py` -- covers SRVR-02 (NATS event forwarding)
 
 ---
 
