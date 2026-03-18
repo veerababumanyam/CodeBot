@@ -149,20 +149,23 @@ Plans:
 ### Phase 8: Security Pipeline + Worktree Manager
 **Goal**: Generated code is security-scanned at every step with quality gates, and coding agents operate in fully isolated git worktrees
 **Depends on**: Phase 7
-**Requirements**: SECP-01, SECP-02, SECP-03, SECP-04, SECP-05, SECP-06, WORK-01, WORK-02, WORK-03, WORK-04, IMPL-05, IMPL-06
+**Requirements**: SECP-01, SECP-02, SECP-03, SECP-04, SECP-05, SECP-06, WORK-01, WORK-02, WORK-03, WORK-04, IMPL-05, IMPL-06, CMPL-01, CMPL-02, CMPL-03, CMPL-04
 **Success Criteria** (what must be TRUE):
   1. Semgrep, Trivy, and Gitleaks run automatically on every code generation output and produce structured findings
   2. Quality gates block pipeline advancement when critical or high severity vulnerabilities are found
   3. Dependency allowlist prevents installation of hallucinated or malicious packages
   4. Each coding agent runs in its own git worktree with isolated filesystem, and worktrees are created and cleaned up automatically
   5. Parallel coding agents operate without port conflicts or shared-resource contention via per-worktree Docker profiles and dynamic port allocation
-**Plans**: 4 plans
+  6. SOC 2 compliance checker runs within SecurityOrchestrator and evaluates generated code against TSC criteria
+  7. Audit logs are immutable with content hashing for tamper detection
+**Plans**: 5 plans
 
 Plans:
 - [ ] 08-01-PLAN.md — Security scanner adapters (Semgrep, Trivy, Gitleaks), gate, allowlist, and Pydantic models
 - [ ] 08-02-PLAN.md — WorktreePool, PortAllocator, BranchStrategy, and CommitManager
 - [ ] 08-03-PLAN.md — SecurityOrchestrator with parallel fan-out and integration test scaffold
 - [ ] 08-04-PLAN.md — CLI agent adapters (Claude Code, Codex, Gemini), CLIAgentRunner, and Docker profiles
+- [ ] 08-05-PLAN.md — SOC 2 compliance checker, immutable audit logger, evidence collection, TSC rule configuration
 
 ### Phase 9: Full Agent Roster
 **Goal**: All 30 specialized agents are implemented across all 10 SDLC stages, completing the full pipeline from brainstorming through documentation
@@ -231,7 +234,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 5. Context Management | 3/3 | Complete   | 2026-03-18 |
 | 6. Pipeline Orchestration | 0/3 | Not started | - |
 | 7. Vertical Slice | 0/4 | Not started | - |
-| 8. Security Pipeline + Worktree Manager | 0/4 | Not started | - |
+| 8. Security Pipeline + Worktree Manager | 0/5 | Not started | - |
 | 9. Full Agent Roster | 0/5 | Not started | - |
 | 10. FastAPI Server + API Layer | 0/2 | Not started | - |
 | 11. React Dashboard + CLI Application | 0/4 | Not started | - |

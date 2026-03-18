@@ -122,6 +122,7 @@ Each coding agent works in an isolated **git worktree** to prevent conflicts. Ag
 - Security scans must pass quality gates before code moves to the next pipeline phase
 - Agent configurations are YAML-declarative (in `configs/`)
 - Pipeline configs support three presets: `full.yaml`, `quick.yaml`, `review-only.yaml`
+- SOC 2 compliance checks run as part of SecurityOrchestrator fan-out when enabled
 
 ## Testing Conventions
 

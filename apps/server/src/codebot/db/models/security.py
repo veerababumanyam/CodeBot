@@ -19,6 +19,7 @@ class FindingType(enum.Enum):
     CODE_SMELL = "CODE_SMELL"
     DEPENDENCY_RISK = "DEPENDENCY_RISK"
     CONFIG_ISSUE = "CONFIG_ISSUE"
+    COMPLIANCE_VIOLATION = "COMPLIANCE_VIOLATION"
 
 
 class Severity(enum.Enum):

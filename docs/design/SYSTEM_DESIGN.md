@@ -4304,7 +4304,34 @@ class SecurityThresholds:
     require_license_compliance: bool = True
 ```
 
-### 8.9 Security Pipeline Sequence
+### 8.9 SOC 2 Compliance Integration
+
+The Security Auditor Agent integrates SOC 2 compliance checking via the
+`SOC2ComplianceChecker` component, which runs as part of the SecurityOrchestrator's
+parallel fan-out alongside Semgrep, Trivy, and Gitleaks.
+
+**Dual-Level Compliance:**
+1. **Platform level**: CodeBot maintains immutable audit logs with SHA-256 content
+   hashing, event-sourced pipeline execution records, and evidence collection
+2. **Generated code level**: The compliance checker evaluates whether generated code
+   follows SOC 2 patterns when the user specifies SOC2 as a security requirement
+
+**Trust Service Criteria Mapping:**
+
+| TSC | Criteria | Check | Implementation |
+|-----|----------|-------|----------------|
+| CC6 | Logical Access Controls | Auth middleware, RBAC | Pattern detection in generated code |
+| CC7 | System Operations | Health checks, structured logging | File/pattern inspection |
+| CC8 | Change Management | DB migrations, version control | File existence checks |
+| CC9 | Risk Mitigation | Input validation, dep pinning, rate limiting | Pattern + file detection |
+| C1 | Confidentiality | Secrets externalized, TLS | Delegates to Gitleaks results |
+| P1 | Privacy | Data retention, PII handling | Pattern detection |
+
+**Output:** Produces `ScanFinding` objects with `tool="soc2-compliance"` that flow into
+the existing `SecurityReport.findings` pipeline. The SecurityGate can evaluate compliance
+findings alongside vulnerability findings when `require_compliance_pass=True`.
+
+### 8.10 Security Pipeline Sequence
 
 ```
   SecurityOrchestrator

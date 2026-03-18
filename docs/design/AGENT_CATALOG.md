@@ -3790,9 +3790,13 @@ class EnhancedSecurityAuditor(SecurityAuditorAgent):
         return result
 
     async def run_compliance_check(self, task):
-        """Run HIPAA/SOC2/GDPR compliance checks."""
-        # Custom compliance logic
-        pass
+        """Run SOC 2/HIPAA/GDPR compliance checks via the compliance checker."""
+        from codebot.security.compliance.checker import SOC2ComplianceChecker
+        from codebot.security.compliance.models import ComplianceFramework
+        checker = SOC2ComplianceChecker()
+        return await checker.check(
+            task.project_path, framework=ComplianceFramework.SOC2
+        )
 ```
 
 ---

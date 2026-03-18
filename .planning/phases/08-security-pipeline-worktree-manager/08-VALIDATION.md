@@ -50,6 +50,9 @@ created: 2026-03-18
 | 08-03-02 | 03 | 2 | SECP-05 | integration | `uv run pytest tests/integration/test_security_pipeline.py -x` | Wave 0 | pending |
 | 08-04-01 | 04 | 2 | IMPL-06 | unit | `uv run pytest tests/unit/test_cli_agents.py -x` | Wave 0 | pending |
 | 08-04-02 | 04 | 2 | IMPL-05, WORK-02 | integration | `uv run pytest tests/integration/test_parallel_worktrees.py tests/integration/test_worktree_docker.py -x` | Wave 0 | pending |
+| 08-05-01 | 05 | 3 | CMPL-01 | unit | `uv run pytest tests/unit/test_compliance_checker.py -x` | Wave 0 | pending |
+| 08-05-02 | 05 | 3 | CMPL-02 | unit | `uv run pytest tests/unit/test_audit_logger.py -x` | Wave 0 | pending |
+| 08-05-03 | 05 | 3 | CMPL-03 | unit | `uv run pytest tests/unit/test_compliance_evidence.py -x` | Wave 0 | pending |
 
 *Status: pending · green · red · flaky*
 
@@ -70,6 +73,9 @@ created: 2026-03-18
 - [ ] `tests/integration/test_worktree_docker.py` — worktree + Docker profile integration
 - [ ] `tests/integration/test_parallel_worktrees.py` — multiple agents in parallel worktrees
 - [ ] `tests/conftest.py` — update with security fixtures (mock subprocess), worktree fixtures (temp git repos)
+- [ ] `tests/unit/test_compliance_checker.py` — SOC 2 checker TSC evaluation with mocked filesystem
+- [ ] `tests/unit/test_audit_logger.py` — immutable audit logger hashing, retention, verification
+- [ ] `tests/unit/test_compliance_evidence.py` — evidence collection and JSON export
 
 ---
 

@@ -1250,6 +1250,19 @@ repos:
         pass_filenames: false
 ```
 
+### 11.7 SOC 2 Compliance Requirements
+
+| Property | Requirement |
+|----------|-------------|
+| **Immutable Audit Logging** | All audit log entries enforced immutable at the database level via PostgreSQL rules preventing UPDATE and DELETE |
+| **Tamper Detection** | SHA-256 content hashing on audit log payloads; `content_hash` column on `audit_logs` table |
+| **Retention** | Minimum 1-year retention for SOC 2 audit evidence; `retention_until` field per log entry |
+| **Evidence Collection** | Compliance evidence exported as structured JSON packages for auditor review |
+| **TSC Mapping** | Trust Service Criteria (CC6, CC7, CC8, CC9, A1, PI1, C1, P1) mapped to CodeBot subsystems |
+| **Generated Code Checks** | SOC2ComplianceChecker evaluates generated code against TSC patterns when SOC2 compliance is required |
+| **Compliance Framework** | `compliance_framework` field on audit logs supports SOC2, HIPAA, GDPR, PCI_DSS |
+| **Finding Type** | `COMPLIANCE_VIOLATION` finding type for compliance-specific security findings |
+
 ---
 
 ## 12. Monitoring & Observability

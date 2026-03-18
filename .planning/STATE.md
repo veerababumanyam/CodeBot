@@ -97,6 +97,7 @@ Recent decisions affecting current work:
 - [Phase 3-02]: NoOpWorktreeProvider returns cwd -- real worktree isolation deferred to Phase 8
 - [Phase 3-02]: AgentNode on_event callback is synchronous (not async) for simple hot path
 - [Phase 3-02]: _-prefixed YAML files skipped by AgentConfigLoader for documentation templates
+- [Phase 1-SOC2]: SOC 2 compliance retroactively added to AuditLog (content_hash, compliance_framework, evidence_type, retention_until) and EventType enum
 
 ### Pending Todos
 

@@ -78,6 +78,10 @@ A user can describe an idea in natural language and get working, tested, securit
 - [ ] Gitleaks secret detection
 - [ ] SonarQube integration
 - [ ] Quality gates between pipeline phases
+- [ ] SOC 2 compliance checker integrated into security scanning pipeline
+- [ ] Immutable audit logging with tamper detection (content hashing)
+- [ ] Compliance evidence collection and TSC mapping
+- [ ] COMPLIANCE_VIOLATION finding type for compliance-specific findings
 
 **FastAPI Server**
 - [ ] REST API for project management, pipeline control, agent monitoring

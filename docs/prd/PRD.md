@@ -1295,7 +1295,7 @@ After completing a project, CodeBot can extract and save the project's architect
 | RBAC | Role-based access control for multi-user deployments |
 | Encryption at rest | All stored credentials, API keys, and sensitive configuration encrypted at rest |
 | Encryption in transit | TLS 1.3 for all network communication between agents, dashboard, and external services |
-| Compliance | Support for GDPR, HIPAA, SOC2, and PCI-DSS compliance requirements through self-hosted LLMs and data residency controls |
+| Compliance | SOC 2 Type II readiness: immutable audit logging with content hashing for tamper detection, Trust Service Criteria (TSC) mapping across CC6 (access control), CC7 (operations), CC8 (change management), CC9 (risk mitigation), compliance evidence collection and export for auditor review, generated code compliance checking against TSC criteria. Also supports GDPR, HIPAA, PCI-DSS through self-hosted LLMs and data residency controls |
 
 CodeBot itself implements JWT-based authentication with RS256 signing. API keys use HMAC-SHA256 with key rotation. Sessions expire after 1 hour with refresh token rotation. Multi-factor authentication (TOTP) available for admin accounts. RBAC enforces admin/user/viewer roles. All auth events are audit-logged.
 
