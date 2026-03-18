@@ -7,7 +7,7 @@ wave_0_complete: false
 created: 2026-03-18
 ---
 
-# Phase 1 — Validation Strategy
+# Phase 1 -- Validation Strategy
 
 > Per-phase validation contract for feedback sampling during execution.
 
@@ -38,24 +38,25 @@ created: 2026-03-18
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 1-01-01 | 01 | 1 | REQ-001 | build | `turbo build` | ❌ W0 | ⬜ pending |
-| 1-01-02 | 01 | 1 | REQ-001 | build | `uv sync && pnpm install` | ❌ W0 | ⬜ pending |
-| 1-02-01 | 02 | 1 | REQ-002 | integration | `docker-compose up -d && docker-compose ps` | ❌ W0 | ⬜ pending |
-| 1-02-02 | 02 | 1 | REQ-003 | integration | `uv run alembic upgrade head` | ❌ W0 | ⬜ pending |
-| 1-03-01 | 03 | 2 | REQ-004 | unit | `uv run pytest tests/test_models.py` | ❌ W0 | ⬜ pending |
-| 1-03-02 | 03 | 2 | REQ-005 | integration | `uv run pytest tests/test_nats.py` | ❌ W0 | ⬜ pending |
-| 1-03-03 | 03 | 2 | REQ-004 | build | `pnpm -F shared-types build` | ❌ W0 | ⬜ pending |
+| 1-01-01 | 01 | 1 | REQ-001 | build | `turbo build` | -- W0 | pending |
+| 1-01-02 | 01 | 1 | REQ-001 | build | `uv sync && pnpm install` | -- W0 | pending |
+| 1-02-01 | 02 | 2 | REQ-002 | integration | `docker-compose up -d && docker-compose exec postgres pg_isready -U codebot && docker-compose exec redis redis-cli ping && curl -sf http://localhost:8222/healthz` | -- W0 | pending |
+| 1-02-2a | 02 | 2 | REQ-003 | unit | `uv run python -c "from codebot.db.engine import engine, async_session_factory; print('OK')"` | -- W0 | pending |
+| 1-02-2b | 02 | 2 | REQ-003 | integration | `uv run alembic upgrade head && uv run pytest tests/test_db.py -x -v --timeout=30` | -- W0 | pending |
+| 1-03-01 | 03 | 3 | REQ-004 | unit | `uv run pytest apps/server/tests/test_models.py -x -v --timeout=30` | -- W0 | pending |
+| 1-03-02 | 03 | 3 | REQ-005 | integration | `uv run pytest apps/server/tests/test_events.py -x -v --timeout=30` | -- W0 | pending |
+| 1-03-03 | 03 | 3 | REQ-004 | build | `pnpm -F shared-types build` | -- W0 | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `tests/conftest.py` — shared fixtures for database, NATS connections
-- [ ] `tests/test_models.py` — stubs for Pydantic model validation (REQ-004)
-- [ ] `tests/test_nats.py` — stubs for NATS JetStream pub/sub (REQ-005)
-- [ ] `pytest` + `pytest-asyncio` — install test framework
+- [ ] `tests/conftest.py` -- shared fixtures for database, NATS connections
+- [ ] `tests/test_models.py` -- stubs for Pydantic model validation (REQ-004)
+- [ ] `tests/test_events.py` -- stubs for NATS JetStream pub/sub (REQ-005)
+- [ ] `pytest` + `pytest-asyncio` -- install test framework
 
 ---
 
