@@ -1,4 +1,4 @@
-"""Graph execution engine for CodeBot multi-agent pipelines."""
+"""Graph engine domain models."""
 
 from __future__ import annotations
 
@@ -7,8 +7,6 @@ from graph_engine.models.execution import ExecutionRecord, GraphResult
 from graph_engine.models.graph_def import GraphDefinition
 from graph_engine.models.node_types import NodeDefinition, NodeType, RetryPolicy
 from graph_engine.models.state import SharedState, merge_dicts
-
-__version__ = "0.1.0"
 
 __all__ = [
     "EdgeDefinition",
