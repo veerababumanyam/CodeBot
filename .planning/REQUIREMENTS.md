@@ -23,9 +23,9 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Agent Framework
 
 - [x] **AGNT-01**: All agents extend BaseAgent with Perception-Reasoning-Action (PRA) cognitive cycle
-- [ ] **AGNT-02**: AgentNode wraps BaseAgent instances for graph execution with typed inputs/outputs
+- [x] **AGNT-02**: AgentNode wraps BaseAgent instances for graph execution with typed inputs/outputs
 - [x] **AGNT-03**: Agents follow state machine: IDLE → INITIALIZING → EXECUTING → REVIEWING → COMPLETED/FAILED → RECOVERING
-- [ ] **AGNT-04**: Each coding agent operates in an isolated git worktree
+- [x] **AGNT-04**: Each coding agent operates in an isolated git worktree
 - [x] **AGNT-05**: Agent configurations are declarative YAML (system prompt, tools, LLM model, context tiers, retry policy)
 - [x] **AGNT-06**: Agents self-review output against acceptance criteria before marking COMPLETED
 - [x] **AGNT-07**: Failed agents trigger recovery strategy (retry with different prompt, escalate, rollback)
@@ -254,9 +254,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GRPH-09 | Phase 2 | Complete |
 | GRPH-10 | Phase 2 | Complete |
 | AGNT-01 | Phase 3 | Complete |
-| AGNT-02 | Phase 3 | Pending |
+| AGNT-02 | Phase 3 | Complete |
 | AGNT-03 | Phase 3 | Complete |
-| AGNT-04 | Phase 3 | Pending |
+| AGNT-04 | Phase 3 | Complete |
 | AGNT-05 | Phase 3 | Complete |
 | AGNT-06 | Phase 3 | Complete |
 | AGNT-07 | Phase 3 | Complete |

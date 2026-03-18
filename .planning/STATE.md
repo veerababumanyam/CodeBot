@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-01-PLAN.md
+stopped_at: Completed 03-02-PLAN.md
 last_updated: "2026-03-18T11:14:35.568Z"
-last_activity: 2026-03-18 -- Completed 03-01 (BaseAgent PRA cycle, state machine, recovery, config)
+last_activity: 2026-03-18 -- Completed 03-02 (AgentNode adapter, YAML config loader)
 progress:
   total_phases: 11
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 34
-  completed_plans: 8
-  percent: 24
+  completed_plans: 9
+  percent: 26
 ---
 
 # Project State
@@ -25,19 +25,19 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Position
 
-Phase: 3 of 11 (Agent Framework)
-Plan: 1 of 2 in current phase
-Status: In Progress
-Last activity: 2026-03-18 -- Completed 03-01 (BaseAgent PRA cycle, state machine, recovery, config)
+Phase: 3 of 11 (Agent Framework) -- COMPLETE
+Plan: 2 of 2 in current phase
+Status: Phase Complete
+Last activity: 2026-03-18 -- Completed 03-02 (AgentNode adapter, YAML config loader)
 
-Progress: [██░░░░░░░░] 24%
+Progress: [███░░░░░░░] 29%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 1)
+- Total plans completed: 11 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2)
 - Average duration: 7min (Phases 2+3+5)
-- Total execution time: 49min (Phases 2+3+5, Phase 1 pre-GSD)
+- Total execution time: 55min (Phases 2+3+5, Phase 1 pre-GSD)
 
 **By Phase:**
 
@@ -45,11 +45,11 @@ Progress: [██░░░░░░░░] 24%
 |-------|-------|-------|----------|
 | 1. Foundation | 3/3 | N/A | N/A |
 | 2. Graph Engine | 3/3 | 20min | 7min |
-| 3. Agent Framework | 1/2 | 8min | 8min |
+| 3. Agent Framework | 2/2 | 14min | 7min |
 | 5. Context Management | 3/3 | 21min | 7min |
 
 **Recent Trend:**
-- Last 5 plans: 05-03 (5min), 02-01 (5min), 02-02 (10min), 02-03 (5min), 03-01 (8min)
+- Last 5 plans: 02-01 (5min), 02-02 (10min), 02-03 (5min), 03-01 (8min), 03-02 (6min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -93,6 +93,10 @@ Recent decisions affecting current work:
 - [Phase 3-01]: Hand-rolled FSM with dict transition table -- 7 states too simple for library overhead
 - [Phase 3-01]: RecoveryAction uses class-level constants (not enum) for extensibility
 - [Phase 3-01]: AgentConfig uses frozen=True and extra=forbid for strict YAML validation
+- [Phase 3-02]: agent-sdk added as workspace dependency via tool.uv.sources to graph-engine and server
+- [Phase 3-02]: NoOpWorktreeProvider returns cwd -- real worktree isolation deferred to Phase 8
+- [Phase 3-02]: AgentNode on_event callback is synchronous (not async) for simple hot path
+- [Phase 3-02]: _-prefixed YAML files skipped by AgentConfigLoader for documentation templates
 
 ### Pending Todos
 
@@ -106,6 +110,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-18T11:14:35.563Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-03-18T11:22:17Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None
