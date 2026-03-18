@@ -1,0 +1,12 @@
+name: invalid-refs
+version: "1.0"
+nodes:
+  - id: only_node
+    type: agent
+    config: {}
+edges:
+  - source: only_node
+    target: ghost_node
+    type: state_flow
+entry_nodes: [only_node]
+exit_nodes: [ghost_node]

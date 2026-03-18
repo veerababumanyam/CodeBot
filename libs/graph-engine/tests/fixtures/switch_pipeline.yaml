@@ -1,0 +1,42 @@
+name: switch-pipeline
+version: "1.0"
+nodes:
+  - id: analyzer
+    type: agent
+    config: {}
+  - id: router
+    type: switch
+    config:
+      cases:
+        simple: "state.complexity == 'low'"
+        complex: "state.complexity == 'high'"
+      default: simple
+  - id: simple_builder
+    type: agent
+    config: {}
+  - id: complex_builder
+    type: agent
+    config: {}
+  - id: merger
+    type: merge
+    config: {}
+edges:
+  - source: analyzer
+    target: router
+    type: state_flow
+  - source: router
+    target: simple_builder
+    type: control_flow
+    condition: "case == 'simple'"
+  - source: router
+    target: complex_builder
+    type: control_flow
+    condition: "case == 'complex'"
+  - source: simple_builder
+    target: merger
+    type: state_flow
+  - source: complex_builder
+    target: merger
+    type: state_flow
+entry_nodes: [analyzer]
+exit_nodes: [merger]

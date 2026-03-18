@@ -7,7 +7,7 @@ import enum
 from pydantic import BaseModel, ConfigDict
 
 
-class EdgeType(str, enum.Enum):
+class EdgeType(enum.StrEnum):
     """Flow types for graph edges."""
 
     STATE_FLOW = "state_flow"

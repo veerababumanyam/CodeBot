@@ -6,8 +6,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from graph_engine.models.edge_types import EdgeDefinition
-from graph_engine.models.node_types import NodeDefinition
+from graph_engine.models.edge_types import EdgeDefinition  # noqa: TC001
+from graph_engine.models.node_types import NodeDefinition  # noqa: TC001
 
 
 class GraphDefinition(BaseModel):

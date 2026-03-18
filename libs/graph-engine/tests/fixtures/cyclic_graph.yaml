@@ -1,0 +1,24 @@
+name: cyclic-graph
+version: "1.0"
+nodes:
+  - id: node_a
+    type: agent
+    config: {}
+  - id: node_b
+    type: agent
+    config: {}
+  - id: node_c
+    type: agent
+    config: {}
+edges:
+  - source: node_a
+    target: node_b
+    type: state_flow
+  - source: node_b
+    target: node_c
+    type: state_flow
+  - source: node_c
+    target: node_a
+    type: state_flow
+entry_nodes: [node_a]
+exit_nodes: [node_c]

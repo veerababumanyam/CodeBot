@@ -8,7 +8,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, field_validator
 
 
-class NodeType(str, enum.Enum):
+class NodeType(enum.StrEnum):
     """All supported graph node types."""
 
     AGENT = "agent"

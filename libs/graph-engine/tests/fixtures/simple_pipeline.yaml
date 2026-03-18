@@ -1,0 +1,28 @@
+name: simple-pipeline
+version: "1.0"
+description: "A simple linear pipeline"
+nodes:
+  - id: analyzer
+    type: agent
+    config:
+      agent_type: RESEARCHER
+    timeout_seconds: 300
+  - id: builder
+    type: agent
+    config:
+      agent_type: BACKEND_DEV
+    timeout_seconds: 600
+  - id: reviewer
+    type: agent
+    config:
+      agent_type: CODE_REVIEWER
+    timeout_seconds: 300
+edges:
+  - source: analyzer
+    target: builder
+    type: state_flow
+  - source: builder
+    target: reviewer
+    type: state_flow
+entry_nodes: [analyzer]
+exit_nodes: [reviewer]

@@ -1,0 +1,31 @@
+name: parallel-pipeline
+version: "1.0"
+nodes:
+  - id: analyzer
+    type: agent
+    config: {}
+  - id: builder_a
+    type: agent
+    config: {}
+  - id: builder_b
+    type: agent
+    config: {}
+  - id: merger
+    type: merge
+    config:
+      strategy: combine_outputs
+edges:
+  - source: analyzer
+    target: builder_a
+    type: state_flow
+  - source: analyzer
+    target: builder_b
+    type: state_flow
+  - source: builder_a
+    target: merger
+    type: state_flow
+  - source: builder_b
+    target: merger
+    type: state_flow
+entry_nodes: [analyzer]
+exit_nodes: [merger]
