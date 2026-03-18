@@ -2,7 +2,7 @@
 phase: 4
 slug: multi-llm-abstraction
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-03-18
 ---
@@ -38,14 +38,12 @@ created: 2026-03-18
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 04-01-01 | 01 | 1 | LLM-01 | unit | `uv run pytest tests/unit/llm/test_provider_registry.py -x` | ❌ W0 | ⬜ pending |
-| 04-01-02 | 01 | 1 | LLM-01 | unit | `uv run pytest tests/unit/llm/test_litellm_adapter.py -x` | ❌ W0 | ⬜ pending |
-| 04-01-03 | 01 | 1 | LLM-03 | unit | `uv run pytest tests/unit/llm/test_fallback_chain.py -x` | ❌ W0 | ⬜ pending |
-| 04-02-01 | 02 | 1 | LLM-02 | unit | `uv run pytest tests/unit/llm/test_model_router.py -x` | ❌ W0 | ⬜ pending |
-| 04-02-02 | 02 | 1 | LLM-04, LLM-05 | unit | `uv run pytest tests/unit/llm/test_cost_tracker.py -x` | ❌ W0 | ⬜ pending |
-| 04-02-03 | 02 | 1 | LLM-06 | unit | `uv run pytest tests/unit/llm/test_budget_manager.py -x` | ❌ W0 | ⬜ pending |
-| 04-03-01 | 03 | 2 | LLM-07 | integration | `uv run pytest tests/integration/llm/test_streaming.py -x` | ❌ W0 | ⬜ pending |
-| 04-03-02 | 03 | 2 | LLM-08 | integration | `uv run pytest tests/integration/llm/test_cli_agent_bridge.py -x` | ❌ W0 | ⬜ pending |
+| 04-01-T1 | 01 | 1 | LLM-01, LLM-06 | unit | `uv run pytest tests/unit/llm/test_schemas.py -x -q` | ❌ W0 | ⬜ pending |
+| 04-01-T2 | 01 | 1 | LLM-01, LLM-06 | unit | `uv run pytest tests/unit/llm/test_config.py -x -q` | ❌ W0 | ⬜ pending |
+| 04-01-T3 | 01 | 1 | LLM-02 | unit | `uv run pytest tests/unit/llm/test_router.py -x -q` | ❌ W0 | ⬜ pending |
+| 04-02-T1 | 02 | 2 | LLM-04, LLM-07, LLM-08 | unit | `uv run pytest tests/unit/llm/test_budget.py tests/unit/llm/test_estimator.py -x -q` | ❌ W0 | ⬜ pending |
+| 04-02-T2 | 02 | 2 | LLM-03 | unit | `uv run pytest tests/unit/llm/test_fallback.py -x -q` | ❌ W0 | ⬜ pending |
+| 04-02-T3 | 02 | 2 | LLM-01, LLM-05 | unit | `uv run pytest tests/unit/llm/test_service.py -x -q` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -73,11 +71,11 @@ created: 2026-03-18
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 15s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 15s
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending
