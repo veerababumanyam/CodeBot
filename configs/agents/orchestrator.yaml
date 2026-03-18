@@ -1,0 +1,29 @@
+orchestrator:
+  model: claude-opus-4
+  fallback_model: gpt-4.1
+  provider: anthropic
+  max_tokens: 8192
+  temperature: 0.3
+  tools:
+    - graph_executor
+    - task_scheduler
+    - event_bus
+    - checkpoint_manager
+    - budget_tracker
+    - approval_gate
+    - agent_registry
+  context_tiers:
+    l0: 2000
+    l1: 10000
+    l2: 20000
+  retry_policy:
+    max_retries: 3
+    base_delay_seconds: 2
+    max_delay_seconds: 60
+    exponential_base: 2
+    recovery_strategy: escalate
+  timeout: 600
+  system_prompt_file: prompts/orchestrator.md
+  settings:
+    max_pipeline_stages: 10
+    parallel_stages: true

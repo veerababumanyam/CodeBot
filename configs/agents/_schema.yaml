@@ -1,0 +1,62 @@
+# Agent Configuration Schema
+# =========================
+# This file documents all available configuration fields for CodeBot agent YAML configs.
+# Copy this template and rename to create a new agent config.
+# Files prefixed with _ are skipped by the config loader.
+#
+# Required fields: agent_type, model
+# All other fields have sensible defaults.
+#
+# YAML pattern: Single top-level key (agent name) -> config dict.
+# The top-level key name is used as agent_type if agent_type is not explicitly set.
+
+_template:
+  # Required: Must match an AgentType enum value (case-insensitive)
+  agent_type: ORCHESTRATOR
+
+  # Required: LLM model identifier
+  model: claude-opus-4
+
+  # Optional: Fallback model when primary fails
+  fallback_model: gpt-4.1
+
+  # Optional: LLM provider name (default: "anthropic")
+  provider: anthropic
+
+  # Optional: Max tokens per LLM call (default: 4096, min: 1)
+  max_tokens: 8192
+
+  # Optional: Temperature for LLM calls (default: 0.7, range: 0.0-2.0)
+  temperature: 0.3
+
+  # Optional: Tool names this agent can use (default: [])
+  tools:
+    - graph_executor
+    - task_scheduler
+    - event_bus
+
+  # Optional: Token budget allocation per context tier
+  context_tiers:
+    l0: 2000    # Always-present context (project config, agent prompt)
+    l1: 10000   # Phase-scoped context (requirements, related code)
+    l2: 20000   # On-demand retrieval (vector store, code search)
+
+  # Optional: Retry and recovery configuration
+  retry_policy:
+    max_retries: 3                          # 0-10
+    base_delay_seconds: 2.0                 # > 0
+    max_delay_seconds: 60.0                 # > 0
+    exponential_base: 2.0                   # >= 1.0
+    recovery_strategy: retry_with_modified_prompt  # retry_with_modified_prompt | escalate | rollback | fallback_model
+
+  # Optional: Agent execution timeout in seconds (default: 600, min: 1)
+  timeout: 600
+
+  # Optional: System prompt (inline string or file path, not both)
+  system_prompt: null
+  system_prompt_file: prompts/orchestrator.md
+
+  # Optional: Agent-specific settings (arbitrary key-value pairs)
+  settings:
+    max_planning_depth: 3
+    parallel_agents: true
