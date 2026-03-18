@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-03-18T18:39:30.000Z"
-last_activity: 2026-03-18 -- Completed 04-01 (LLM schemas, config, router)
+status: executing
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-03-18T18:59:00.195Z"
+last_activity: 2026-03-18 -- Completed 04-02 (LLM service facade, budget, callbacks)
 progress:
   total_phases: 11
-  completed_phases: 4
-  total_plans: 34
-  completed_plans: 10
-  percent: 32
+  completed_phases: 5
+  total_plans: 35
+  completed_plans: 12
+  percent: 34
 ---
 
 # Project State
@@ -26,18 +26,18 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 4 of 11 (Multi-LLM Abstraction)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In Progress
-Last activity: 2026-03-18 -- Completed 04-01 (LLM schemas, config, router)
+Last activity: 2026-03-18 -- Completed 04-02 (LLM service facade, budget, callbacks)
 
-Progress: [████░░░░░░] 32%
+Progress: [███░░░░░░░] 34%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 1)
-- Average duration: 7min (Phases 2+3+4+5)
-- Total execution time: 64min (Phases 2+3+4+5, Phase 1 pre-GSD)
+- Total plans completed: 13 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 2)
+- Average duration: 8min (Phases 2+3+4+5)
+- Total execution time: 76min (Phases 2+3+4+5, Phase 1 pre-GSD)
 
 **By Phase:**
 
@@ -46,11 +46,11 @@ Progress: [████░░░░░░] 32%
 | 1. Foundation | 3/3 | N/A | N/A |
 | 2. Graph Engine | 3/3 | 20min | 7min |
 | 3. Agent Framework | 2/2 | 14min | 7min |
-| 4. Multi-LLM Abstraction | 1/3 | 9min | 9min |
+| 4. Multi-LLM Abstraction | 2/3 | 21min | 11min |
 | 5. Context Management | 3/3 | 21min | 7min |
 
 **Recent Trend:**
-- Last 5 plans: 02-03 (5min), 03-01 (8min), 03-02 (6min), 04-01 (9min)
+- Last 5 plans: 02-03 (5min), 03-01 (8min), 03-02 (6min), 04-01 (9min), 04-02 (12min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -105,6 +105,11 @@ Recent decisions affecting current work:
 - [Phase 4-01]: Complexity threshold 0.3 for downgrade, 0.7 for ensuring premium
 - [Phase 4-01]: Provider unhealthy after 3 consecutive failures (_UNHEALTHY_THRESHOLD = 3)
 - [Phase 4-01]: tiktoken already present from Phase 5 -- not re-added to dependencies
+- [Phase 4-02]: asyncio.Lock in CostTracker for concurrent agent cost recording safety
+- [Phase 4-02]: LiteLLM Router stream returns async generator directly -- handle both patterns
+- [Phase 4-02]: litellm.Router typed as Any due to missing py.typed in litellm package
+- [Phase 4-02]: Conservative fallback pricing ($0.01/1k input, $0.03/1k output) for unknown models
+- [Phase 4-02]: Deduplicated fallback mappings when same primary model in multiple task types
 
 ### Pending Todos
 
@@ -118,6 +123,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-18T18:39:30Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-03-18T18:59:00.192Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
