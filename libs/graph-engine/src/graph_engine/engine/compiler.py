@@ -8,6 +8,7 @@ from typing import Any
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph  # noqa: TC002
 
+from graph_engine.engine.fanout import FanOutConfig, build_fanout_node
 from graph_engine.engine.validator import GraphValidator
 from graph_engine.models.edge_types import EdgeDefinition  # noqa: TC001
 from graph_engine.models.graph_def import GraphDefinition  # noqa: TC001
@@ -79,6 +80,48 @@ class GraphCompiler:
             ]
             router_fn, path_map = self._build_switch_router(switch_node, cond_edges)
             builder.add_conditional_edges(switch_id, router_fn, path_map)
+
+        # Build fan-out conditional edges via Send API
+        for fanout_id in fanout_ids:
+            fanout_node = next(n for n in graph_def.nodes if n.id == fanout_id)
+            fanout_cfg = fanout_node.config["fanout"]
+            fo_config = FanOutConfig(
+                source_node=fanout_id,
+                worker_node=fanout_cfg["worker_node"],
+                task_key=fanout_cfg["task_key"],
+            )
+            # Find fallback targets (non-worker edges from this fanout node)
+            fallback_targets = [
+                e.target
+                for e in graph_def.edges
+                if e.source == fanout_id and e.target != fo_config.worker_node
+            ]
+            dispatch_fn = build_fanout_node(fo_config)
+
+            if fallback_targets:
+                # Wrap dispatch to handle empty sends -> route to fallback
+                fallback_target = fallback_targets[0]
+
+                def _make_dispatch_with_fallback(
+                    _dispatch: Any = dispatch_fn,
+                    _fallback: str = fallback_target,
+                    _worker: str = fo_config.worker_node,
+                ) -> Any:
+                    def dispatch_or_fallback(state: dict[str, Any]) -> Any:
+                        sends = _dispatch(state)
+                        if sends:
+                            return sends
+                        return _fallback
+
+                    return dispatch_or_fallback
+
+                builder.add_conditional_edges(
+                    fanout_id,
+                    _make_dispatch_with_fallback(),
+                    {fallback_target: fallback_target},
+                )
+            else:
+                builder.add_conditional_edges(fanout_id, dispatch_fn)
 
         # Add non-conditional edges (skip edges from SWITCH and fan-out nodes)
         skip_sources = switch_ids | fanout_ids

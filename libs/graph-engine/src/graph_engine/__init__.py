@@ -9,6 +9,7 @@ from graph_engine.engine.checkpoint import (
 )
 from graph_engine.engine.compiler import GateFailedError, GraphCompiler
 from graph_engine.engine.executor import ExecutionEngine
+from graph_engine.engine.fanout import FanOutConfig, build_fanout_node
 from graph_engine.engine.validator import GraphValidator, ValidationResult
 from graph_engine.models.edge_types import EdgeDefinition, EdgeType
 from graph_engine.models.execution import ExecutionRecord, GraphResult
@@ -27,6 +28,7 @@ __all__ = [
     "ExecutionEngine",
     "ExecutionRecord",
     "ExecutionTracer",
+    "FanOutConfig",
     "GateFailedError",
     "GraphCompiler",
     "GraphDefinition",
@@ -37,6 +39,7 @@ __all__ = [
     "RetryPolicy",
     "SharedState",
     "ValidationResult",
+    "build_fanout_node",
     "create_checkpointer",
     "load_graph_definition",
     "load_graph_definition_from_string",
