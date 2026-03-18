@@ -40,129 +40,7 @@ Built on the **MASFactory framework** (arXiv:2603.06007), CodeBot models multi-a
 <br>
 
 <p align="center">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 320" width="900" height="320">
-  <!-- Background -->
-  <rect width="900" height="320" rx="16" fill="#0F172A"/>
-
-  <!-- Title -->
-  <text x="450" y="35" font-family="system-ui, sans-serif" font-size="14" fill="#94A3B8" text-anchor="middle" font-weight="600" letter-spacing="4">11-STAGE SDLC PIPELINE</text>
-
-  <!-- Pipeline stages -->
-  <!-- S0 -->
-  <rect x="20" y="55" width="75" height="55" rx="8" fill="#312E81" stroke="#6366F1" stroke-width="1.5"/>
-  <text x="57" y="76" font-family="system-ui" font-size="9" fill="#A5B4FC" text-anchor="middle" font-weight="700">S0</text>
-  <text x="57" y="92" font-family="system-ui" font-size="8" fill="#C7D2FE" text-anchor="middle">Init</text>
-
-  <!-- Arrow -->
-  <path d="M98 82 L108 82" stroke="#4F46E5" stroke-width="2" marker-end="url(#arrow)"/>
-
-  <!-- S1 -->
-  <rect x="112" y="55" width="75" height="55" rx="8" fill="#312E81" stroke="#6366F1" stroke-width="1.5"/>
-  <text x="149" y="76" font-family="system-ui" font-size="9" fill="#A5B4FC" text-anchor="middle" font-weight="700">S1</text>
-  <text x="149" y="92" font-family="system-ui" font-size="8" fill="#C7D2FE" text-anchor="middle">Brainstorm</text>
-
-  <!-- Arrow -->
-  <path d="M190 82 L200 82" stroke="#4F46E5" stroke-width="2"/>
-
-  <!-- S2 -->
-  <rect x="204" y="55" width="75" height="55" rx="8" fill="#1E1B4B" stroke="#7C3AED" stroke-width="1.5"/>
-  <text x="241" y="76" font-family="system-ui" font-size="9" fill="#C4B5FD" text-anchor="middle" font-weight="700">S2</text>
-  <text x="241" y="92" font-family="system-ui" font-size="8" fill="#DDD6FE" text-anchor="middle">Research</text>
-
-  <!-- Arrow -->
-  <path d="M282 82 L292 82" stroke="#7C3AED" stroke-width="2"/>
-
-  <!-- S3 - Parallel -->
-  <rect x="296" y="55" width="75" height="55" rx="8" fill="#4C1D95" stroke="#A78BFA" stroke-width="1.5"/>
-  <text x="333" y="72" font-family="system-ui" font-size="9" fill="#DDD6FE" text-anchor="middle" font-weight="700">S3</text>
-  <text x="333" y="85" font-family="system-ui" font-size="8" fill="#EDE9FE" text-anchor="middle">Architecture</text>
-  <text x="333" y="98" font-family="system-ui" font-size="7" fill="#A78BFA" text-anchor="middle">PARALLEL</text>
-
-  <!-- Arrow -->
-  <path d="M374 82 L384 82" stroke="#A78BFA" stroke-width="2"/>
-
-  <!-- S4 -->
-  <rect x="388" y="55" width="75" height="55" rx="8" fill="#4C1D95" stroke="#A78BFA" stroke-width="1.5"/>
-  <text x="425" y="76" font-family="system-ui" font-size="9" fill="#DDD6FE" text-anchor="middle" font-weight="700">S4</text>
-  <text x="425" y="92" font-family="system-ui" font-size="8" fill="#EDE9FE" text-anchor="middle">Planning</text>
-
-  <!-- Arrow -->
-  <path d="M466 82 L476 82" stroke="#A78BFA" stroke-width="2"/>
-
-  <!-- S5 - Parallel -->
-  <rect x="480" y="55" width="75" height="55" rx="8" fill="#701A75" stroke="#E879F9" stroke-width="1.5"/>
-  <text x="517" y="72" font-family="system-ui" font-size="9" fill="#F5D0FE" text-anchor="middle" font-weight="700">S5</text>
-  <text x="517" y="85" font-family="system-ui" font-size="8" fill="#FAE8FF" text-anchor="middle">Implement</text>
-  <text x="517" y="98" font-family="system-ui" font-size="7" fill="#E879F9" text-anchor="middle">PARALLEL</text>
-
-  <!-- Arrow -->
-  <path d="M558 82 L568 82" stroke="#E879F9" stroke-width="2"/>
-
-  <!-- S6 - Parallel -->
-  <rect x="572" y="55" width="75" height="55" rx="8" fill="#831843" stroke="#F472B6" stroke-width="1.5"/>
-  <text x="609" y="72" font-family="system-ui" font-size="9" fill="#FBCFE8" text-anchor="middle" font-weight="700">S6</text>
-  <text x="609" y="85" font-family="system-ui" font-size="8" fill="#FCE7F3" text-anchor="middle">QA Review</text>
-  <text x="609" y="98" font-family="system-ui" font-size="7" fill="#F472B6" text-anchor="middle">PARALLEL</text>
-
-  <!-- Arrow -->
-  <path d="M650 82 L660 82" stroke="#F472B6" stroke-width="2"/>
-
-  <!-- S7 -->
-  <rect x="664" y="55" width="75" height="55" rx="8" fill="#9F1239" stroke="#FB7185" stroke-width="1.5"/>
-  <text x="701" y="76" font-family="system-ui" font-size="9" fill="#FECDD3" text-anchor="middle" font-weight="700">S7</text>
-  <text x="701" y="92" font-family="system-ui" font-size="8" fill="#FFE4E6" text-anchor="middle">Testing</text>
-
-  <!-- Arrow -->
-  <path d="M742 82 L752 82" stroke="#FB7185" stroke-width="2"/>
-
-  <!-- S8 -->
-  <rect x="756" y="55" width="55" height="55" rx="8" fill="#7F1D1D" stroke="#EF4444" stroke-width="1.5"/>
-  <text x="783" y="76" font-family="system-ui" font-size="9" fill="#FCA5A5" text-anchor="middle" font-weight="700">S8</text>
-  <text x="783" y="92" font-family="system-ui" font-size="8" fill="#FECACA" text-anchor="middle">Debug</text>
-
-  <!-- Arrow down -->
-  <path d="M783 113 L783 128 L450 128 L450 145" stroke="#EF4444" stroke-width="1.5" fill="none" stroke-dasharray="4,3"/>
-
-  <!-- Second row -->
-  <!-- S9 -->
-  <rect x="388" y="148" width="120" height="50" rx="8" fill="#14532D" stroke="#22C55E" stroke-width="1.5"/>
-  <text x="448" y="170" font-family="system-ui" font-size="9" fill="#86EFAC" text-anchor="middle" font-weight="700">S9 Documentation</text>
-  <text x="448" y="185" font-family="system-ui" font-size="8" fill="#BBF7D0" text-anchor="middle">Auto-generated docs, ADRs</text>
-
-  <!-- Arrow -->
-  <path d="M511 173 L530 173" stroke="#22C55E" stroke-width="2"/>
-
-  <!-- S10 - Optional -->
-  <rect x="534" y="148" width="120" height="50" rx="8" fill="#0C4A6E" stroke="#0EA5E9" stroke-width="1.5" stroke-dasharray="5,3"/>
-  <text x="594" y="170" font-family="system-ui" font-size="9" fill="#7DD3FC" text-anchor="middle" font-weight="700">S10 Deploy (opt-in)</text>
-  <text x="594" y="185" font-family="system-ui" font-size="8" fill="#BAE6FD" text-anchor="middle">AWS / GCP / Azure / Vercel</text>
-
-  <!-- Agent count boxes -->
-  <text x="450" y="230" font-family="system-ui" font-size="12" fill="#64748B" text-anchor="middle" font-weight="600" letter-spacing="2">AGENT DISTRIBUTION BY STAGE</text>
-
-  <!-- Mini bar chart -->
-  <rect x="60" y="248" width="15" height="20" rx="2" fill="#6366F1"/> <text x="67" y="280" font-family="system-ui" font-size="7" fill="#94A3B8" text-anchor="middle">S0</text> <text x="67" y="245" font-family="system-ui" font-size="8" fill="#A5B4FC" text-anchor="middle">2</text>
-  <rect x="130" y="258" width="15" height="10" rx="2" fill="#6366F1"/> <text x="137" y="280" font-family="system-ui" font-size="7" fill="#94A3B8" text-anchor="middle">S1</text> <text x="137" y="255" font-family="system-ui" font-size="8" fill="#A5B4FC" text-anchor="middle">1</text>
-  <rect x="200" y="258" width="15" height="10" rx="2" fill="#7C3AED"/> <text x="207" y="280" font-family="system-ui" font-size="7" fill="#94A3B8" text-anchor="middle">S2</text> <text x="207" y="255" font-family="system-ui" font-size="8" fill="#C4B5FD" text-anchor="middle">1</text>
-  <rect x="270" y="228" width="15" height="40" rx="2" fill="#A78BFA"/> <text x="277" y="280" font-family="system-ui" font-size="7" fill="#94A3B8" text-anchor="middle">S3</text> <text x="277" y="225" font-family="system-ui" font-size="8" fill="#DDD6FE" text-anchor="middle">5</text>
-  <rect x="340" y="238" width="15" height="30" rx="2" fill="#A78BFA"/> <text x="347" y="280" font-family="system-ui" font-size="7" fill="#94A3B8" text-anchor="middle">S4</text> <text x="347" y="235" font-family="system-ui" font-size="8" fill="#DDD6FE" text-anchor="middle">3</text>
-  <rect x="410" y="218" width="15" height="50" rx="2" fill="#E879F9"/> <text x="417" y="280" font-family="system-ui" font-size="7" fill="#94A3B8" text-anchor="middle">S5</text> <text x="417" y="215" font-family="system-ui" font-size="8" fill="#F5D0FE" text-anchor="middle">6</text>
-  <rect x="480" y="218" width="15" height="50" rx="2" fill="#F472B6"/> <text x="487" y="280" font-family="system-ui" font-size="7" fill="#94A3B8" text-anchor="middle">S6</text> <text x="487" y="215" font-family="system-ui" font-size="8" fill="#FBCFE8" text-anchor="middle">5</text>
-  <rect x="550" y="248" width="15" height="20" rx="2" fill="#FB7185"/> <text x="557" y="280" font-family="system-ui" font-size="7" fill="#94A3B8" text-anchor="middle">S7</text> <text x="557" y="245" font-family="system-ui" font-size="8" fill="#FECDD3" text-anchor="middle">1</text>
-  <rect x="620" y="258" width="15" height="10" rx="2" fill="#EF4444"/> <text x="627" y="280" font-family="system-ui" font-size="7" fill="#94A3B8" text-anchor="middle">S8</text> <text x="627" y="255" font-family="system-ui" font-size="8" fill="#FCA5A5" text-anchor="middle">1</text>
-  <rect x="690" y="228" width="15" height="40" rx="2" fill="#22C55E"/> <text x="697" y="280" font-family="system-ui" font-size="7" fill="#94A3B8" text-anchor="middle">S9</text> <text x="697" y="225" font-family="system-ui" font-size="8" fill="#86EFAC" text-anchor="middle">4</text>
-  <rect x="760" y="238" width="15" height="30" rx="2" fill="#0EA5E9"/> <text x="767" y="280" font-family="system-ui" font-size="7" fill="#94A3B8" text-anchor="middle">S10</text> <text x="767" y="235" font-family="system-ui" font-size="8" fill="#7DD3FC" text-anchor="middle">3</text>
-
-  <!-- Footer -->
-  <text x="450" y="305" font-family="system-ui" font-size="10" fill="#475569" text-anchor="middle">Stages S3, S5, S6 support full parallel agent execution | S10 is opt-in | Cross-cutting: Orchestrator + Project Manager</text>
-
-  <!-- Arrow marker -->
-  <defs>
-    <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-      <path d="M0,0 L6,3 L0,6 Z" fill="#6366F1"/>
-    </marker>
-  </defs>
-</svg>
+  <img src="assets/pipeline.svg" alt="CodeBot 11-Stage SDLC Pipeline — S0 Init, S1 Brainstorm, S2 Research, S3 Architecture (parallel), S4 Planning, S5 Implementation (parallel), S6 QA Review (parallel), S7 Testing, S8 Debug, S9 Documentation, S10 Deploy (optional)" width="900">
 </p>
 
 ---
@@ -454,36 +332,60 @@ Agents create **skills, hooks, and tools** that other agents consume. The Skill 
 
 ### What Makes CodeBot Different
 
-```mermaid
-mindmap
-  root((CodeBot))
-    Autonomous Pipeline
-      11 SDLC Stages
-      Brainstorm to Deploy
-      Zero Manual Coding
-      3 Project Modes
-    30 AI Agents
-      Parallel Execution
-      PRA Cognitive Cycle
-      Self-Improving Skills
-      Git Worktree Isolation
-    Multi-LLM Intelligence
-      6 Cloud Providers
-      7 Self-Hosted Platforms
-      Task-Based Routing
-      Privacy-Based Routing
-      Offline-First Support
-    Enterprise Ready
-      Security Pipeline
-      CRDT Collaboration
-      Multi-Repo Support
-      Compliance Scanning
-    Platform Agnostic
-      Web + Mobile + Backend
-      Native iOS & Android
-      10+ Deploy Targets
-      Multi-Cloud Support
-```
+<table>
+<tr>
+<td align="center" width="20%">
+
+**Autonomous Pipeline**
+
+11 SDLC Stages
+Brainstorm to Deploy
+Zero Manual Coding
+3 Project Modes
+
+</td>
+<td align="center" width="20%">
+
+**30 AI Agents**
+
+Parallel Execution
+PRA Cognitive Cycle
+Self-Improving Skills
+Git Worktree Isolation
+
+</td>
+<td align="center" width="20%">
+
+**Multi-LLM Intelligence**
+
+6 Cloud Providers
+7 Self-Hosted Platforms
+Task & Privacy Routing
+Offline-First Support
+
+</td>
+<td align="center" width="20%">
+
+**Enterprise Ready**
+
+Security Pipeline
+CRDT Collaboration
+Multi-Repo Support
+Compliance Scanning
+
+</td>
+<td align="center" width="20%">
+
+**Platform Agnostic**
+
+Web + Mobile + Backend
+Native iOS & Android
+10+ Deploy Targets
+Multi-Cloud Support
+
+</td>
+</tr>
+</table>
 
 ---
 
@@ -492,6 +394,7 @@ mindmap
 CodeBot's 30 agents are organized into **10 functional categories**:
 
 ```mermaid
+%%{init: {'theme': 'neutral'}}%%
 pie title Agent Distribution by Category
     "Design" : 5
     "Implementation" : 5
@@ -617,6 +520,7 @@ CodeBot is **provider-agnostic** — use the best model for each task, or run en
 ### Intelligent Routing
 
 ```mermaid
+%%{init: {'theme': 'neutral'}}%%
 graph LR
     A[Incoming Task] --> B{Router}
     B -->|Complex Architecture| C[Claude Opus]
@@ -625,14 +529,6 @@ graph LR
     B -->|Boilerplate| F[Self-Hosted 13B]
     B -->|Sensitive Code| G[Local Ollama]
     B -->|Budget Tasks| H[Haiku / Flash]
-
-    style B fill:#4338CA,stroke:#6366F1,color:#fff
-    style C fill:#D97706,stroke:#F59E0B,color:#fff
-    style D fill:#059669,stroke:#10B981,color:#fff
-    style E fill:#2563EB,stroke:#3B82F6,color:#fff
-    style F fill:#7C3AED,stroke:#8B5CF6,color:#fff
-    style G fill:#DC2626,stroke:#EF4444,color:#fff
-    style H fill:#0891B2,stroke:#06B6D4,color:#fff
 ```
 
 Routing decisions are based on **task type**, **complexity**, **privacy requirements**, **cost**, and **latency**. Fallback chains ensure zero downtime if a provider is unavailable.
@@ -665,24 +561,25 @@ Code Generated ──> Semgrep ──> SonarQube ──> Trivy ──> Gitleaks 
 ## Architecture Overview
 
 <p align="center">
-  <img src="docs/Arch.jpeg" alt="CodeBot Architecture" width="800">
+  <img src="docs/Arch.jpeg" alt="CodeBot Architecture Diagram showing 5 layers: Visualizer (Editor, Monitor, Human-in-the-Loop), Orchestration Interfaces (Vibe Graphing, Imperative, Declarative), Reusability Components (NodeTemplate, ComposedGraph), Key Components (Graph, Loop, Switch, Interaction, Agent), and Basic Components (Node, Edge, State Flow, Message Flow, Control Flow). Right side shows PRA cognitive cycle (Perception, Reasoning, Action), Communication Protocol (Message Adapter), and Context Management (MCP, Tools, RAG, Memory)" width="800">
 </p>
 
 ### 5-Layer Architecture
 
 ```mermaid
+%%{init: {'theme': 'neutral'}}%%
 graph TB
     subgraph L1["Layer 1: Presentation"]
-        Dashboard["React Dashboard<br>(Vite + TypeScript + Tailwind)"]
-        CLI["CLI Interface<br>(TypeScript)"]
+        Dashboard["React Dashboard — Vite + TypeScript + Tailwind"]
+        CLI["CLI Interface — TypeScript"]
     end
 
     subgraph L2["Layer 2: API Gateway"]
-        API["FastAPI + Socket.IO<br>REST + WebSocket"]
+        API["FastAPI + Socket.IO — REST + WebSocket"]
     end
 
     subgraph L3["Layer 3: Orchestration Engine"]
-        Graph["Agent Graph Engine<br>(LangGraph)"]
+        Graph["Agent Graph Engine — LangGraph"]
         Pipeline["Pipeline Manager"]
         Scheduler["Task Scheduler"]
         Checkpoint["Checkpoint Manager"]
@@ -690,9 +587,9 @@ graph TB
 
     subgraph L4["Layer 4: Agent Runtime"]
         Agents["30 Specialized Agents"]
-        LLM["Multi-LLM Abstraction<br>(LiteLLM + RouteLLM)"]
-        CLIAgents["CLI Agent Bridge<br>(Claude Code / Codex / Gemini)"]
-        Context["Context Management<br>(3-Tier: L0/L1/L2)"]
+        LLM["Multi-LLM Abstraction — LiteLLM + RouteLLM"]
+        CLIAgents["CLI Agent Bridge — Claude Code / Codex / Gemini"]
+        Context["Context Management — 3-Tier: L0/L1/L2"]
     end
 
     subgraph L5["Layer 5: Infrastructure"]
@@ -707,12 +604,6 @@ graph TB
     L2 --> L3
     L3 --> L4
     L4 --> L5
-
-    style L1 fill:#312E81,stroke:#6366F1,color:#fff
-    style L2 fill:#4C1D95,stroke:#A78BFA,color:#fff
-    style L3 fill:#701A75,stroke:#E879F9,color:#fff
-    style L4 fill:#831843,stroke:#F472B6,color:#fff
-    style L5 fill:#0C4A6E,stroke:#0EA5E9,color:#fff
 ```
 
 ---
@@ -841,7 +732,7 @@ codebot/
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/codebot.git
+git clone https://github.com/veerababumanyam/CodeBot.git
 cd codebot
 
 # Start infrastructure (PostgreSQL, Redis, NATS)
