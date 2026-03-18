@@ -13,7 +13,7 @@ Activities:
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from temporalio import activity
 
@@ -39,7 +39,7 @@ async def load_pipeline_config(preset_name: str) -> dict:  # type: ignore[type-a
 
 
 @activity.defn
-async def execute_phase_activity(input: PhaseInput) -> PhaseResult:
+async def execute_phase_activity(phase_input: PhaseInput) -> PhaseResult:
     """Execute a single pipeline phase.
 
     In the full implementation, this delegates to the graph engine
@@ -47,18 +47,18 @@ async def execute_phase_activity(input: PhaseInput) -> PhaseResult:
     with heartbeating and timing.
 
     Args:
-        input: Phase execution parameters.
+        phase_input: Phase execution parameters.
 
     Returns:
         A :class:`PhaseResult` with per-agent results and timing.
     """
     start_ms = int(time.monotonic() * 1000)
-    activity.heartbeat(f"Starting phase: {input.phase_name}")
+    activity.heartbeat(f"Starting phase: {phase_input.phase_name}")
 
     # TODO: Phase 2/3 integration -- delegate to graph engine
     agent_results: list[dict] = []  # type: ignore[type-arg]
 
-    for agent_name in input.agents:
+    for agent_name in phase_input.agents:
         activity.heartbeat(f"Executing agent: {agent_name}")
         agent_results.append(
             {
@@ -70,8 +70,8 @@ async def execute_phase_activity(input: PhaseInput) -> PhaseResult:
 
     elapsed_ms = int(time.monotonic() * 1000) - start_ms
     return PhaseResult(
-        phase_name=input.phase_name,
-        phase_idx=input.phase_idx,
+        phase_name=phase_input.phase_name,
+        phase_idx=phase_input.phase_idx,
         status="completed",
         agent_results=agent_results,
         duration_ms=elapsed_ms,
@@ -93,7 +93,7 @@ async def emit_pipeline_event(event_data: dict) -> None:  # type: ignore[type-ar
     """
     activity.heartbeat(f"Emitting event: {event_data.get('type', 'unknown')}")
     # TODO: Plan 03 wires NATS JetStream here
-    timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp = datetime.now(UTC).isoformat()
     activity.logger.info(
         "Pipeline event: type=%s timestamp=%s",
         event_data.get("type", "unknown"),

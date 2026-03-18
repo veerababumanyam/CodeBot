@@ -14,9 +14,7 @@ from codebot.pipeline.models import PipelineConfig
 
 # Default config directory resolved relative to this file's position in the
 # repo tree:  apps/server/src/codebot/pipeline/loader.py  ->  repo root
-_DEFAULT_CONFIG_DIR: Path = (
-    Path(__file__).resolve().parents[5] / "configs" / "pipelines"
-)
+_DEFAULT_CONFIG_DIR: Path = Path(__file__).resolve().parents[5] / "configs" / "pipelines"
 
 
 def load_preset(
