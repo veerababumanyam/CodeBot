@@ -17,18 +17,18 @@ created: 2026-03-18
 
 | Property | Value |
 |----------|-------|
-| **Framework** | pytest 7.x |
-| **Config file** | `pyproject.toml` (pytest section) |
-| **Quick run command** | `uv run pytest tests/unit/graph/ -x -q` |
-| **Full suite command** | `uv run pytest tests/unit/graph/ tests/integration/graph/ -v` |
+| **Framework** | pytest 8.x + pytest-asyncio 0.24+ |
+| **Config file** | `libs/graph-engine/pyproject.toml` (pytest section) |
+| **Quick run command** | `cd libs/graph-engine && uv run pytest tests/ -x -q` |
+| **Full suite command** | `cd libs/graph-engine && uv run pytest tests/ -v --tb=short` |
 | **Estimated runtime** | ~15 seconds |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Run `uv run pytest tests/unit/graph/ -x -q`
-- **After every plan wave:** Run `uv run pytest tests/unit/graph/ tests/integration/graph/ -v`
+- **After every task commit:** Run `cd libs/graph-engine && uv run pytest tests/ -x -q`
+- **After every plan wave:** Run `cd libs/graph-engine && uv run pytest tests/ -v --tb=short`
 - **Before `/gsd:verify-work`:** Full suite must be green
 - **Max feedback latency:** 15 seconds
 
@@ -38,28 +38,30 @@ created: 2026-03-18
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 02-01-01 | 01 | 1 | GRPH-01 | unit | `uv run pytest tests/unit/graph/test_models.py -x` | ❌ W0 | ⬜ pending |
-| 02-01-02 | 01 | 1 | GRPH-02 | unit | `uv run pytest tests/unit/graph/test_yaml_loader.py -x` | ❌ W0 | ⬜ pending |
-| 02-01-03 | 01 | 1 | GRPH-03 | unit | `uv run pytest tests/unit/graph/test_validator.py -x` | ❌ W0 | ⬜ pending |
-| 02-02-01 | 02 | 1 | GRPH-04 | unit | `uv run pytest tests/unit/graph/test_compiler.py -x` | ❌ W0 | ⬜ pending |
-| 02-02-02 | 02 | 1 | GRPH-05 | unit | `uv run pytest tests/unit/graph/test_shared_state.py -x` | ❌ W0 | ⬜ pending |
-| 02-02-03 | 02 | 2 | GRPH-07 | unit | `uv run pytest tests/unit/graph/test_parallel.py -x` | ❌ W0 | ⬜ pending |
-| 02-02-04 | 02 | 2 | GRPH-08 | unit | `uv run pytest tests/unit/graph/test_switch.py -x` | ❌ W0 | ⬜ pending |
-| 02-03-01 | 03 | 1 | GRPH-06 | integration | `uv run pytest tests/integration/graph/test_checkpoint.py -x` | ❌ W0 | ⬜ pending |
-| 02-03-02 | 03 | 1 | GRPH-09 | unit | `uv run pytest tests/unit/graph/test_tracing.py -x` | ❌ W0 | ⬜ pending |
-| 02-03-03 | 03 | 2 | GRPH-10 | integration | `uv run pytest tests/integration/graph/test_dynamic_fanout.py -x` | ❌ W0 | ⬜ pending |
+| 02-01-01 | 01 | 1 | GRPH-01,02,03 | unit | `cd libs/graph-engine && uv run pytest tests/test_models.py -x` | Wave 0 | pending |
+| 02-01-02 | 01 | 1 | GRPH-04,05 | unit | `cd libs/graph-engine && uv run pytest tests/test_yaml_loader.py tests/test_validator.py -x` | Wave 0 | pending |
+| 02-02-01 | 02 | 2 | GRPH-07,08,09 | unit | `cd libs/graph-engine && uv run pytest tests/test_compiler.py tests/test_tracer.py -x` | Wave 0 | pending |
+| 02-02-02 | 02 | 2 | GRPH-07,08 | unit+int | `cd libs/graph-engine && uv run pytest tests/test_executor.py -x` | Wave 0 | pending |
+| 02-03-01 | 03 | 3 | GRPH-06 | integration | `cd libs/graph-engine && uv run pytest tests/test_checkpoint.py -x` | Wave 0 | pending |
+| 02-03-02 | 03 | 3 | GRPH-10 | unit+int | `cd libs/graph-engine && uv run pytest tests/test_fanout.py -x` | Wave 0 | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `tests/unit/graph/` — directory structure for graph engine unit tests
-- [ ] `tests/integration/graph/` — directory structure for integration tests
-- [ ] `tests/unit/graph/conftest.py` — shared fixtures (mock graph definitions, sample YAML)
-- [ ] `tests/integration/graph/conftest.py` — integration fixtures (PostgreSQL test connection)
-- [ ] pytest + pytest-asyncio installed via `uv add --dev pytest pytest-asyncio`
+- [ ] `libs/graph-engine/pyproject.toml` -- needs pytest, pytest-asyncio, langgraph, pydantic, pyyaml dependencies
+- [ ] `libs/graph-engine/tests/conftest.py` -- shared fixtures (sample graph definitions, mock nodes)
+- [ ] `libs/graph-engine/tests/test_models.py` -- covers GRPH-01, GRPH-02, GRPH-03
+- [ ] `libs/graph-engine/tests/test_yaml_loader.py` -- covers GRPH-04
+- [ ] `libs/graph-engine/tests/test_validator.py` -- covers GRPH-05
+- [ ] `libs/graph-engine/tests/test_compiler.py` -- covers GRPH-07, GRPH-08, GRPH-09, GATE semantics
+- [ ] `libs/graph-engine/tests/test_tracer.py` -- covers GRPH-07
+- [ ] `libs/graph-engine/tests/test_executor.py` -- covers GRPH-01 (topological), GRPH-08 (parallel)
+- [ ] `libs/graph-engine/tests/test_checkpoint.py` -- covers GRPH-06
+- [ ] `libs/graph-engine/tests/test_fanout.py` -- covers GRPH-10, compiler integration
+- [ ] `libs/graph-engine/tests/fixtures/` -- sample YAML graph definitions for tests
 
 ---
 
