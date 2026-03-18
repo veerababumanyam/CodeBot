@@ -13,6 +13,7 @@ from codebot.context.models import (
     L1Context,
     Priority,
 )
+from codebot.context.tiers import ThreeTierLoader
 
 __all__ = [
     "AgentContext",
@@ -21,5 +22,6 @@ __all__ = [
     "L0Context",
     "L1Context",
     "Priority",
+    "ThreeTierLoader",
     "TokenBudget",
 ]
