@@ -213,7 +213,7 @@ Plans:
 
 Plans:
 - [ ] 11-01-PLAN.md -- Dashboard foundation: Vite scaffold, Socket.IO, Zustand stores, React Flow pipeline graph (DASH-01, DASH-06)
-- [ ] 11-02-PLAN.md -- CLI application: Click + Rich + httpx, all commands, streaming logs (CLI-01, CLI-02, CLI-03, CLI-04)
+- [ ] 11-02-PLAN.md -- TypeScript CLI application: commander + chalk + ora, all commands, streaming logs (CLI-01, CLI-02, CLI-03, CLI-04)
 - [ ] 11-03-PLAN.md -- Dashboard advanced panels: monitoring, cost, Monaco editor, Yjs, xterm.js terminal, live preview (DASH-02, DASH-03, DASH-04, DASH-05, DASH-07, DASH-08)
 - [ ] 11-04-PLAN.md -- Creator agents: Skill Creator, Hooks Creator, Tools Creator with YAML configs (AGNT-09, AGNT-10, AGNT-11)
 
