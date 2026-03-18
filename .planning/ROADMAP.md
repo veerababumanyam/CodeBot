@@ -72,11 +72,11 @@ Plans:
   3. Agent state machine transitions are observable (IDLE through COMPLETED/FAILED/RECOVERING) and logged
   4. A YAML configuration file fully specifies an agent (system prompt, tools, model, context tiers, retry policy) without code changes
   5. Failed agents automatically attempt recovery (retry with modified prompt, escalate, or rollback) based on configured strategy
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-01-PLAN.md — BaseAgent with PRA cycle, state machine, recovery strategies, metrics, config models, and protocol stubs
+- [ ] 03-02-PLAN.md — AgentNode graph adapter, YAML agent configs, config loader, and integration tests
 
 ### Phase 4: Multi-LLM Abstraction
 **Goal**: Any agent can call any supported LLM provider through a unified interface with intelligent routing and cost awareness
