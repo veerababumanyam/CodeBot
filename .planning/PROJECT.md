@@ -131,6 +131,7 @@ A user can describe an idea in natural language and get working, tested, securit
 
 ## Constraints
 
+- **Open-source stack**: Prefer open-source (MIT/Apache-2) libraries and tools throughout. Avoid proprietary/vendor-locked dependencies where viable open alternatives exist.
 - **Python version**: 3.12+ with strict mypy, ruff format/lint
 - **TypeScript**: 5.5+ strict mode, ESM only, no CommonJS
 - **Package managers**: uv (Python), pnpm (Node.js)
