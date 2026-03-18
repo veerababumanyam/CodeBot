@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+*.egg
+.eggs/
+.venv/
+venv/
+env/
+dist/
+build/
+*.so
+
+# uv
+.python-version
+
+# Node
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# Turborepo
+.turbo/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# Docker volumes
+postgres_data/
+redis_data/
+nats_data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+firebase-debug.log
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+.nyc_output/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+
+# ruff
+.ruff_cache/
