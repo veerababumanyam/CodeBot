@@ -96,81 +96,75 @@ Agents create **skills, hooks, and tools** that other agents consume. The Skill 
 
 ## How It Works
 
-```
-                    "Build me a SaaS invoicing app with Stripe integration"
-                                          |
-                                          v
-                    +---------------------------------------------+
-                    |            S0  PROJECT INITIALIZATION        |
-                    |   Detect project type, import codebase,      |
-                    |   configure pipeline, set up repositories     |
-                    +----------------------+----------------------+
-                                           |
-                    +----------------------v----------------------+
-                    |            S1  BRAINSTORMING                 |
-                    |   Explore ideas, define scope, prioritize    |
-                    |   features, generate personas, map solutions  |
-                    +----------------------+----------------------+
-                                           |
-                    +----------------------v----------------------+
-                    |            S2  RESEARCH                      |
-                    |   Evaluate frameworks, discover APIs,        |
-                    |   analyze dependencies, security research    |
-                    +----------------------+----------------------+
-                                           |
-                    +----------+-----------+-----------+-----------+
-                    |          |           |           |           |
-                    v          v           v           v           |
-              +---------+ +--------+ +--------+ +---------+      |
-              |Architect| |Designer| |Database| |API GW   |      |
-              |  Agent  | | Agent  | | Agent  | | Agent   |      |
-              +---------+ +--------+ +--------+ +---------+      |
-                    |  S3  ARCHITECTURE & DESIGN  (parallel)      |
-                    +----------------------+----------------------+
-                                           |
-                    +----------------------v----------------------+
-                    |            S4  PLANNING                      |
-                    |   Task decomposition, scheduling, resource   |
-                    |   allocation, tech stack confirmation         |
-                    +----------------------+----------------------+
-                                           |
-              +--------+--------+---------+--------+--------+
-              |        |        |         |        |        |
-              v        v        v         v        v        v
-          +------+ +------+ +------+ +------+ +------+ +------+
-          |Front | |Back  | |Middle| |Mobile| |Infra | |Integ |
-          |End   | |End   | |ware  | |Dev   | |Engr  | |rator |
-          +------+ +------+ +------+ +------+ +------+ +------+
-                    |  S5  IMPLEMENTATION  (parallel worktrees)   |
-                    +----------------------+----------------------+
-                                           |
-              +---------+---------+--------+---------+--------+
-              |         |         |        |         |        |
-              v         v         v        v         v        |
-          +------+ +--------+ +------+ +------+ +------+     |
-          |Code  | |Security| |a11y  | |Perf  | |i18n  |     |
-          |Review| |Audit   | |Audit | |Audit | |Audit |     |
-          +------+ +--------+ +------+ +------+ +------+     |
-                    |  S6  QUALITY ASSURANCE  (parallel)       |
-                    +----------------------+----------------------+
-                                           |
-                    +----------------------v----------------------+
-                    |      S7  TESTING  ->  S8  DEBUG & FIX       |
-                    |   Unit, Integration, E2E, Visual Regression  |
-                    |   Iterative fix loop until all tests pass    |
-                    +----------------------+----------------------+
-                                           |
-                    +----------------------v----------------------+
-                    |            S9  DOCUMENTATION                 |
-                    |   API docs, README, ADRs, runbooks,          |
-                    |   onboarding guides, skill/hook/tool creation |
-                    +----------------------+----------------------+
-                                           |
-                    +----------------------v----------------------+
-                    |         S10  DEPLOYMENT  (optional)          |
-                    |   AWS / GCP / Azure / Vercel / Railway       |
-                    |   CI/CD, monitoring, SSL, DNS, rollback      |
-                    +---------------------------------------------+
+```mermaid
+graph TD
+    INPUT["💬 Build me a SaaS invoicing app with Stripe integration"]
+    INPUT --> S0
+
+    S0["S0 · Project Initialization\nDetect type · Import codebase · Configure pipeline"]
+    S0 --> S1
+
+    S1["S1 · Brainstorming\nExplore ideas · Define scope · Prioritize features"]
+    S1 --> S2
+
+    S2["S2 · Research\nEvaluate frameworks · Discover APIs · Analyze deps"]
+    S2 --> S3A & S3B & S3C & S3D
+
+    S3A["Architect\nAgent"]
+    S3B["Designer\nAgent"]
+    S3C["Database\nAgent"]
+    S3D["API Gateway\nAgent"]
+    S3A & S3B & S3C & S3D --> S4
+
+    S4["S4 · Planning\nTask decomposition · Scheduling · Tech stack"]
+    S4 --> S5A & S5B & S5C & S5D & S5E & S5F
+
+    S5A["Frontend\nDev"]
+    S5B["Backend\nDev"]
+    S5C["Middleware\nDev"]
+    S5D["Mobile\nDev"]
+    S5E["Infra\nEngineer"]
+    S5F["Integrator"]
+    S5A & S5B & S5C & S5D & S5E & S5F --> S6A & S6B & S6C & S6D & S6E
+
+    S6A["Code\nReview"]
+    S6B["Security\nAudit"]
+    S6C["a11y\nAudit"]
+    S6D["Perf\nAudit"]
+    S6E["i18n\nAudit"]
+    S6A & S6B & S6C & S6D & S6E --> S78
+
+    S78["S7 · Testing → S8 · Debug & Fix\nUnit · Integration · E2E · Visual Regression\nIterative fix loop until all tests pass"]
+    S78 --> S9
+
+    S9["S9 · Documentation\nAPI docs · README · ADRs · Runbooks"]
+    S9 --> S10
+
+    S10["S10 · Deployment ⟨optional⟩\nAWS · GCP · Azure · Vercel · Railway\nCI/CD · Monitoring · SSL · DNS"]
+
+    style INPUT fill:#7C3AED,stroke:#6D28D9,color:#fff
+    style S0 fill:#6366F1,stroke:#4F46E5,color:#fff
+    style S1 fill:#3B82F6,stroke:#2563EB,color:#fff
+    style S2 fill:#06B6D4,stroke:#0891B2,color:#fff
+    style S3A fill:#8B5CF6,stroke:#7C3AED,color:#fff
+    style S3B fill:#A855F7,stroke:#9333EA,color:#fff
+    style S3C fill:#D946EF,stroke:#C026D3,color:#fff
+    style S3D fill:#EC4899,stroke:#DB2777,color:#fff
+    style S4 fill:#F59E0B,stroke:#D97706,color:#fff
+    style S5A fill:#10B981,stroke:#059669,color:#fff
+    style S5B fill:#14B8A6,stroke:#0D9488,color:#fff
+    style S5C fill:#06B6D4,stroke:#0891B2,color:#fff
+    style S5D fill:#3B82F6,stroke:#2563EB,color:#fff
+    style S5E fill:#6366F1,stroke:#4F46E5,color:#fff
+    style S5F fill:#8B5CF6,stroke:#7C3AED,color:#fff
+    style S6A fill:#F43F5E,stroke:#E11D48,color:#fff
+    style S6B fill:#EF4444,stroke:#DC2626,color:#fff
+    style S6C fill:#F97316,stroke:#EA580C,color:#fff
+    style S6D fill:#F59E0B,stroke:#D97706,color:#fff
+    style S6E fill:#EAB308,stroke:#CA8A04,color:#fff
+    style S78 fill:#10B981,stroke:#059669,color:#fff
+    style S9 fill:#3B82F6,stroke:#2563EB,color:#fff
+    style S10 fill:#6366F1,stroke:#4F46E5,color:#fff
 ```
 
 ---
