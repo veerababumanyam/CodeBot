@@ -278,9 +278,12 @@ messages. Context Adapters inject relevant context into agent prompts. Interacti
 Handlers bridge the system to external interfaces (human-in-the-loop, tools).
 
 **Layer 5 -- Interaction Layer**
-User-facing surfaces. The Web Dashboard provides real-time visualization. The CLI
-provides programmatic access. The Chat Interface enables conversational control.
-Vibe Graphing allows natural language workflow definition.
+User-facing surfaces. The Web Dashboard provides real-time visualization including
+the Visual Workflow Editor for drag-and-drop graph construction and monitoring (see
+Section 3.7). The CLI provides programmatic access. The Chat Interface enables
+conversational control. Vibe Graphing allows natural language workflow definition —
+users describe what they want in plain English, and the Orchestrator generates the
+corresponding execution graph for review and refinement.
 
 ### 2.3 Request Lifecycle
 
@@ -526,6 +529,65 @@ S0: Orchestrator
 - Brainstorming (S1) BEFORE Research (S2): brainstorm outputs define what needs to be researched
 - Research (S2) BEFORE Architecture (S3): research findings inform architectural decisions
 - Architecture (S3) BEFORE Planning (S4): you must know the system design before decomposing into tasks
+
+### 3.6 Agent Cognitive Model: Perception-Reasoning-Action Cycle
+
+Every agent node executes using a continuous **Perception → Reasoning → Action**
+(PRA) cognitive loop, the core agent model from the MASFactory framework.
+
+```
+         ┌──────────────────────────────────────────────────┐
+         │              Agent Node Execution                │
+         │                                                  │
+         │    ┌──────────┐                                  │
+         │    │PERCEPTION│ Assemble context:                │
+         │    │          │  • L0/L1/L2 context tiers        │
+         │    │          │  • MCP resources & tools         │
+         │    │          │  • Episodic memory retrieval     │
+         │    │          │  • Upstream SharedState          │
+         │    └────┬─────┘                                  │
+         │         │                                        │
+         │         ▼                                        │
+         │    ┌──────────┐                                  │
+         │    │REASONING │ LLM invocation:                  │
+         │    │          │  • System prompt + task           │
+         │    │          │  • Tool schema injection         │
+         │    │          │  • Plan / decide next action     │
+         │    └────┬─────┘                                  │
+         │         │                                        │
+         │         ▼                                        │
+         │    ┌──────────┐                                  │
+         │    │  ACTION  │ Execute decision:                │
+         │    │          │  • Tool invocation               │
+         │    │          │  • Code generation / file ops    │
+         │    │          │  • Sub-agent delegation          │
+         │    │          │  • Event emission / state update │
+         │    └────┬─────┘                                  │
+         │         │                                        │
+         │         ▼                                        │
+         │    Task complete? ── No ──► loop to PERCEPTION   │
+         │         │                                        │
+         │        Yes                                       │
+         │         ▼                                        │
+         │    Emit AgentOutput + update SharedState          │
+         └──────────────────────────────────────────────────┘
+```
+
+The PRA cycle maps to the `BaseAgent.execute()` method (see SYSTEM_DESIGN.md
+Section 2.0.1). Each PRA iteration is bounded by token budget and max iterations.
+State is checkpointed between iterations for crash recovery.
+
+### 3.7 Orchestration Interfaces
+
+Three interfaces for graph construction, aligning with the MASFactory framework:
+
+| Interface | User | Description |
+|-----------|------|-------------|
+| **Imperative API** | Developers | Python code: `g.add_node()`, `g.add_edge()`, `g.execute()`. Full programmatic control for custom workflows |
+| **Declarative API** | DevOps / Config | YAML pipeline definitions in `configs/pipelines/`. Loaded via `DirectedGraph.from_yaml()`. Version-controlled, reviewable, CI/CD-friendly |
+| **Vibe Graphing** | Non-technical users | Natural language description → Orchestrator agent generates the graph. User refines via the Visual Workflow Editor in the dashboard. Generated graphs can be exported to YAML |
+
+These three interfaces are detailed in SYSTEM_DESIGN.md Section 1.8.
 
 ---
 

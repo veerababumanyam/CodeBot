@@ -180,6 +180,57 @@ execution logic, and an exit gate (quality checks). A phase cannot advance until
 | G9 | Documentation -> Deployment | Automatic | Documentation completeness check |
 | G10 | Deployment -> Delivery | Automatic | Deployment health checks pass |
 
+#### 1.2.1 Progressive Validation Cascade
+
+The quality gates above are organized into a **4-level progressive validation
+cascade**. Each level must pass entirely before the next level executes. Failures
+at any level loop back to the originating agent for correction before retrying.
+This progressive structure ensures fast feedback — cheap static checks catch
+errors before expensive integration tests run.
+
+```
+Level 1 (Syntax & Style)
+    ↓ pass
+Level 2 (Unit Tests)
+    ↓ pass
+Level 3 (Integration Tests)
+    ↓ pass
+Level 4 (Acceptance Checklist)
+    ↓ pass
+Gate PASSED ─── proceed to next pipeline phase
+```
+
+**Level 1 — Syntax & Style** (seconds, gates G5/G6):
+- Python: `ruff check`, `ruff format --check`, `mypy --strict`
+- TypeScript: `tsc --noEmit`, ESLint
+- Failure action: agent auto-fixes lint/type errors and retries
+
+**Level 2 — Unit Tests** (seconds–minutes, gate G8):
+- `pytest tests/unit/` with coverage thresholds:
+  - Line coverage ≥ 80%
+  - Branch coverage ≥ 70%
+  - Function coverage ≥ 85%
+- Failure action: agent fixes failing tests or implementation, retries from Level 1
+
+**Level 3 — Integration Tests** (minutes, gates G7/G8):
+- `pytest tests/integration/` — cross-module interaction tests
+- API contract validation (OpenAPI schema conformance)
+- Cross-agent compatibility checks (shared interfaces compile)
+- Failure action: agent fixes integration issues, retries from Level 1
+
+**Level 4 — Acceptance Checklist** (minutes, gates G6/G9):
+- Security gate pass (Semgrep, Trivy, Gitleaks — no critical findings)
+- All quality gate criteria met for the target phase boundary
+- Architecture conformance verified (no unauthorized dependencies, correct
+  layer boundaries respected)
+- Feature specification acceptance criteria satisfied (see SYSTEM_DESIGN.md §6.4)
+- Failure action: escalate to human review if auto-fix not possible
+
+The cascade maps to CodeBot's existing gates: Level 1 corresponds to the
+compilation and lint checks in G5, Level 2 to the unit test portion of G8,
+Level 3 to integration checks across G7/G8, and Level 4 to the security and
+completeness checks in G6/G9.
+
 ### 1.3 Parallel vs Sequential Execution Strategies
 
 ```
@@ -1275,15 +1326,55 @@ For each transition, the following data flows between phases:
     - git worktree add ../worktree-mobile   agent/mobile-dev
     - git worktree add ../worktree-infra    agent/infra-dev
  2. Orchestrator assigns task waves from the execution schedule
- 3. Each agent receives its task list + context:
+ 3. Each agent receives its task list (structured task schema, see
+    SYSTEM_DESIGN.md §6.3) + fresh context (context isolation policy,
+    see SYSTEM_DESIGN.md §14.5):
     - Architecture docs relevant to its layer
     - API contracts it must implement or consume
     - Design tokens and component specs (for Frontend)
     - Database schemas and migration files (for Backend)
- 4. Agents begin implementing tasks in parallel
- 5. Each agent commits atomically per task completion
- 6. Code is streamed to the dashboard in real time
- 7. Orchestrator monitors agent progress:
+ 4. **Implementation Blueprint Generation** (pre-implementation step):
+    Before writing any code, each agent analyzes the existing codebase
+    to produce a mini-spec for its assigned tasks:
+    a. CodeIndexer scans relevant files via Tree-sitter AST analysis
+    b. Agent queries the Pattern Library for matching patterns
+    c. Agent queries the Anti-Pattern Registry to avoid known failures
+    d. Agent produces an implementation blueprint:
+       - Existing patterns to follow (naming, structure, error handling)
+       - Files to reuse or extend vs. create from scratch
+       - Integration points with other agents' work
+       - Risks or ambiguities to flag before coding
+    e. Blueprint is logged to SharedState for traceability
+    This step ensures agents write code consistent with the existing
+    codebase rather than generating code in isolation.
+ 5. **Pseudocode Phase** (critical logic paths only):
+    After the blueprint and before writing production code, each agent
+    produces pseudocode for non-trivial logic. This catches design errors
+    before they become implementation bugs.
+    a. Agent identifies critical logic paths from the task's `action` field
+       (branching logic, state transitions, error recovery, data transformations)
+    b. Agent writes pseudocode covering:
+       - Function signatures with parameter/return types
+       - Error handling strategy (which exceptions, where to catch, fallbacks)
+       - Integration points (API calls, event emissions, state updates)
+       - Known gotchas from the Anti-Pattern Registry
+    c. Pseudocode is validated against the Feature Specification (see
+       SYSTEM_DESIGN.md §6.4) — specifically the `constraints` field
+    d. If validation reveals conflicts or ambiguities, agent flags them
+       in SharedState before proceeding
+    e. Pseudocode is logged to SharedState alongside the blueprint for
+       traceability and post-incident review
+    This step is REQUIRED when the plan confidence score is ≤7 (see
+    SYSTEM_DESIGN.md §2.2). For high-confidence plans (score ≥8), the
+    agent may skip pseudocode for simple tasks (single-file changes with
+    clear patterns), but must still produce it for multi-file tasks.
+ 6. Agents begin implementing tasks in parallel (one task at a time,
+    following the PRA cognitive cycle per task)
+ 7. Each agent commits atomically per task completion (see atomic commit
+    policy, SYSTEM_DESIGN.md §7.8). Verification step in task schema
+    must pass before commit is created.
+ 8. Code is streamed to the dashboard in real time
+ 9. Orchestrator monitors agent progress:
     - Tracks task completion percentage
     - Detects stalled agents (no commits for >5 min)
     - Monitors token/cost consumption
@@ -2699,14 +2790,20 @@ Every agent in the pipeline follows a standardized lifecycle managed by the Orch
 ```
  AGENT LIFECYCLE:
 
- SPAWN → INITIALIZE → EXECUTE → CHECKPOINT → TERMINATE
-   ↓         ↓           ↓          ↓           ↓
- Config   Load L0     Process    Serialize   Release
- loaded   context     tasks      state       resources
-          Connect     Produce    to storage  Cleanup
-          to LLM      artifacts              worktree
-          Register    Emit                   Record
-          tools       events                 metrics
+ SPAWN → INITIALIZE → EXECUTE (PRA Cycle) → CHECKPOINT → TERMINATE
+   ↓         ↓              ↓                   ↓           ↓
+ Config   Load L0     ┌──────────────┐       Serialize   Release
+ loaded   context     │ PERCEPTION   │       state       resources
+          Connect     │ (context)    │       to storage  Cleanup
+          to LLM      │      ↓       │                   worktree
+          Register    │ REASONING    │                   Record
+          tools       │ (LLM call)   │                   metrics
+                      │      ↓       │
+                      │ ACTION       │
+                      │ (tool use)   │
+                      │      ↓       │
+                      │ Done? → loop │
+                      └──────────────┘
 ```
 
 **Lifecycle Stages:**
@@ -2715,7 +2812,7 @@ Every agent in the pipeline follows a standardized lifecycle managed by the Orch
 |-------|-------------|-----------------|
 | **SPAWN** | Load agent configuration, allocate resources | Fail fast — configuration errors are fatal |
 | **INITIALIZE** | Load L0 context, connect to LLM provider, register tools | Retry LLM connection up to 3 times, then fallback provider |
-| **EXECUTE** | Process assigned tasks, produce artifacts, emit events | See Section 6 error handling strategies |
+| **EXECUTE** | Run the Perception-Reasoning-Action (PRA) cognitive cycle: **Perception** (assemble L0/L1/L2 context, MCP resources, episodic memory) → **Reasoning** (LLM invocation with tool schemas) → **Action** (tool use, code gen, event emission). Cycle repeats until task complete or budget exhausted. See SYSTEM_DESIGN.md Section 2.0.1 | See Section 6 error handling strategies |
 | **CHECKPOINT** | Serialize current state to persistent storage | Retry write; on failure, hold state in memory and alert |
 | **TERMINATE** | Release resources, cleanup worktree, record metrics | Best-effort cleanup; log failures but do not block pipeline |
 

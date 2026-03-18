@@ -416,6 +416,10 @@ All four agents work in parallel using research results. Architect produces the 
 
 All agents work in **isolated git worktrees** on separate branches, merged in dependency order after completion.
 
+**Implementation Blueprint:** Before writing code, each agent analyzes the existing codebase via CodeIndexer (Tree-sitter AST), queries the Pattern Library and Anti-Pattern Registry, and produces a mini-spec documenting which patterns to follow, which files to reuse/extend, and integration points. This ensures generated code is consistent with the existing codebase.
+
+**Atomic Commits:** Each completed task produces exactly one git commit with structured metadata (agent, phase, task ID). This enables `git bisect` for failure diagnosis and per-task rollback without affecting other completed work.
+
 **User interaction:** Real-time visibility into each agent's progress. Users can edit code simultaneously via CRDT-based collaboration. Agents respond to inline comments.
 
 #### 6.1.7 Stage 6: Quality Assurance (Full Parallel)
@@ -812,8 +816,14 @@ Agent States: IDLE → INITIALIZING → RUNNING → WAITING → COMPLETED/FAILED
 
 - **Spawn**: Orchestrator creates agent with role-specific config and system prompt
 - **Initialize**: Agent loads context (L0), connects to LLM provider, registers tools
-- **Execute**: Agent processes tasks, produces artifacts, emits events
-- **Checkpoint**: Agent state serialized at phase boundaries for resume
+- **Execute**: Agent runs the **Perception-Reasoning-Action (PRA) cognitive cycle** — the core agent model from the MASFactory framework:
+  - **Perception**: Assemble context (L0/L1/L2 tiers, MCP resources, episodic memory, upstream SharedState)
+  - **Reasoning**: Invoke LLM with assembled context, system prompt, and tool schemas; model analyzes situation and selects next action
+  - **Action**: Execute chosen action (tool invocation, code generation, sub-agent delegation, event emission)
+  - The PRA cycle repeats until the agent produces a final output, exhausts its token budget, or hits its iteration limit
+- **Checkpoint**: Agent state serialized at phase boundaries and between PRA iterations for resume
+- **Atomic Commit**: Each completed task produces exactly one structured git commit (`[agent-role] type(scope): description`) with task ID attribution. Enables `git bisect` for failure diagnosis and per-task rollback
+- **Context Isolation**: Each task execution starts with a fresh context window — L0 baseline persists, L1/L2 context assembled specifically for the current task, no prior-task conversation history carried forward. Prevents context rot (quality degradation from accumulated noise)
 - **Terminate**: Agent releases resources, worktree cleaned up, metrics recorded
 - **Health Check**: Orchestrator pings agents every 30s; unresponsive agents are restarted
 - **Resource Limits**: Per-agent token budget, execution timeout, memory limit
@@ -964,6 +974,8 @@ CodeBot captures **cross-session and cross-project memory** — what happened, w
 | **Architecture Visualizer** | Auto-generated architecture diagrams (C4 model) from the actual generated code — not just planned architecture. Side-by-side comparison of planned vs. actual |
 | **Git Timeline** | Visual git history showing branches, merges, agent commits, and human commits on an interactive timeline. Click any commit to see the agent's reasoning |
 | **Knowledge Base Browser** | Browse the growing knowledge base of lessons learned, patterns, anti-patterns, and skills across all projects. Search, filter, and tag entries |
+| **Visual Workflow Editor** | Interactive drag-and-drop graph editor (React Flow + ELKjs) for building and modifying pipeline workflows. Users can add/remove agent nodes, draw edges, configure node parameters, and arrange layouts visually. Supports all node types (Agent, Loop, Switch, Interaction, Subgraph) and edge types (State Flow, Message Flow, Control Flow). Generated graphs can be exported to YAML for version control. Integrates with Vibe Graphing: natural language descriptions are converted into editable graph layouts for review and refinement before execution |
+| **Pipeline Monitor & Trace** | Real-time execution tracing of running pipelines via OpenTelemetry and Jaeger integration. Shows per-node execution duration, token consumption, state transitions, and inter-agent message flow on the live graph. Click any node to inspect its PRA (Perception-Reasoning-Action) cycle iterations, tool invocations, and LLM conversation history |
 
 ### 8.2 Real-time Collaboration Features
 

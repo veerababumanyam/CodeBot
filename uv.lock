@@ -232,6 +232,7 @@ name = "codebot-server"
 version = "0.1.0"
 source = { editable = "apps/server" }
 dependencies = [
+    { name = "agent-sdk" },
     { name = "aiofiles" },
     { name = "alembic" },
     { name = "asyncpg" },
@@ -268,6 +269,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "agent-sdk", editable = "libs/agent-sdk" },
     { name = "aiofiles", specifier = ">=25.1.0" },
     { name = "alembic", specifier = ">=1.14.0" },
     { name = "asyncpg", specifier = ">=0.30.0" },
@@ -385,6 +387,7 @@ name = "graph-engine"
 version = "0.1.0"
 source = { editable = "libs/graph-engine" }
 dependencies = [
+    { name = "agent-sdk" },
     { name = "langgraph" },
     { name = "langgraph-checkpoint-postgres" },
     { name = "pydantic" },
@@ -400,6 +403,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "agent-sdk", editable = "libs/agent-sdk" },
     { name = "langgraph", specifier = ">=1.1.0,<2.0" },
     { name = "langgraph-checkpoint-postgres", specifier = "==3.0.4" },
     { name = "pydantic", specifier = ">=2.10.0" },

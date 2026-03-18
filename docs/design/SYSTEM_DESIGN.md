@@ -564,6 +564,95 @@ def build_sdlc_pipeline() -> DirectedGraph:
         +------------------+
 ```
 
+### 1.8 Orchestration Interfaces
+
+Graph workflows can be constructed through three complementary interfaces, as
+defined by the MASFactory framework:
+
+```
+ Orchestration Interfaces
+ +---------------------------------------------------------------+
+ |                                                               |
+ |  Vibe Graphing          Imperative API      Declarative API   |
+ |  +-----------------+    +---------------+   +---------------+ |
+ |  | Natural language|    | Python code   |   | YAML / JSON   | |
+ |  | "Build an API   |    | g.add_node()  |   | nodes:        | |
+ |  |  with auth and  |    | g.add_edge()  |   |   - agent: .. | |
+ |  |  tests"         |    | g.validate()  |   | edges:        | |
+ |  |                 |    | g.execute()   |   |   - src: ..   | |
+ |  | → Orchestrator  |    |               |   |   - tgt: ..   | |
+ |  |   generates     |    | Full control  |   | g = Graph.    | |
+ |  |   graph from NL |    | for custom    |   |   from_yaml() | |
+ |  +-----------------+    | workflows     |   +---------------+ |
+ |                         +---------------+                     |
+ +---------------------------------------------------------------+
+```
+
+#### 1.8.1 Imperative API (Python)
+
+Programmatic graph construction for full control:
+
+```python
+g = DirectedGraph(name="custom-workflow")
+g.add_node(AgentNode("coder", agent=BackendDevAgent))
+g.add_node(AgentNode("reviewer", agent=CodeReviewerAgent))
+g.add_edge(Edge("coder", "reviewer", EdgeType.STATE_FLOW))
+g.validate()  # cycle detection, missing edges, type checks
+result = await g.execute(ctx)
+```
+
+#### 1.8.2 Declarative API (YAML/JSON)
+
+Pipeline-as-code definition loaded from configuration files:
+
+```yaml
+# configs/pipelines/custom.yaml
+name: custom-pipeline
+version: "1.0"
+nodes:
+  - id: coder
+    type: agent
+    agent: BackendDevAgent
+    llm: claude-sonnet-4
+  - id: reviewer
+    type: agent
+    agent: CodeReviewerAgent
+    llm: claude-opus-4
+edges:
+  - source: coder
+    target: reviewer
+    type: state_flow
+```
+
+```python
+pipeline = DirectedGraph.from_yaml("configs/pipelines/custom.yaml")
+result = await pipeline.execute(ctx)
+```
+
+#### 1.8.3 Vibe Graphing (Natural Language)
+
+Natural language workflow definition for non-technical users. The Orchestrator
+agent interprets a plain-English description and generates the corresponding
+graph structure:
+
+```
+User input:  "Build a REST API with JWT auth, PostgreSQL, full test coverage,
+              and security scanning before deployment"
+
+Orchestrator translates to:
+  1. Parse intent → identify required agents and stages
+  2. Select appropriate ComposedGraphs (CodingPipeline, ReviewGate)
+  3. Configure agent parameters (tech stack, constraints)
+  4. Generate and validate the DirectedGraph
+  5. Present graph to user in the Workflow Editor for review/modification
+```
+
+Vibe Graphing bridges the gap between natural language project descriptions
+(PRDs, chat messages) and the formal graph execution model. It is exposed
+through the Chat Interface and the Visual Workflow Editor in the dashboard
+(see Section 8.1 in PRD). The generated graph can be exported to YAML for
+version control and reuse.
+
 ---
 
 ## 2. Agent Design
@@ -594,6 +683,123 @@ management, context injection, tool invocation, and observability.
 | + emit_event(event: Event) -> None                                |
 | + escalate(reason: str) -> None                                   |
 +-------------------------------------------------------------------+
+```
+
+#### 2.0.1 Perception-Reasoning-Action (PRA) Cognitive Cycle
+
+Every agent operates on a continuous **Perception → Reasoning → Action** loop,
+the core cognitive model inherited from the MASFactory framework (arXiv:2603.06007).
+Each iteration of `execute()` runs one or more PRA cycles until the task is
+complete or a termination condition is met.
+
+```
+                    ┌─────────────┐
+                    │ PERCEPTION  │
+                    │             │
+                    │ Context     │◄──── Context Adapter (L0/L1/L2)
+                    │ Assembly    │◄──── MCP Resources
+                    │             │◄──── Episodic Memory
+                    └──────┬──────┘
+                           │
+                           ▼
+                    ┌─────────────┐
+                    │  REASONING  │
+                    │             │
+                    │ LLM Call    │◄──── System Prompt + Task
+                    │ Planning    │◄──── Tool Schemas
+                    │ Decision    │◄──── Constraints / Budget
+                    └──────┬──────┘
+                           │
+                           ▼
+                    ┌─────────────┐
+                    │   ACTION    │
+                    │             │
+                    │ Tool Use    │───── File ops, code gen, git
+                    │ Delegation  │───── Sub-agent spawn
+                    │ Messaging   │───── Event bus, state update
+                    └──────┬──────┘
+                           │
+                           ▼
+                      ┌─────────┐
+                      │ Done?   │──── No ──► back to PERCEPTION
+                      └────┬────┘
+                           │ Yes
+                           ▼
+                      AgentOutput
+```
+
+**Phase details:**
+
+| Phase | Responsibility | Key Components |
+|-------|---------------|----------------|
+| **Perception** | Gather and assemble all relevant context for the current step. Includes loading context tiers (L0 always, L1/L2 on demand), reading MCP resources, retrieving episodic memory, and ingesting upstream agent outputs from SharedState | `ContextAdapter`, `MemoryManager`, MCP `read_resource()` |
+| **Reasoning** | Invoke the LLM with the assembled context, system prompt, and available tool schemas. The model analyzes the situation, forms a plan, and decides on the next action (tool call, delegation, or direct output) | `ModelConfig`, LLM provider, `plan()` method |
+| **Action** | Execute the chosen action: invoke a tool (file write, code generation, git operation), delegate to a sub-agent, emit an event, update SharedState, or produce a final artifact | `invoke_tool()`, `emit_event()`, `escalate()` |
+
+The PRA loop is bounded by the agent's `token_budget` and `max_iterations`
+configuration. Each iteration checkpoints state so the cycle can resume after
+interruption. The Reasoning phase selects the LLM model via the Multi-LLM
+abstraction layer based on task complexity (see Section 3).
+
+#### 2.0.2 Plan Verification Checkpoint (Deep Reasoning)
+
+Before the **first Action** in a task's PRA cycle, the agent performs a
+structured reasoning pause — a **Plan Verification Checkpoint**. This prevents
+the agent from immediately executing based on surface-level pattern matching
+and instead forces deliberate analysis of the task requirements.
+
+**Checkpoint steps:**
+
+1. **Summarize understanding** — The agent restates the task requirements in its
+   own words, confirming alignment with the Feature Specification (§6.4) and
+   task schema (§6.3)
+2. **List assumptions** — Explicitly enumerate assumptions about the codebase,
+   dependencies, and expected behavior that are not directly stated in the task
+3. **Identify risks** — Flag potential failure modes: missing dependencies,
+   breaking changes, edge cases not covered by the task's `constraints`
+4. **Produce action plan** — Brief ordered list of steps the agent will take,
+   including which files to modify, which tests to write, and which integration
+   points to verify
+
+**Enforcement rules:**
+
+```
+Plan confidence score ≤ 7 (medium/low):
+  → Checkpoint is REQUIRED for ALL tasks
+  → Agent must complete all 4 steps before executing
+  → Checkpoint output is logged to SharedState for traceability
+
+Plan confidence score ≥ 8 (high):
+  → Checkpoint is OPTIONAL for simple tasks
+  → Agent may skip for single-file, single-pattern tasks
+  → Multi-file tasks still REQUIRE the checkpoint
+```
+
+**Implementation:** The checkpoint is enforced in the `execute()` method of
+`BaseAgent`. Before the first tool invocation, the agent's Reasoning phase
+includes a checkpoint prompt that elicits the 4 steps above. The checkpoint
+output is stored in the agent's `SharedState` entry alongside the blueprint
+and pseudocode artifacts.
+
+```python
+async def execute(self, task: Task, context: ContextManager) -> AgentResult:
+    # --- PERCEPTION: assemble context ---
+    ctx = await context.load_tiers(task, tiers=["l0", "l1"])
+
+    # --- PLAN VERIFICATION CHECKPOINT (before first action) ---
+    if task.confidence_score <= 7 or task.is_multi_file:
+        checkpoint = await self._plan_verification(task, ctx)
+        await self.shared_state.log("plan_checkpoint", checkpoint)
+
+    # --- PRA cycle ---
+    for iteration in range(self.config.max_iterations):
+        prompt = self.build_prompt(task, ctx)
+        response = await self.llm.generate(prompt, tools=self.tools)
+        new_artifacts = self.process_response(response)
+        if not response.has_tool_calls:
+            break
+        await self.checkpoint(iteration, new_artifacts)
+    ...
 ```
 
 ### 2.1 Orchestrator Agent
@@ -720,6 +926,42 @@ management, context injection, tool invocation, and observability.
 - Receives `ArchitectureDoc` from Architect and `DesignSpecs` from Designer (STATE_FLOW)
 - Sends `TaskGraph` to Implementation agents: Frontend Dev, Backend Dev, Middleware Dev (STATE_FLOW)
 - May send clarification requests back to Orchestrator (MESSAGE_FLOW)
+
+**Plan Confidence Scoring:**
+
+After generating the task graph and feature specifications (§6.4), the Planner
+produces a **confidence score (1–10)** indicating the likelihood of successful
+one-pass implementation. This score determines the autonomy level for S5.
+
+| Factor | Weight | Assessment Method |
+|--------|--------|-------------------|
+| Codebase familiarity | 25% | Ratio of patterns found in Pattern Library vs. novel code needed |
+| External dependency complexity | 20% | Number of new libraries, API integrations, or unfamiliar tools |
+| Requirement ambiguity | 20% | Count of open questions, vague acceptance criteria, or missing specs |
+| Test coverage of touched areas | 15% | Existing test coverage % for files listed in task `files` fields |
+| Historical success rate | 20% | Past success rate for similar task types (from episodic memory) |
+
+**Score thresholds and actions:**
+
+```
+Score 1–4 (Low confidence):
+  → HUMAN_REVIEW gate inserted before S5
+  → Planner emits risk report with specific concerns
+  → User must approve the plan before implementation proceeds
+
+Score 5–7 (Medium confidence):
+  → Proceed to S5 with enhanced monitoring
+  → Orchestrator checks agent progress more frequently (every 2 min vs 5 min)
+  → Plan verification checkpoint is REQUIRED for all tasks (see §2.0.2)
+
+Score 8–10 (High confidence):
+  → Proceed to S5 with full autonomy
+  → Standard monitoring intervals
+  → Plan verification checkpoint is optional (agent may skip for simple tasks)
+```
+
+The confidence score is persisted in the `TaskGraph` output and displayed on the
+dashboard so users can gauge plan reliability before implementation begins.
 
 ---
 
@@ -2806,7 +3048,116 @@ pipeline:
       gate_prompt: "Review final deliverables. Approve for delivery?"
 ```
 
-### 6.3 PhaseExecutor
+### 6.3 Task Definition Schema
+
+The Planner agent (S4) produces tasks in a structured JSON schema optimized for
+LLM comprehension. Structured task definitions reduce agent errors by providing
+unambiguous instructions with explicit verification criteria and file scope.
+
+```json
+{
+  "id": "TASK-042",
+  "name": "Implement JWT authentication middleware",
+  "agent": "backend-dev",
+  "type": "auto",
+  "priority": 1,
+  "depends_on": ["TASK-038", "TASK-041"],
+  "files": [
+    "src/middleware/auth.py",
+    "src/config/security.py",
+    "tests/unit/test_auth_middleware.py"
+  ],
+  "action": "Create JWT authentication middleware that validates Bearer tokens from the Authorization header. Use python-jose for token verification. Extract user claims and attach to request state. Return 401 for missing/invalid tokens, 403 for insufficient permissions.",
+  "context": {
+    "l1_refs": ["src/models/user.py", "src/config/settings.py"],
+    "patterns": ["middleware_pattern", "auth_guard_pattern"],
+    "constraints": ["Must support RS256 and HS256 algorithms", "Token expiry check required"]
+  },
+  "verify": "pytest tests/unit/test_auth_middleware.py -v && ruff check src/middleware/auth.py",
+  "done": "All tests pass. Middleware correctly validates JWT tokens, rejects expired/malformed tokens with proper HTTP status codes, and extracts user claims to request.state.user."
+}
+```
+
+**Schema fields:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `id` | Yes | Unique task identifier for commit attribution and dependency tracking |
+| `name` | Yes | Human-readable task description (used in commit messages) |
+| `agent` | Yes | Target agent role (e.g., `backend-dev`, `frontend-dev`) |
+| `type` | Yes | `auto` (agent executes independently) or `interactive` (requires human input) |
+| `priority` | Yes | Execution priority within a wave (lower = higher priority) |
+| `depends_on` | No | Task IDs that must complete before this task can start |
+| `files` | Yes | Explicit list of files this task will create or modify (scopes the agent's work) |
+| `action` | Yes | Detailed implementation instructions for the agent |
+| `context` | No | Additional context: L1 file references, pattern library entries, constraints |
+| `verify` | Yes | Shell command(s) the agent runs to verify task completion |
+| `done` | Yes | Acceptance criteria — the agent checks this before marking the task complete |
+
+**Design rationale:** Structured task definitions with explicit `files`, `verify`,
+and `done` fields prevent scope creep (agents only touch listed files), enable
+atomic commits (one commit per task with verification), and support automated
+acceptance testing. The format is inspired by specification-driven development
+practices that reduce agent hallucination and improve task completion rates.
+
+### 6.4 Feature Specification Template
+
+The Planner agent (S4) produces a **Feature Specification** for each feature or
+user story before decomposing it into tasks. This specification serves as the
+primary context document loaded into each coding agent's L1 context during S5.
+The template structure ensures agents receive unambiguous, codebase-grounded
+instructions rather than abstract requirements.
+
+**Template structure:**
+
+```yaml
+feature_spec:
+  id: "FEAT-017"
+  title: "JWT Authentication Middleware"
+
+  # FEATURE: What needs to be built — specific, measurable end state
+  feature: |
+    Create a FastAPI middleware that validates JWT Bearer tokens on protected
+    endpoints. Must support RS256/HS256, extract user claims to request.state,
+    return 401/403 with RFC 7807 error bodies.
+
+  # EXAMPLES: Code patterns from THIS codebase to follow
+  examples:
+    - file: "src/middleware/rate_limiter.py"
+      note: "Follow the same Starlette BaseHTTPMiddleware pattern"
+    - file: "src/models/user.py"
+      note: "User model already defines the claims schema to extract"
+    - file: "tests/unit/test_rate_limiter.py"
+      note: "Mirror test structure: fixture setup, happy path, edge cases"
+
+  # DOCUMENTATION: External references the agent should consult
+  documentation:
+    - "python-jose library docs: https://python-jose.readthedocs.io/"
+    - "RFC 7519 (JWT): https://tools.ietf.org/html/rfc7519"
+    - "FastAPI middleware guide: https://fastapi.tiangolo.com/tutorial/middleware/"
+
+  # CONSTRAINTS: What to avoid, edge cases, performance requirements
+  constraints:
+    - "DO NOT use PyJWT — project standardizes on python-jose"
+    - "Token validation must complete in <10ms (no DB calls in hot path)"
+    - "Must handle: expired tokens, malformed tokens, missing Authorization header"
+    - "Do not cache decoded tokens — validate fresh on each request"
+    - "Follow existing error response format in src/api/errors.py"
+```
+
+**How it integrates with the pipeline:**
+
+1. **S4 (Planning):** Planner agent generates one Feature Specification per
+   feature, populating `examples` by querying the CodeIndexer for matching
+   patterns in the existing codebase
+2. **S5 (Implementation):** Each coding agent receives the Feature Specification
+   as L1 context alongside its task list (§6.3). The `examples` field grounds
+   the agent in existing codebase conventions
+3. **Validation:** During the pseudocode phase (see AGENT_WORKFLOWS.md S5 step
+   4), the agent validates its approach against the Feature Specification's
+   `constraints` before writing code
+
+### 6.5 PhaseExecutor
 
 ```python
 class PhaseExecutor:
@@ -2915,7 +3266,7 @@ class PhaseExecutor:
         return PhaseResult(agent_results=results)
 ```
 
-### 6.4 CheckpointManager
+### 6.6 CheckpointManager
 
 ```python
 class CheckpointManager:
@@ -2947,7 +3298,7 @@ class CheckpointManager:
         return CheckpointData.from_dict(data)
 ```
 
-### 6.5 HumanGate
+### 6.7 HumanGate
 
 ```python
 class HumanGate:
@@ -3002,7 +3353,7 @@ class HumanGate:
             request.event.set()  # unblock the waiting coroutine
 ```
 
-### 6.6 ErrorEscalation
+### 6.8 ErrorEscalation
 
 ```python
 class ErrorEscalation:
@@ -3048,7 +3399,7 @@ class ErrorEscalation:
             return await HumanEscalationStrategy().execute(agent_id, context, error)
 ```
 
-### 6.7 Pipeline Execution Sequence (v2.2 -- 10-stage)
+### 6.9 Pipeline Execution Sequence (v2.2 -- 10-stage)
 
 ```
   User                Pipeline        PhaseExecutor     Agents         HumanGate
@@ -3531,7 +3882,57 @@ class PRManager:
         )
 ```
 
-### 7.8 Git Workflow Diagram
+### 7.8 Atomic Commit Policy
+
+Every agent task produces **exactly one atomic commit** upon successful completion.
+This policy enables precise traceability, failure diagnosis, and per-task rollback.
+
+**Rules:**
+
+1. **One task = one commit.** Each task in the execution schedule maps to a single
+   git commit in the agent's worktree branch. No batching multiple tasks into one
+   commit; no splitting one task across multiple commits.
+
+2. **Commit immediately on task completion.** The CommitManager creates the commit
+   as soon as the agent's PRA cycle produces a passing result (all verification
+   checks in the task pass). This ensures partial progress is preserved if the
+   agent crashes on a subsequent task.
+
+3. **Structured commit message format.** All commits follow the format defined in
+   Section 7.6: `[agent-role] type(scope): description` with Task ID trailer.
+
+4. **Verification before commit.** Each task definition includes a `verify` field
+   (see Section 6.3 Task Schema). The agent MUST execute the verification step
+   and confirm it passes before the CommitManager creates the commit.
+
+5. **Git bisect support.** Because each commit represents exactly one task, `git
+   bisect` can pinpoint which task introduced a regression. The Debugger agent
+   (S8) uses this for automated root cause analysis.
+
+6. **Per-task rollback.** Any individual task's commit can be reverted (`git
+   revert <sha>`) without affecting other completed tasks. The Orchestrator
+   can trigger selective rollback when a quality gate identifies a specific
+   task as the source of a failure.
+
+```python
+# Integration with agent execution
+async def _on_task_complete(self, agent: BaseAgent, task: Task, result: TaskResult):
+    """Called after each task's PRA cycle completes successfully."""
+    if result.verification_passed:
+        commit_sha = self.commit_mgr.create_commit(
+            repo=agent.worktree.repo,
+            agent_role=agent.role.value,
+            commit_type=self._infer_commit_type(task),
+            scope=task.scope,
+            description=task.name,
+            body=result.summary,
+            task_id=task.id,
+            files=result.files_modified,
+        )
+        self.event_bus.emit(TaskCommitted(task_id=task.id, sha=commit_sha))
+```
+
+### 7.9 Git Workflow Diagram
 
 ```
   main --------+------------------------------------------+----> main
@@ -5981,10 +6382,30 @@ Each LLM provider connection is wrapped in a circuit breaker:
 
 ```
 Spawn → Initialize (load context, tools, prompt)
-      → Execute (run task, invoke tools, call LLM)
+      → Execute (PRA cognitive cycle — see Section 2.0.1)
+          ┌──────────────────────────────────────┐
+          │  Perception → Reasoning → Action     │
+          │       ▲                     │         │
+          │       └─────────────────────┘         │
+          │  (repeats until task complete or      │
+          │   termination condition met)          │
+          └──────────────────────────────────────┘
       → Checkpoint (persist intermediate state)
       → Terminate (release resources, emit completion event)
 ```
+
+During the Execute phase, the agent runs the **Perception-Reasoning-Action (PRA)
+cognitive cycle** defined in Section 2.0.1. Each PRA iteration corresponds to one
+LLM invocation with assembled context (Perception), model reasoning and tool
+selection (Reasoning), and tool execution or artifact production (Action). The
+cycle repeats until the agent produces a final output, exhausts its token budget,
+or hits its iteration limit.
+
+Before the first Action, a **Plan Verification Checkpoint** (Section 2.0.2) may
+be enforced based on the plan confidence score (see Section 2.2 Planner Agent).
+This checkpoint ensures the agent has deeply reasoned about requirements,
+assumptions, and risks before executing. The checkpoint output is persisted in
+SharedState alongside the implementation blueprint and pseudocode artifacts.
 
 ### 14.3 Health Checks
 
@@ -5999,6 +6420,52 @@ Spawn → Initialize (load context, tools, prompt)
 | Token budget | Per-agent configurable (default 100K tokens) | Hard cutoff; agent FAILED if exceeded |
 | Execution timeout | Per-agent configurable (default 30 min) | Agent TERMINATED on timeout |
 | Memory limit | Per-agent configurable (default 2 GB) | Agent TERMINATED on OOM |
+
+### 14.5 Context Window Isolation Policy
+
+Each agent task execution starts with a **fresh context window**. Accumulated
+conversation history from previous tasks does NOT carry across task boundaries.
+This prevents context rot — quality degradation as context windows fill with
+irrelevant prior-task noise.
+
+**Isolation rules:**
+
+1. **L0 context is the persistent baseline.** Project summary, directory
+   structure, tech stack, and conventions are loaded fresh at the start of
+   every task. This is the only context that persists across tasks.
+
+2. **L1 context is assembled per task.** Relevant source files, API contracts,
+   and schemas are loaded specifically for the current task based on its `files`
+   and `context.l1_refs` fields (see Section 6.3 Task Schema). Prior task L1
+   data is discarded.
+
+3. **L2 context is retrieved per task.** Vector store queries for similar code
+   patterns and documentation chunks are executed fresh. Prior task L2
+   retrievals are not carried forward.
+
+4. **Episodic memory bridges tasks.** The MemoryManager (Section 5) provides
+   cross-task continuity by persisting key decisions, errors encountered, and
+   patterns discovered. Agents query episodic memory during the Perception
+   phase of the PRA cycle, but this is a structured retrieval — not a raw
+   conversation dump.
+
+5. **SharedState carries typed data, not conversation.** Inter-task data flows
+   through the graph engine's SharedState with explicit keys and schemas. Raw
+   LLM conversation history is never written to SharedState.
+
+```
+Task N context:           Task N+1 context:
+┌──────────────┐          ┌──────────────┐
+│ L0 (fresh)   │          │ L0 (fresh)   │
+│ L1 (task N)  │          │ L1 (task N+1)│   ◄── Different files
+│ L2 (task N)  │          │ L2 (task N+1)│   ◄── Different queries
+│ Memory query │          │ Memory query │   ◄── May recall task N decisions
+│ SharedState  │──────────│ SharedState  │   ◄── Typed data flows through
+└──────────────┘          └──────────────┘
+```
+
+This policy ensures each agent task gets the maximum effective context window
+for its specific work, avoiding the diminishing returns of polluted context.
 
 ---
 

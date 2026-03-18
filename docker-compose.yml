@@ -65,7 +65,7 @@ services:
   # ──────────────────────────────────────────────
 
   langfuse:
-    image: langfuse/langfuse:latest
+    image: langfuse/langfuse:2
     container_name: codebot-langfuse
     environment:
       DATABASE_URL: postgresql://codebot:codebot_dev@postgres:5432/langfuse

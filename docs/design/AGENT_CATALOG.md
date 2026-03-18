@@ -35,7 +35,7 @@
 
 CodeBot employs **30 specialized agents** organized across **10 categories** to cover every aspect of the software development lifecycle. Each agent is a node in a directed computation graph, with typed edges encoding data flow, message passing, and control signals between them.
 
-All agents share a common state machine:
+All agents share a common state machine and cognitive model:
 
 ```
 IDLE --> INITIALIZING --> EXECUTING --> REVIEWING --> COMPLETED
@@ -53,11 +53,21 @@ IDLE --> INITIALIZING --> EXECUTING --> REVIEWING --> COMPLETED
 |--------|-------------|
 | IDLE | Agent instantiated but not yet assigned a task |
 | INITIALIZING | Loading system prompt, context tiers, and tools |
-| EXECUTING | Actively processing a task via LLM calls and tool use |
+| EXECUTING | Running the Perception-Reasoning-Action (PRA) cognitive cycle (see below) |
 | REVIEWING | Self-reviewing output against acceptance criteria |
 | COMPLETED | Task finished successfully; output artifacts available |
 | FAILED | Task failed after exhausting retries; escalation triggered |
 | RECOVERING | Applying recovery strategy before retry |
+
+**Perception-Reasoning-Action (PRA) Cognitive Cycle:**
+
+During the EXECUTING state, every agent operates on the MASFactory PRA loop:
+
+1. **Perception** — Assemble context: load L0/L1/L2 context tiers, read MCP resources, retrieve episodic memory, ingest upstream SharedState
+2. **Reasoning** — Invoke the LLM with assembled context, system prompt, and tool schemas; the model analyzes the task, forms a plan, and selects the next action
+3. **Action** — Execute the chosen action: invoke tools (file ops, code gen, git), delegate to sub-agents, emit events, or update SharedState
+
+The PRA cycle repeats within `execute()` until the agent produces a final output, exhausts its token budget, or hits its max iteration limit. State is checkpointed between iterations for crash recovery. See SYSTEM_DESIGN.md Section 2.0.1 for the full specification.
 
 ---
 
@@ -3686,20 +3696,28 @@ class CustomAgent(BaseAgent):
         self.category = "custom"
 
     async def execute(self, task: Task, context: ContextManager) -> AgentResult:
-        """Main execution logic for the custom agent."""
-        # 1. Load context
-        ctx = await context.load_tiers(task, tiers=["l0", "l1"])
+        """Main execution logic implementing the PRA cognitive cycle."""
+        artifacts = []
 
-        # 2. Build prompt
-        prompt = self.build_prompt(task, ctx)
+        for iteration in range(self.config.max_iterations):
+            # --- PERCEPTION: assemble context ---
+            ctx = await context.load_tiers(task, tiers=["l0", "l1"])
 
-        # 3. Call LLM
-        response = await self.llm.generate(prompt, tools=self.tools)
+            # --- REASONING: invoke LLM ---
+            prompt = self.build_prompt(task, ctx)
+            response = await self.llm.generate(prompt, tools=self.tools)
 
-        # 4. Process response
-        artifacts = self.process_response(response)
+            # --- ACTION: execute tool calls or produce output ---
+            new_artifacts = self.process_response(response)
+            artifacts.extend(new_artifacts)
 
-        # 5. Return result
+            # Check if task is complete (no more tool calls)
+            if not response.has_tool_calls:
+                break
+
+            # Checkpoint between PRA iterations for crash recovery
+            await self.checkpoint(iteration, artifacts)
+
         return AgentResult(
             status="completed",
             artifacts=artifacts,

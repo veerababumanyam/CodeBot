@@ -1,0 +1,23 @@
+{
+  "skill_name": "design-an-interface",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I need to build a notification system for our app. Users can get notifications via email, push, SMS, and in-app. Each channel has different formatting requirements and rate limits. Design the interface for the notification dispatcher module.",
+      "expected_output": "3+ radically different interface designs with signatures, usage examples, hidden complexity analysis, and a comparison on depth/simplicity/flexibility dimensions",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "We're building a caching layer that sits between our API handlers and the database. It needs to support TTL, invalidation by key pattern, and cache warming. Multiple backends (Redis, in-memory, disk). Design the cache interface.",
+      "expected_output": "3+ designs ranging from minimal (get/set) to flexible (query-builder style), with clear trade-off analysis on depth vs surface area",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I'm creating a permission system for a multi-tenant SaaS app. Users have roles, roles have permissions, and permissions can be scoped to specific resources. Some permissions are inherited from org-level. Design the authorization check interface — the thing that code calls to ask 'can this user do X?'",
+      "expected_output": "3+ designs exploring different authorization models (RBAC, ABAC, policy-based), with analysis of which hides the most complexity behind the simplest interface",
+      "files": []
+    }
+  ]
+}

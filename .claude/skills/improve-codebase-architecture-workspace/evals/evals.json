@@ -1,0 +1,23 @@
+{
+  "skill_name": "improve-codebase-architecture",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Analyze this CodeBot project's architecture and find the top architectural improvements. Focus on the libs/ and apps/server/ directories. Create GitHub issues for the top findings.",
+      "expected_output": "Survey of module boundaries, dependency classification (deep/shallow/leaky/pass-through), prioritized findings with concrete file paths, and GitHub issues or RFC markdown files",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I feel like our codebase has too many thin wrapper layers. Can you look through the project and find any pass-through modules or unnecessary abstraction layers that should be removed or merged?",
+      "expected_output": "Identification of pass-through methods/modules, analysis of which layers add value vs which just forward calls, concrete merge/removal proposals",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "We've been getting a lot of 'change amplification' — every time we add a new agent type, we have to touch 5+ files. Can you analyze the agent system architecture and suggest how to reduce the number of files that need to change when adding a new agent?",
+      "expected_output": "Trace of what files change when adding an agent, identification of the coupling points, proposed refactoring to reduce change amplification with concrete steps",
+      "files": []
+    }
+  ]
+}
