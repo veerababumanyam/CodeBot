@@ -1,16 +1,11 @@
-"""Agent SDK - base classes and shared Pydantic models."""
+"""Barrel imports for all agent-sdk Pydantic schemas and enums."""
 
-__version__ = "0.1.0"
-
-from agent_sdk.models import (
-    AgentEvent,
-    AgentExecutionSchema,
-    AgentSchema,
+from agent_sdk.models.agent import AgentExecutionSchema, AgentSchema
+from agent_sdk.models.enums import (
     AgentStatus,
     AgentType,
     CommentStatus,
     CommentType,
-    EventEnvelope,
     EventType,
     ExecutionStatus,
     ExperimentStatus,
@@ -18,24 +13,19 @@ from agent_sdk.models import (
     FindingType,
     PhaseStatus,
     PhaseType,
-    PipelineCreateRequest,
-    PipelineEvent,
-    PipelinePhaseSchema,
-    PipelineSchema,
     PipelineStatus,
-    PipelineStatusResponse,
-    ProjectSchema,
     ProjectStatus,
     ProjectType,
     Severity,
-    TaskEvent,
-    TaskSchema,
     TaskStatus,
     TestStatus,
 )
+from agent_sdk.models.events import AgentEvent, EventEnvelope, PipelineEvent, TaskEvent
+from agent_sdk.models.pipeline import PipelineCreateRequest, PipelineStatusResponse
+from agent_sdk.models.project import PipelinePhaseSchema, PipelineSchema, ProjectSchema
+from agent_sdk.models.task import TaskSchema
 
 __all__ = [
-    "__version__",
     # Enums
     "AgentStatus",
     "AgentType",
@@ -55,9 +45,9 @@ __all__ = [
     "TaskStatus",
     "TestStatus",
     # Schemas
-    "AgentEvent",
     "AgentExecutionSchema",
     "AgentSchema",
+    "AgentEvent",
     "EventEnvelope",
     "PipelineCreateRequest",
     "PipelineEvent",

@@ -1,0 +1,255 @@
+"""Shared enum types for CodeBot — used by agents, API endpoints, and event payloads.
+
+All enums use the ``str, enum.Enum`` (StrEnum) pattern so values serialize
+directly to their string representations in JSON without extra processing.
+"""
+
+import enum
+
+
+class ProjectStatus(str, enum.Enum):
+    """Lifecycle states for a Project."""
+
+    CREATED = "CREATED"
+    PLANNING = "PLANNING"
+    BRAINSTORMING = "BRAINSTORMING"
+    RESEARCHING = "RESEARCHING"
+    ARCHITECTING = "ARCHITECTING"
+    DESIGNING = "DESIGNING"
+    IMPLEMENTING = "IMPLEMENTING"
+    REVIEWING = "REVIEWING"
+    TESTING = "TESTING"
+    DEBUGGING = "DEBUGGING"
+    DOCUMENTING = "DOCUMENTING"
+    DEPLOYING = "DEPLOYING"
+    DELIVERING = "DELIVERING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    PAUSED = "PAUSED"
+    CANCELLED = "CANCELLED"
+
+
+class ProjectType(str, enum.Enum):
+    """Classification of a project's starting point."""
+
+    GREENFIELD = "GREENFIELD"
+    INFLIGHT = "INFLIGHT"
+    BROWNFIELD = "BROWNFIELD"
+    IMPROVE = "IMPROVE"
+
+
+class PipelineStatus(str, enum.Enum):
+    """Execution states for a Pipeline."""
+
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    PAUSED = "PAUSED"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+
+class PhaseType(str, enum.Enum):
+    """SDLC phase identifiers."""
+
+    BRAINSTORMING = "BRAINSTORMING"
+    TECH_STACK_SELECTION = "TECH_STACK_SELECTION"
+    TEMPLATE_SELECTION = "TEMPLATE_SELECTION"
+    PLANNING = "PLANNING"
+    RESEARCH = "RESEARCH"
+    ARCHITECTURE = "ARCHITECTURE"
+    DESIGN = "DESIGN"
+    IMPLEMENTATION = "IMPLEMENTATION"
+    REVIEW = "REVIEW"
+    TESTING = "TESTING"
+    DEBUG_FIX = "DEBUG_FIX"
+    DOCUMENTATION = "DOCUMENTATION"
+    DEPLOYMENT = "DEPLOYMENT"
+    DELIVERY = "DELIVERY"
+
+
+class PhaseStatus(str, enum.Enum):
+    """Execution states for a pipeline phase."""
+
+    PENDING = "PENDING"
+    WAITING_APPROVAL = "WAITING_APPROVAL"
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    SKIPPED = "SKIPPED"
+
+
+class TaskStatus(str, enum.Enum):
+    """Lifecycle states for an agent Task."""
+
+    PENDING = "PENDING"
+    BLOCKED = "BLOCKED"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+
+class AgentType(str, enum.Enum):
+    """Specializations for individual agents in the pipeline."""
+
+    ORCHESTRATOR = "ORCHESTRATOR"
+    PLANNER = "PLANNER"
+    RESEARCHER = "RESEARCHER"
+    ARCHITECT = "ARCHITECT"
+    DESIGNER = "DESIGNER"
+    FRONTEND_DEV = "FRONTEND_DEV"
+    BACKEND_DEV = "BACKEND_DEV"
+    MIDDLEWARE_DEV = "MIDDLEWARE_DEV"
+    INFRA_ENGINEER = "INFRA_ENGINEER"
+    SECURITY_AUDITOR = "SECURITY_AUDITOR"
+    CODE_REVIEWER = "CODE_REVIEWER"
+    TESTER = "TESTER"
+    DEBUGGER = "DEBUGGER"
+    DOC_WRITER = "DOC_WRITER"
+    BRAINSTORM_FACILITATOR = "BRAINSTORM_FACILITATOR"
+    TECH_STACK_ADVISOR = "TECH_STACK_ADVISOR"
+    TEMPLATE_CURATOR = "TEMPLATE_CURATOR"
+    DEPLOYER = "DEPLOYER"
+    COLLABORATION_MANAGER = "COLLABORATION_MANAGER"
+    MOBILE_DEV = "MOBILE_DEV"
+    PERFORMANCE_TESTER = "PERFORMANCE_TESTER"
+    ACCESSIBILITY_AUDITOR = "ACCESSIBILITY_AUDITOR"
+    GITHUB_INTEGRATOR = "GITHUB_INTEGRATOR"
+    SKILL_MANAGER = "SKILL_MANAGER"
+    HOOK_MANAGER = "HOOK_MANAGER"
+    TOOL_BUILDER = "TOOL_BUILDER"
+    INTEGRATION_ADAPTER = "INTEGRATION_ADAPTER"
+    I18N_SPECIALIST = "I18N_SPECIALIST"
+    API_DESIGNER = "API_DESIGNER"
+    PROJECT_MANAGER = "PROJECT_MANAGER"
+
+
+class AgentStatus(str, enum.Enum):
+    """Runtime states for an Agent instance."""
+
+    IDLE = "IDLE"
+    INITIALIZING = "INITIALIZING"
+    RUNNING = "RUNNING"
+    WAITING = "WAITING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    TERMINATED = "TERMINATED"
+
+
+class ExecutionStatus(str, enum.Enum):
+    """Outcome of a single AgentExecution."""
+
+    SUCCESS = "SUCCESS"
+    FAILURE = "FAILURE"
+    TIMEOUT = "TIMEOUT"
+    RATE_LIMITED = "RATE_LIMITED"
+    CANCELLED = "CANCELLED"
+
+
+class TestStatus(str, enum.Enum):
+    """Outcome of a test run."""
+
+    PASSED = "PASSED"
+    FAILED = "FAILED"
+    SKIPPED = "SKIPPED"
+    ERROR = "ERROR"
+
+
+class ExperimentStatus(str, enum.Enum):
+    """Decision outcome for an ExperimentLoop iteration."""
+
+    KEEP = "KEEP"
+    DISCARD = "DISCARD"
+    CRASH = "CRASH"
+    TIMEOUT = "TIMEOUT"
+    REGRESSION = "REGRESSION"
+
+
+class FindingType(str, enum.Enum):
+    """Category of a security finding."""
+
+    VULNERABILITY = "VULNERABILITY"
+    SECRET = "SECRET"
+    LICENSE_VIOLATION = "LICENSE_VIOLATION"
+    CODE_SMELL = "CODE_SMELL"
+    DEPENDENCY_RISK = "DEPENDENCY_RISK"
+    CONFIG_ISSUE = "CONFIG_ISSUE"
+
+
+class Severity(str, enum.Enum):
+    """Impact level of a finding or issue."""
+
+    CRITICAL = "CRITICAL"
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
+    INFO = "INFO"
+
+
+class FindingStatus(str, enum.Enum):
+    """Remediation state for a SecurityFinding."""
+
+    OPEN = "OPEN"
+    IN_PROGRESS = "IN_PROGRESS"
+    FIXED = "FIXED"
+    ACCEPTED_RISK = "ACCEPTED_RISK"
+    FALSE_POSITIVE = "FALSE_POSITIVE"
+
+
+class CommentType(str, enum.Enum):
+    """Classification for a ReviewComment."""
+
+    BUG = "BUG"
+    STYLE = "STYLE"
+    PERFORMANCE = "PERFORMANCE"
+    SECURITY = "SECURITY"
+    ARCHITECTURE = "ARCHITECTURE"
+    SUGGESTION = "SUGGESTION"
+
+
+class CommentStatus(str, enum.Enum):
+    """Resolution state for a ReviewComment."""
+
+    OPEN = "OPEN"
+    RESOLVED = "RESOLVED"
+    DISMISSED = "DISMISSED"
+
+
+class EventType(str, enum.Enum):
+    """NATS event types published on the codebot-events stream."""
+
+    AGENT_STARTED = "AGENT_STARTED"
+    AGENT_COMPLETED = "AGENT_COMPLETED"
+    AGENT_FAILED = "AGENT_FAILED"
+    TASK_CREATED = "TASK_CREATED"
+    TASK_COMPLETED = "TASK_COMPLETED"
+    TASK_FAILED = "TASK_FAILED"
+    PHASE_STARTED = "PHASE_STARTED"
+    PHASE_COMPLETED = "PHASE_COMPLETED"
+    PIPELINE_STARTED = "PIPELINE_STARTED"
+    PIPELINE_COMPLETED = "PIPELINE_COMPLETED"
+    BRAINSTORM_MESSAGE = "BRAINSTORM_MESSAGE"
+    BRAINSTORM_FINALIZED = "BRAINSTORM_FINALIZED"
+    DEPLOYMENT_STARTED = "DEPLOYMENT_STARTED"
+    DEPLOYMENT_COMPLETED = "DEPLOYMENT_COMPLETED"
+    DEPLOYMENT_FAILED = "DEPLOYMENT_FAILED"
+    DEPLOYMENT_ROLLED_BACK = "DEPLOYMENT_ROLLED_BACK"
+    COLLABORATION_JOINED = "COLLABORATION_JOINED"
+    COLLABORATION_LEFT = "COLLABORATION_LEFT"
+    COLLABORATION_CONFLICT = "COLLABORATION_CONFLICT"
+    COLLABORATION_RESOLVED = "COLLABORATION_RESOLVED"
+    GITHUB_PUSH = "GITHUB_PUSH"
+    GITHUB_PR_CREATED = "GITHUB_PR_CREATED"
+    GITHUB_PR_MERGED = "GITHUB_PR_MERGED"
+    GITHUB_ISSUE_CREATED = "GITHUB_ISSUE_CREATED"
+    GITHUB_ISSUE_CLOSED = "GITHUB_ISSUE_CLOSED"
+    GITHUB_WEBHOOK_RECEIVED = "GITHUB_WEBHOOK_RECEIVED"
+    SKILL_CREATED = "SKILL_CREATED"
+    SKILL_EXECUTED = "SKILL_EXECUTED"
+    HOOK_TRIGGERED = "HOOK_TRIGGERED"
+    HOOK_COMPLETED = "HOOK_COMPLETED"
+    TOOL_REGISTERED = "TOOL_REGISTERED"
+    TOOL_INVOKED = "TOOL_INVOKED"
+    PERFORMANCE_REPORT_GENERATED = "PERFORMANCE_REPORT_GENERATED"
+    ACCESSIBILITY_REPORT_GENERATED = "ACCESSIBILITY_REPORT_GENERATED"
