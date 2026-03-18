@@ -137,6 +137,24 @@ class AgentStatus(str, enum.Enum):
     TERMINATED = "TERMINATED"
 
 
+class AgentPhase(str, enum.Enum):
+    """Runtime states for agent execution lifecycle (higher resolution than ORM AgentStatus).
+
+    Maps to ORM AgentStatus for persistence:
+    - EXECUTING, REVIEWING -> AgentStatus.RUNNING
+    - RECOVERING -> AgentStatus.RUNNING
+    - All others map by name
+    """
+
+    IDLE = "IDLE"
+    INITIALIZING = "INITIALIZING"
+    EXECUTING = "EXECUTING"
+    REVIEWING = "REVIEWING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    RECOVERING = "RECOVERING"
+
+
 class ExecutionStatus(str, enum.Enum):
     """Outcome of a single AgentExecution."""
 

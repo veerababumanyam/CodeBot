@@ -2,6 +2,7 @@
 
 from agent_sdk.models.agent import AgentExecutionSchema, AgentSchema
 from agent_sdk.models.enums import (
+    AgentPhase,
     AgentStatus,
     AgentType,
     CommentStatus,
@@ -27,6 +28,7 @@ from agent_sdk.models.task import TaskSchema
 
 __all__ = [
     # Enums
+    "AgentPhase",
     "AgentStatus",
     "AgentType",
     "CommentStatus",
