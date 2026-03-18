@@ -46,10 +46,10 @@ created: 2026-03-18
 | 08-02-01 | 02 | 1 | WORK-01 | unit | `uv run pytest tests/unit/test_worktree_pool.py -x` | Wave 0 | pending |
 | 08-02-02 | 02 | 1 | WORK-03 | unit | `uv run pytest tests/unit/test_port_allocator.py -x` | Wave 0 | pending |
 | 08-02-03 | 02 | 1 | WORK-04 | unit | `uv run pytest tests/unit/test_branch_strategy.py -x` | Wave 0 | pending |
-| 08-03-01 | 03 | 2 | IMPL-06 | unit | `uv run pytest tests/unit/test_cli_agents.py -x` | Wave 0 | pending |
+| 08-03-01 | 03 | 2 | SECP-05 | unit | `uv run pytest tests/unit/test_security_orchestrator.py -x` | Wave 0 | pending |
 | 08-03-02 | 03 | 2 | SECP-05 | integration | `uv run pytest tests/integration/test_security_pipeline.py -x` | Wave 0 | pending |
-| 08-03-03 | 03 | 2 | IMPL-05 | integration | `uv run pytest tests/integration/test_parallel_worktrees.py -x` | Wave 0 | pending |
-| 08-03-04 | 03 | 2 | WORK-02 | integration | `uv run pytest tests/integration/test_worktree_docker.py -x` | Wave 0 | pending |
+| 08-04-01 | 04 | 2 | IMPL-06 | unit | `uv run pytest tests/unit/test_cli_agents.py -x` | Wave 0 | pending |
+| 08-04-02 | 04 | 2 | IMPL-05, WORK-02 | integration | `uv run pytest tests/integration/test_parallel_worktrees.py tests/integration/test_worktree_docker.py -x` | Wave 0 | pending |
 
 *Status: pending · green · red · flaky*
 
