@@ -144,13 +144,13 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Context Management
 
-- [ ] **CTXT-01**: L0 context (always present): project config, current task, agent system prompt
-- [ ] **CTXT-02**: L1 context (phase-scoped): phase requirements, related code files, architecture decisions
+- [x] **CTXT-01**: L0 context (always present): project config, current task, agent system prompt
+- [x] **CTXT-02**: L1 context (phase-scoped): phase requirements, related code files, architecture decisions
 - [ ] **CTXT-03**: L2 context (on-demand): vector store retrieval for code search, documentation lookup
 - [ ] **CTXT-04**: Vector store (LanceDB/Qdrant) indexes codebase for semantic search
 - [ ] **CTXT-05**: Tree-sitter parses code for structural understanding (functions, classes, imports)
 - [ ] **CTXT-06**: Context compression summarizes large outputs to fit within token budgets
-- [ ] **CTXT-07**: Hard token budgets enforced per agent call to prevent context exhaustion
+- [x] **CTXT-07**: Hard token budgets enforced per agent call to prevent context exhaustion
 
 ### Security Pipeline
 
@@ -336,13 +336,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DOCS-02 | Phase 9 | Pending |
 | DOCS-03 | Phase 9 | Pending |
 | DOCS-04 | Phase 9 | Pending |
-| CTXT-01 | Phase 5 | Pending |
-| CTXT-02 | Phase 5 | Pending |
+| CTXT-01 | Phase 5 | Complete |
+| CTXT-02 | Phase 5 | Complete |
 | CTXT-03 | Phase 5 | Pending |
 | CTXT-04 | Phase 5 | Pending |
 | CTXT-05 | Phase 5 | Pending |
 | CTXT-06 | Phase 5 | Pending |
-| CTXT-07 | Phase 5 | Pending |
+| CTXT-07 | Phase 5 | Complete |
 | SECP-01 | Phase 8 | Pending |
 | SECP-02 | Phase 8 | Pending |
 | SECP-03 | Phase 8 | Pending |
