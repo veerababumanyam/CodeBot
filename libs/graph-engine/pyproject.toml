@@ -9,6 +9,7 @@ dependencies = [
     "pyyaml>=6.0",
     "langgraph>=1.1.0,<2.0",
     "langgraph-checkpoint-postgres==3.0.4",
+    "agent-sdk",
 ]
 
 [project.optional-dependencies]
@@ -17,6 +18,9 @@ dev = [
     "pytest-asyncio>=0.24",
     "ruff>=0.8.0",
 ]
+
+[tool.uv.sources]
+agent-sdk = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]
@@ -27,6 +31,7 @@ packages = ["src/graph_engine"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 
 [tool.ruff]
