@@ -104,11 +104,12 @@ Plans:
   3. L2 context retrieval returns semantically relevant code snippets and documentation from the vector store given a natural language query
   4. Tree-sitter parses source files and indexes functions, classes, and imports for structural code search
   5. Hard token budgets are enforced per agent call -- oversized context is compressed or truncated, never silently exceeding limits
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md -- Context models, token budget enforcement, and three-tier loader (L0/L1)
+- [ ] 05-02-PLAN.md -- Vector store backends (LanceDB/Qdrant) and Tree-sitter code indexer
+- [ ] 05-03-PLAN.md -- Context compressor and ContextAdapter (full assembly pipeline)
 
 ### Phase 6: Pipeline Orchestration
 **Goal**: Multi-stage pipelines run durably with retry, checkpoint/resume, human approval gates, and configurable presets
@@ -218,7 +219,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 2. Graph Engine | 0/3 | Not started | - |
 | 3. Agent Framework | 0/2 | Not started | - |
 | 4. Multi-LLM Abstraction | 0/2 | Not started | - |
-| 5. Context Management | 0/2 | Not started | - |
+| 5. Context Management | 0/3 | Not started | - |
 | 6. Pipeline Orchestration | 0/3 | Not started | - |
 | 7. Vertical Slice | 0/3 | Not started | - |
 | 8. Security Pipeline + Worktree Manager | 0/3 | Not started | - |
