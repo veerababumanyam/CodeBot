@@ -1,8 +1,8 @@
 ---
 phase: 3
 slug: agent-framework
-status: draft
-nyquist_compliant: false
+status: ready
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-03-18
 ---
@@ -17,18 +17,18 @@ created: 2026-03-18
 
 | Property | Value |
 |----------|-------|
-| **Framework** | pytest 7.x |
-| **Config file** | pyproject.toml `[tool.pytest.ini_options]` |
-| **Quick run command** | `uv run pytest tests/unit/agents/ -x -q` |
-| **Full suite command** | `uv run pytest tests/unit/agents/ tests/integration/agents/ -v` |
+| **Framework** | pytest 8.x |
+| **Config file** | pyproject.toml `[tool.pytest.ini_options]` (per-library) |
+| **Quick run command** | `cd libs/agent-sdk && uv run pytest tests/ -x -q` |
+| **Full suite command** | `cd libs/agent-sdk && uv run pytest tests/ -v && cd ../../libs/graph-engine && uv run pytest tests/ -v && cd ../../apps/server && uv run pytest tests/test_agent_loader.py -v` |
 | **Estimated runtime** | ~15 seconds |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Run `uv run pytest tests/unit/agents/ -x -q`
-- **After every plan wave:** Run `uv run pytest tests/unit/agents/ tests/integration/agents/ -v`
+- **After every task commit:** Run quick command for the relevant library
+- **After every plan wave:** Run full suite command across all three packages
 - **Before `/gsd:verify-work`:** Full suite must be green
 - **Max feedback latency:** 15 seconds
 
@@ -38,7 +38,10 @@ created: 2026-03-18
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| *Populated after planning* | | | | | | | |
+| 03-01-01 | 01 | 1 | AGNT-03, AGNT-07, AGNT-12 | unit | `cd libs/agent-sdk && uv run pytest tests/test_state_machine.py tests/test_recovery.py tests/test_metrics.py -v --tb=short` | W0 | ⬜ pending |
+| 03-01-02 | 01 | 1 | AGNT-01, AGNT-05, AGNT-06 | unit | `cd libs/agent-sdk && uv run pytest tests/ -v --tb=short` | W0 | ⬜ pending |
+| 03-02-01 | 02 | 2 | AGNT-02, AGNT-04, AGNT-12 | unit | `cd libs/graph-engine && uv run pytest tests/test_agent_node.py -v --tb=short` | W0 | ⬜ pending |
+| 03-02-02 | 02 | 2 | AGNT-05 | unit | `cd apps/server && uv run pytest tests/test_agent_loader.py -v --tb=short` | W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -46,13 +49,15 @@ created: 2026-03-18
 
 ## Wave 0 Requirements
 
-- [ ] `tests/unit/agents/test_base_agent.py` — stubs for AGNT-01, AGNT-02, AGNT-03
-- [ ] `tests/unit/agents/test_agent_node.py` — stubs for AGNT-05, AGNT-06
-- [ ] `tests/unit/agents/test_agent_config.py` — stubs for AGNT-07
-- [ ] `tests/unit/agents/test_agent_recovery.py` — stubs for AGNT-12
-- [ ] `tests/unit/agents/conftest.py` — shared fixtures (mock LLM, mock context)
-
-*If none: "Existing infrastructure covers all phase requirements."*
+- [ ] `libs/agent-sdk/tests/test_state_machine.py` — stubs for AGNT-03
+- [ ] `libs/agent-sdk/tests/test_recovery.py` — stubs for AGNT-07
+- [ ] `libs/agent-sdk/tests/test_metrics.py` — stubs for AGNT-12
+- [ ] `libs/agent-sdk/tests/test_base_agent.py` — stubs for AGNT-01, AGNT-06
+- [ ] `libs/agent-sdk/tests/test_agent_config.py` — stubs for AGNT-05
+- [ ] `libs/agent-sdk/tests/conftest.py` — shared fixtures (mock LLM, mock context)
+- [ ] `libs/graph-engine/tests/test_agent_node.py` — stubs for AGNT-02, AGNT-04
+- [ ] `libs/graph-engine/tests/conftest.py` — shared fixtures (test agents)
+- [ ] `apps/server/tests/test_agent_loader.py` — stubs for AGNT-05
 
 ---
 
@@ -66,11 +71,11 @@ created: 2026-03-18
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 15s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 15s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-03-18
