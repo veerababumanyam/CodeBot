@@ -1,10 +1,10 @@
 # CodeBot — Product Requirements Document (PRD)
 
-**Version:** 2.4
+**Version:** 2.5
 **Date:** 2026-03-18
 **Status:** Review
 **Author:** Architecture Team
-**Supersedes:** PRD v2.3 (2026-03-18)
+**Supersedes:** PRD v2.4 (2026-03-18)
 
 ---
 
@@ -83,6 +83,7 @@ The system is inspired by the MASFactory framework (arXiv:2603.06007), which mod
 | Project Type Detection | Automatically detect whether input describes a greenfield, inflight, or brownfield project and configure the pipeline accordingly |
 | Existing Codebase Import | Import and analyze existing codebases from local directories, GitHub, GitLab, Bitbucket, or archive files for inflight and brownfield projects |
 | Multi-repo Configuration | Configure multi-repository project structures with cross-repo dependency definitions |
+| Deployment Opt-in | Users choose whether to include automated deployment (S10) or receive the generated codebase as a local repository with deployment docs. Deployment can also be triggered later on demand |
 | Reference App Analysis | Analyze reference applications, competitor products, or inspiration screenshots to inform design and feature requirements |
 
 ### 4.2 Brainstorming Phase
@@ -222,7 +223,9 @@ Planning runs after architecture because you need the system blueprint, database
 | Accessibility Fix Cycle | Detect accessibility violations and generate compliant fixes |
 | Dependency Conflict Resolution | Resolve version conflicts, breaking changes, and compatibility issues in dependencies |
 
-### 4.10 Deployment & Delivery Phase
+### 4.10 Deployment & Delivery Phase (Optional)
+
+> **This stage is optional.** Users can skip deployment entirely and receive the generated codebase as a local repository. Not all projects need cloud deployment — libraries, CLI tools, packages, local-only apps, and users who prefer manual deployment can end the pipeline after documentation (S9). Deployment is opt-in during project initialization (S0) or can be triggered later on demand.
 
 | Feature | Description |
 |---|---|
@@ -339,7 +342,7 @@ Based on the MASFactory framework, agents are organized as nodes in a directed c
 | S7 | **Testing & Validation** | Tester | Internal parallel (test suites) | Review test results, approve coverage |
 | S8 | **Debug & Stabilization** | Debugger | Sequential per issue | Escalation if stuck, manual fix input |
 | S9 | **Documentation & Knowledge** | Documentation Writer, Skill Creator, Hooks Creator, Tools Creator | Internal parallel | Review generated docs |
-| S10 | **Deployment & Delivery** | DevOps Agent, Infrastructure Engineer, Project Manager | Sequential (pipeline) | Approve deployment, verify health |
+| S10 | **Deployment & Delivery** *(optional)* | DevOps Agent, Infrastructure Engineer, Project Manager | Sequential (pipeline) | Approve deployment, verify health. **Skippable** — users can take the generated codebase without deploying |
 
 **Cross-Cutting Agents** (active across all stages):
 - **Orchestrator** (#1) — Master coordinator, always active
@@ -354,9 +357,10 @@ Based on the MASFactory framework, agents are organized as nodes in a directed c
 | 24 | **GitHub Agent** | Repository creation/import, branch protection, CI/CD scaffold, project board setup |
 
 **Project type routing:**
-- **Greenfield** → Full pipeline S1-S10
-- **Inflight** → Codebase Analysis → Architecture Recovery → Gap Analysis → S1 (scoped) → S4-S10
-- **Brownfield** → Legacy Assessment → Modernization Strategy → Safety Net → S3-S10 (incremental)
+- **Greenfield** → Full pipeline S1-S9, then S10 if deployment opted in
+- **Inflight** → Codebase Analysis → Architecture Recovery → Gap Analysis → S1 (scoped) → S4-S9, then S10 if opted in
+- **Brownfield** → Legacy Assessment → Modernization Strategy → Safety Net → S3-S9 (incremental), then S10 if opted in
+- **Improve** → Codebase Analysis → Metric Baselining → ExperimentLoop (optimize target metrics) → Results Report
 
 #### 6.1.2 Stage 1: Discovery & Brainstorming (Interactive)
 
@@ -480,7 +484,7 @@ Documentation is generated from code, architecture decisions, and pipeline artif
 
 **User interaction:** Review generated documentation, approve skills/hooks/tools before activation.
 
-#### 6.1.11 Stage 10: Deployment & Delivery (Final Stage)
+#### 6.1.11 Stage 10: Deployment & Delivery (Optional, Final Stage)
 
 | # | Agent Role | Responsibility |
 |---|---|---|
@@ -488,7 +492,9 @@ Documentation is generated from code, architecture decisions, and pipeline artif
 | 15 | **Infrastructure Engineer** | Cloud resource provisioning, IaC deployment, SSL/TLS, DNS configuration |
 | 30 | **Project Manager Agent** | Final status report, handoff documentation, timeline summary, lessons learned |
 
-Deployment is the **last stage** — it only executes after all code is written, reviewed, tested, debugged, and documented. Deployment follows a strict sequential pipeline:
+Deployment is the **last and optional stage** — it only executes if the user opted in during project initialization (S0) or triggers it on demand. It runs after all code is written, reviewed, tested, debugged, and documented. Users who skip deployment receive a fully functional local repository with build scripts, CI/CD configurations, and deployment documentation — ready for manual deployment whenever they choose.
+
+When enabled, deployment follows a strict sequential pipeline:
 
 1. Build & Package (web bundles, Docker images, iOS IPA, Android AAB)
 2. Deploy to staging environment
@@ -519,6 +525,7 @@ User Input (Idea / PRD / Existing Codebase)
     |--- Greenfield --------+
     |--- Inflight (analysis)|--- merge into pipeline
     |--- Brownfield (assess)|
+    |--- Improve (baseline) |--- ExperimentLoop → Results Report
     |
     v
 +=======================================================+
@@ -722,6 +729,7 @@ After every pipeline run (and at key stage boundaries), agents automatically cap
 | **Code Review Feedback** | After QA stage (S6) | Reviewer comments, issues found by type (style, logic, performance, security), resolution | Coding agents internalize common review feedback to reduce review cycles |
 | **Deployment Issues** | After Deployment stage (S10) | Deployment failures, configuration mistakes, environment-specific issues | Infra Agent learns environment-specific requirements across projects |
 | **User Overrides** | Any stage with user input | When the user overrides an agent's decision, what was changed and why | All agents learn user preferences and adjust defaults accordingly |
+| **Experiment Results** | After any ExperimentLoop (Debug, Improve, QA optimization) | Hypothesis proposed, metric before/after, keep/discard decision, code diff size, experiment duration | Agents learn which optimization strategies produce the best improvements for each project type and metric domain |
 
 #### 6.4.2 Agent Behavior Adaptation
 
@@ -1042,6 +1050,33 @@ CodeBot captures **cross-session and cross-project memory** — what happened, w
 | Compatibility Testing | Ensure modernized components maintain compatibility with legacy systems during transition |
 | Documentation Generation | Generate documentation for undocumented legacy code to aid understanding |
 
+### 9.4 Improve Mode Projects (Autonomous Optimization)
+
+Inspired by autonomous experimentation frameworks (e.g., Karpathy's autoresearch), Improve mode takes an existing codebase and autonomously runs structured experiment loops to optimize specified quality metrics — without human intervention during the loop.
+
+| Feature | Description |
+|---|---|
+| **Optimization Target Selection** | User specifies what to optimize: performance, security, test coverage, accessibility, bundle size, or a combination. Each target maps to measurable metrics (Lighthouse score, Semgrep findings count, mutation kill rate, axe-core violations, etc.) |
+| **Time Budget** | User sets a total time budget for the experiment session (e.g., "run for 4 hours"). Individual experiments get a fixed time slice (configurable, default 10 minutes) to ensure comparable results across attempts |
+| **Constraint Specification** | User defines boundaries: "do not change public API," "do not modify auth module," "stay within 500-token budget per experiment." Constraints are enforced before each experiment is applied |
+| **Metric Baselining** | Before any experiments, the system runs the full measurement suite to establish baseline scores across all target metrics. All experiments are compared against this baseline |
+| **ExperimentLoop Execution** | The core loop: (1) agent proposes optimization hypothesis, (2) applies change to experiment branch, (3) runs measurement suite, (4) compares to baseline, (5) keeps if improved and no regressions, (6) discards otherwise, (7) logs result, (8) repeats |
+| **Multi-Metric Regression Guard** | Improvements in the target metric must not regress other metrics beyond a configurable threshold. A security improvement that breaks 5 tests is discarded |
+| **Simplicity Criterion** | Changes that increase code complexity (cyclomatic complexity, coupling, LOC) must produce proportionally larger metric improvements. Simplifications that maintain metrics are always kept |
+| **Experiment Log** | Every experiment is logged to `experiment_log.tsv`: commit hash, hypothesis, metric before, metric after, delta, keep/discard, code diff size, duration. This log is the primary artifact of an Improve session |
+| **Git-Based Experiment Tracking** | Each experiment gets its own branch. Success = merge to working branch. Failure = branch deleted. The git history shows only successful improvements, while the experiment log captures the full history of attempts |
+| **Circuit Breakers** | The loop stops automatically when: time budget exhausted, token budget exhausted, N consecutive experiments show no improvement, or all target metrics exceed user-defined "good enough" thresholds |
+| **Human Review Gate** | After the loop completes, all merged experiments are presented as a single PR for human review before merging to main. Each experiment commit includes the hypothesis and metric deltas in the commit message |
+| **Results Report** | A summary report showing: baseline vs. final metrics, total experiments run, keep/discard ratio, top improvements by impact, and cost breakdown (tokens, time, compute) |
+
+**Improve mode pipeline:**
+```
+Codebase Import → Metric Baselining → ExperimentLoop → Results Report → Human Review PR
+                                          ↑                    |
+                                          └────────────────────┘
+                                          (repeat until budget exhausted)
+```
+
 ---
 
 ## 10. Cost Intelligence & Budget Management
@@ -1314,7 +1349,7 @@ CodeBot itself implements JWT-based authentication with RS256 signing. API keys 
 | **AutoGen / CrewAI** | Multi-agent frameworks | Generic agent orchestration | SDLC-specific, production pipeline, not framework |
 | **Automaker** | Kanban + Claude Agent SDK | Tight Claude integration | Multi-LLM, full pipeline, 30 agent types |
 
-CodeBot's unique position: Open-source, multi-LLM, graph-centric, full-lifecycle autonomous development platform with 29 specialized agents, integrated security/quality gates, multi-platform support, and extensible agent ecosystem.
+CodeBot's unique position: Open-source, multi-LLM, graph-centric, full-lifecycle autonomous development platform with 30 specialized agents, integrated security/quality gates, multi-platform support, and extensible agent ecosystem.
 
 ---
 
@@ -1343,26 +1378,131 @@ CodeBot's unique position: Open-source, multi-LLM, graph-centric, full-lifecycle
 
 ---
 
-## 17. Technical Constraints
+## 17. Technical Constraints & Technology Stack
 
-1. **Python 3.12+** as the primary runtime for the orchestration layer and agent framework
-2. **Node.js 22+** for the web dashboard, CLI agent integrations, and real-time collaboration server
-3. **Docker** required for sandbox execution, infrastructure agent, and local development environments (gVisor or Kata Containers recommended for production-grade isolation)
-4. **Git 2.40+** required for worktree management and multi-repo support
-5. **Minimum 16GB RAM** for running multiple agents concurrently (32GB recommended for self-hosted LLMs)
-6. **GPU (optional)** NVIDIA CUDA 12+, Apple Metal, or AMD ROCm for self-hosted LLM inference
-7. **API keys** required for at least one cloud LLM provider OR a self-hosted model for fully offline operation
-8. **Xcode 16+** required for iOS development and App Store submission (macOS only)
-9. **Android Studio / Android SDK** required for Android development and Play Store submission
-10. **Terraform 1.6+** required for infrastructure-as-code deployment automation
-11. **kubectl** required for Kubernetes-based deployments
-12. **WebSocket support** required for real-time collaboration features
-13. **Redis 7+** or compatible (Valkey, DragonflyDB) for task queue, caching, and real-time pub/sub
-14. **PostgreSQL 16+** for persistent storage of project state, agent history, and metrics
-15. **Sandbox Runtime** for isolated code execution, live preview, and per-agent dev environments — requires Docker runtime (gVisor or Kata Containers recommended for production isolation; Kubernetes optional for distributed scheduling)
-16. **Hierarchical Context Store** with filesystem-paradigm organization, L0/L1/L2 tiered loading, directory-based retrieval, and observable retrieval trajectories — backed by SQLite + file tree
-17. **Episodic Memory Store** for cross-session observation capture, semantic compression, and progressive disclosure retrieval — backed by vector DB (ChromaDB) + SQLite
-18. **ChromaDB** embedded vector database for episodic memory, code context semantic search, and document retrieval
+### 17.1 Core Runtime Requirements
+
+| # | Requirement | Version | Purpose |
+|---|---|---|---|
+| 1 | Python 3.12+ | Primary runtime | Orchestration layer, agent framework, backend API |
+| 2 | Node.js 22+ | Secondary runtime | Web dashboard, CLI agent integrations, real-time collaboration |
+| 3 | Docker | Latest stable | Sandbox execution, infrastructure agent, dev environments |
+| 4 | Git 2.40+ | Required | Worktree management, multi-repo support |
+| 5 | Minimum 16GB RAM | (32GB for self-hosted LLMs) | Running multiple agents concurrently |
+| 6 | GPU (optional) | NVIDIA CUDA 12+, Apple Metal, AMD ROCm | Self-hosted LLM inference |
+
+### 17.2 Open-Source Technology Stack
+
+CodeBot maximizes reuse of proven open-source tools to reduce custom development effort while maintaining full control through self-hosting.
+
+#### Agent Orchestration Layer
+
+| Component | Technology | Stars | License | Purpose |
+|---|---|---|---|---|
+| Agent Graph Engine | LangGraph | 24.6K | MIT | DAG-based multi-agent orchestration with checkpointing |
+| Durable Execution | Temporal | 18.9K | MIT | Workflow durability, retry, distributed execution |
+| LLM Gateway | LiteLLM Proxy | 39.2K | MIT | Unified API for 100+ LLM providers with cost tracking |
+| Smart Routing | RouteLLM | — | Apache-2.0 | Cost-quality model routing optimization |
+| MCP Framework | FastMCP 2.0 | 21.9K | Apache-2.0 | MCP server/client for agent tool integration |
+| Event Bus | NATS + JetStream | 19.4K | Apache-2.0 | Sub-ms inter-agent messaging with durable delivery |
+| Task Queue | Taskiq | 2K | MIT | Async-native Python task distribution |
+
+#### Context & Memory Layer
+
+| Component | Technology | Stars | License | Purpose |
+|---|---|---|---|---|
+| Vector Database | LanceDB (dev) / Qdrant (prod) | 10K / 29.6K | Apache-2.0 | Hybrid search for code and episodic memory |
+| RAG Framework | LlamaIndex | 47.7K | MIT | Code-aware retrieval with 150+ data connectors |
+| Context Store | SQLite + DuckDB | — / 36.7K | Public Domain / MIT | L0/L1 relational context, L2 analytical queries |
+| Code Parsing | Tree-sitter | 24.2K | MIT | Multi-language AST parsing (100+ grammars) |
+| Code Search | ast-grep | 12.9K | MIT | AST-aware structural search and rewrite |
+
+#### Frontend & Dashboard Layer
+
+| Component | Technology | Stars | License | Purpose |
+|---|---|---|---|---|
+| Admin Framework | Refine | 34.2K | MIT | Headless React admin with real-time support |
+| UI Components | Shadcn/ui + Tremor | 110K / 16.5K | MIT / Apache-2.0 | Components + data visualization charts |
+| Pipeline Graph | React Flow + ELKjs | 35.6K / 2.4K | MIT / EPL-2.0 | Interactive DAG pipeline visualization |
+| Code Editor | Monaco Editor | 45.8K | MIT | Syntax highlighting, diff view, LSP support |
+| Terminal | xterm.js | 19.5K | MIT | Browser-based terminal emulation |
+| Real-time | Socket.IO | 62.9K | MIT | WebSocket with rooms, broadcasting, auto-reconnect |
+| CRDT Collaboration | Yjs | 21.4K | MIT | Real-time collaborative editing |
+
+#### Testing & Quality Layer
+
+| Component | Technology | Stars | License | Purpose |
+|---|---|---|---|---|
+| E2E Testing | Playwright | 84.4K | Apache-2.0 | Cross-browser testing with multi-language bindings |
+| Unit Testing (JS/TS) | Vitest | 16.2K | MIT | Vite-native with browser mode |
+| Unit Testing (Python) | pytest | 13.8K | MIT | Fixture system, rich plugin ecosystem |
+| Mutation Testing | Stryker | 2.8K | Apache-2.0 | Test suite quality verification |
+| Load Testing | k6 | 29.9K | AGPL-3.0 | Developer-centric performance testing |
+| Accessibility | axe-core | 6.9K | MPL-2.0 | WCAG 2.2 automated compliance |
+| Contract Testing | Pact | — | MIT | Consumer-driven microservice contracts |
+| Integration Testing | Testcontainers | 9K+ | MIT | Throwaway Docker containers for tests |
+| API Mocking | Prism | 4.9K | Apache-2.0 | OpenAPI-driven mock servers |
+
+#### Security & Compliance Layer
+
+| Component | Technology | Stars | License | Purpose |
+|---|---|---|---|---|
+| SAST | Semgrep + Bandit | 14.5K / 7.9K | LGPL-2.1 / Apache-2.0 | Multi-language + Python-specific static analysis |
+| SCA / SBOM | Trivy + Syft + Grype | 33.2K / 8.4K / 11.7K | Apache-2.0 | Container, dependency scanning, SBOM generation |
+| Secret Detection | Gitleaks | 24.4K | MIT | Pre-commit and CI secret scanning |
+| DAST | OWASP ZAP | 14.8K | Apache-2.0 | Dynamic application security testing |
+| License Compliance | ORT + ScanCode | 1.8K / 2.4K | Apache-2.0 | Automated open-source license compliance |
+| Code Quality | SonarQube CE | 10.3K | LGPL-3.0 | Continuous code quality inspection |
+| Formatting (JS/TS) | Biome | 24K | MIT | 10-100x faster linting + formatting |
+| Formatting (Python) | Ruff | 46.2K | MIT | 10-100x faster Python linting + formatting |
+
+#### DevOps & Infrastructure Layer
+
+| Component | Technology | Stars | License | Purpose |
+|---|---|---|---|---|
+| IaC Generation | Pulumi | 23.1K | Apache-2.0 | Programmatic IaC in Python/TypeScript |
+| IaC (HCL) | OpenTofu | ~23K | MPL-2.0 | Open-source Terraform alternative |
+| CI/CD Generation | Dagger | 15.5K | Apache-2.0 | Pipelines as code in Python/TypeScript |
+| Monorepo | Nx | 28.3K | MIT | Build system with caching and affected-only runs |
+| Config Management | Ansible | 68.1K | GPL-3.0 | Agentless configuration management |
+
+#### Observability & Operations Layer
+
+| Component | Technology | Stars | License | Purpose |
+|---|---|---|---|---|
+| All-in-One APM | SigNoz | 25K | Open-source | Traces, metrics, logs with LLM observability |
+| Metrics | Prometheus | 63.2K | Apache-2.0 | Pull-based metrics collection |
+| Dashboards | Grafana | 67.6K | AGPL-3.0 | Visualization and alerting |
+| Tracing | OpenTelemetry + Jaeger | 4.5K / 22.6K | Apache-2.0 | Distributed tracing across agents |
+| Error Tracking | Sentry (self-hosted) | 9.2K | FSL→Apache-2.0 | Exception monitoring, session replay |
+| LLM Observability | Langfuse | 23.3K | MIT | Per-agent cost tracking, prompt management |
+| Prompt Testing | Promptfoo | 12.8K | MIT | A/B testing, red-teaming, CI/CD integration |
+
+#### Utilities & Integration Layer
+
+| Component | Technology | Stars | License | Purpose |
+|---|---|---|---|---|
+| Plugin System | pluggy | 1.5K | MIT | Hook-based plugin architecture (powers pytest) |
+| Project Templates | Copier | 3K | MIT | Parameterized scaffolding with update/sync |
+| Diagrams | Mermaid + D2 | 86.6K / 23.2K | MIT / MPL-2.0 | Text-to-diagram generation |
+| API Docs | OpenAPI Generator | 25.9K | Apache-2.0 | SDK and doc generation from OpenAPI specs |
+| DB Migrations | Alembic | 4K | MIT | SQLAlchemy-based schema migrations |
+| Notifications | Apprise | 14.1K | BSD | 100+ notification channels, single library |
+| Dependency Updates | Renovate | 20K | AGPL-3.0 | Automated dependency update PRs |
+| Sandbox Execution | E2B (managed) / Nsjail (self-hosted) | 8.9K / 3K | Apache-2.0 | Isolated code execution environments |
+| Live Preview | code-server | 76.7K | MIT | Full VS Code in browser for live preview |
+| Git Operations | GitPython + simple-git + gh CLI | 5.1K / 3.8K / 43.1K | BSD/MIT | Programmatic git and GitHub automation |
+
+### 17.3 Additional Requirements
+
+| # | Requirement | Details |
+|---|---|---|
+| 1 | API keys for at least one LLM provider | OR a self-hosted model for fully offline operation |
+| 2 | Xcode 16+ | Required for iOS development (macOS only) |
+| 3 | Android Studio / Android SDK | Required for Android development |
+| 4 | WebSocket support | Required for real-time collaboration features |
+| 5 | PostgreSQL 16+ | Persistent storage of project state, agent history, metrics |
+| 6 | Redis 7+ or compatible | Task queue, caching, real-time pub/sub |
 
 ---
 
@@ -1448,6 +1588,8 @@ CodeBot's unique position: Open-source, multi-LLM, graph-centric, full-lifecycle
 | Privacy/compliance violations | Low | Critical | Self-hosted LLM option, data residency controls, audit logging, GDPR/HIPAA compliance tooling, no telemetry in offline mode |
 | Agent skill/hook/tool conflicts | Low | Medium | Skill versioning, conflict detection, sandbox testing of new skills before deployment, rollback capability |
 | Open source contribution quality | Medium | Medium | Contribution guidelines, automated PR review, CI/CD quality gates, community code review |
+| Experiment loop runaway cost | Medium | Medium | Hard token/time budget per experiment, circuit breakers (N consecutive non-improvements), multi-metric regression guards, human review gate before merge |
+| Autonomous optimization degrades codebase | Low | High | Multi-metric regression checks (improvement in one metric must not regress others), simplicity criterion enforcement, mandatory human review PR at end of Improve session |
 
 ---
 
@@ -1467,7 +1609,10 @@ CodeBot's unique position: Open-source, multi-LLM, graph-centric, full-lifecycle
 | **Context Tier** | Hierarchical context loading strategy (L0/L1/L2) inspired by OpenViking patterns |
 | **Dead Letter Queue** | Storage for failed messages that could not be processed after max retries |
 | **Design Token** | Atomic design decision (color, spacing, typography) that can be imported from design tools |
+| **ExperimentLoop** | An autonomous optimization loop where an agent proposes a code change (hypothesis), applies it to an experiment branch, measures outcome against baseline metrics, and keeps or discards the change. Inspired by Karpathy's autoresearch framework |
+| **Experiment Log** | TSV file tracking all experiment attempts: commit hash, hypothesis, metric before/after, keep/discard decision, diff size, duration |
 | **Fix Loop** | Iterative debug-fix-test cycle until all tests pass |
+| **Improve Mode** | Project type where CodeBot takes an existing codebase and autonomously runs ExperimentLoop to optimize specified quality metrics (performance, security, coverage, accessibility) within a time/token budget |
 | **Greenfield** | A brand new project built from scratch with no existing codebase |
 | **Hook** | A lifecycle callback that executes custom logic at a specific pipeline stage (pre-build, post-deploy, etc.) |
 | **IaC** | Infrastructure as Code — managing infrastructure through declarative configuration files |

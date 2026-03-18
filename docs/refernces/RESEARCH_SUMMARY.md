@@ -1,6 +1,6 @@
 # CodeBot — Research Summary
 
-**Version:** 2.3
+**Version:** 2.4
 **Date:** 2026-03-18
 
 ---
@@ -250,52 +250,102 @@ MASFactory provides the foundational architecture for CodeBot's multi-agent orch
 
 These are external tools that CodeBot **must** integrate — they are not replaceable by built-in code because they are the actual execution engines or industry-standard tools:
 
-| Component | Technology | Rationale |
-|---|---|---|
-| **CLI Coding Agents** | Claude Code, OpenAI Codex, Google Gemini CLI | Core code generation engines — CodeBot orchestrates these, does not replace them |
-| Graph engine | MASFactory | Production-tested graph-centric execution engine for agent orchestration |
-| LLM abstraction | LiteLLM + custom router | Unified interface for 100+ models across providers |
-| Code indexing | Tree-sitter | Language-agnostic AST parsing, no practical alternative |
-| Security scanning | Semgrep, Trivy, Gitleaks, Shannon, ScanCode | Best-in-class open-source security tools |
-| Test frameworks | pytest, Vitest, Playwright, Storybook | Industry standard per language/platform |
-| Containerization | Docker | Standard isolation runtime for sandboxes and deployment |
-| Git operations | GitPython | Programmatic git access for worktree management |
-| Observability | Prometheus + Grafana + OpenTelemetry | Industry standard metrics/tracing ecosystem |
+| Component | Technology | Version/Stars | License | Rationale |
+|---|---|---|---|---|
+| **CLI Coding Agents** | Claude Code (Agent SDK), OpenAI Codex CLI, Gemini CLI | Latest | Various | Core code generation engines — CodeBot orchestrates these |
+| **Agent Orchestration** | LangGraph | ~24.6K stars | MIT | DAG-based graph execution with checkpointing, fan-out parallelism, human-in-the-loop |
+| **Durable Execution** | Temporal | ~18.9K stars | MIT | Production-grade workflow durability, used by Stripe/Netflix/Datadog |
+| **LLM Gateway** | LiteLLM | ~39.2K stars, v1.82+ | MIT | Unified API for 100+ LLM providers, built-in cost tracking, self-hosted model support |
+| **Smart Model Routing** | RouteLLM | Apache-2.0 | Apache-2.0 | Cost-quality optimization between strong/weak model pairs (ICLR 2025) |
+| **MCP Framework** | FastMCP 2.0 | ~21.9K stars | Apache-2.0 | Powers 70% of MCP servers, REST-to-MCP generation, tool composition |
+| **Event Bus** | NATS + JetStream | ~19.4K stars | Apache-2.0 | Sub-ms latency pub/sub, durable messaging, queue groups, CNCF project |
+| **Task Queue** | Taskiq | ~2K stars | MIT | Async-native Python task queue with NATS/Redis/RabbitMQ brokers |
+| **Code Parsing** | Tree-sitter | ~24.2K stars | MIT | Multi-language AST parsing, incremental re-parsing, 100+ grammars |
+| **Code Search** | ast-grep | ~12.9K stars | MIT | AST-aware structural search, lint, and rewrite via Tree-sitter |
+| **Vector Database** | LanceDB (embedded) / Qdrant (server) | ~10K / ~29.6K stars | Apache-2.0 | Hybrid search (vector + keyword + SQL), embeddable, multi-modal |
+| **RAG Framework** | LlamaIndex | ~47.7K stars | MIT | 150+ data connectors, code-aware retrieval, query planning |
+| **CRDT Collaboration** | Yjs | ~21.4K stars | MIT | Real-time collaborative editing, Monaco/CodeMirror bindings |
+| **Security Scanning** | Semgrep, Trivy, Gitleaks, OWASP ZAP, Bandit | Various | Various | SAST, SCA, secret detection, DAST, Python security |
+| **SBOM Generation** | Syft + Grype | ~8.4K + ~11.7K stars | Apache-2.0 | Software bill of materials + vulnerability scanning |
+| **License Compliance** | ORT + ScanCode | ~1.8K + ~2.4K stars | Apache-2.0 | Automated open-source license compliance |
+| **Test Frameworks** | Playwright, Vitest, pytest, Stryker, k6, axe-core, Pact, Testcontainers | Various | Various | E2E, unit, mutation, load, accessibility, contract, integration testing |
+| **Linting/Formatting** | Biome (JS/TS), Ruff (Python), ESLint, Prettier, Black | Various | MIT | Multi-language code formatting and linting |
+| **Git Operations** | GitPython, simple-git, gh CLI, Husky | Various | Various | Programmatic git, PR automation, git hooks |
+| **Containerization** | Docker + E2B (sandbox) / Nsjail (lightweight) | Various | Various | Agent sandbox execution with security isolation |
+| **Observability** | SigNoz / Prometheus + Grafana + Jaeger + OpenTelemetry | Various | Various | LLM-aware observability, metrics, tracing, dashboards |
+| **LLM Cost Tracking** | Langfuse | ~23.3K stars | MIT | Per-agent token tracking, prompt management, self-hostable |
+| **Prompt Testing** | Promptfoo | ~12.8K stars | MIT | Prompt A/B testing, red-teaming, CI/CD integration |
 
 ### 7.2 Built-In Features (Developed Natively)
 
 These capabilities are **built into CodeBot** as first-class features. Research projects are listed as inspiration/reference, but CodeBot implements these natively:
 
-| Feature | Description | Research Inspiration |
-|---|---|---|
-| Agent orchestration layer | Custom SDLC pipeline logic with 10-stage model | MASFactory patterns |
-| Multi-LLM router | Route tasks to optimal LLM based on type, complexity, cost | Custom design |
-| **Hierarchical context system** | L0/L1/L2 tiered loading, filesystem-paradigm context store, directory-based retrieval, observable retrieval trajectories | OpenViking patterns |
-| **Episodic memory** | Cross-session observation capture, semantic compression, progressive disclosure, cross-project learning | claude-mem patterns |
-| **Sandbox execution & live preview** | Containerized per-agent execution environments with live browser preview, hot-reload, VNC, device emulation | OpenSandbox patterns |
-| Web dashboard | Custom UI for project management + agent monitoring + live preview | Custom design |
-| CLI tool | Custom CLI for headless operation | Custom design |
-| Security pipeline orchestrator | Orchestration of scanning tools with unified reporting | Shannon's pipeline model |
-| Debug/fix loop | Novel iterative agent loop with test-driven fixing | Custom design |
-| Auth & authorization | JWT + API key auth with optional MFA, RBAC | Custom design |
-| Platform observability layer | Metrics, tracing, alerting for agent and pipeline monitoring | Custom design |
-| Data retention management | Configurable retention policies for logs, traces, and artifacts | Custom design |
-| Dead letter queue | Capture and replay failed agent tasks and messages | Custom design |
-| Project Manager agent | Autonomous planning, task breakdown, progress tracking | Custom design |
-| **Agent memory hierarchy** | Project-scoped memory blocks, stateful agents with checkpoints | Letta/MemGPT patterns |
-| **Document understanding** | Deep document parsing for PRDs, API specs, templates | RAGFlow patterns |
+| Feature | Description | Backing Technology | Research Inspiration |
+|---|---|---|---|
+| Agent orchestration layer | Custom SDLC pipeline logic with 10-stage model | LangGraph + Temporal | MASFactory patterns |
+| Multi-LLM router | Route tasks to optimal LLM based on type, complexity, cost | LiteLLM + RouteLLM | Custom design |
+| **Hierarchical context system** | L0/L1/L2 tiered loading, filesystem-paradigm context store | SQLite + LanceDB + DuckDB | OpenViking patterns |
+| **Episodic memory** | Cross-session observation capture, semantic compression, progressive disclosure | LanceDB + SQLite | claude-mem patterns |
+| **Sandbox execution & live preview** | Containerized per-agent execution environments with live preview | E2B / Nsjail + code-server | OpenSandbox patterns |
+| Web dashboard | Custom UI with pipeline visualization, agent monitoring | Refine + React Flow + Shadcn/ui + Monaco Editor | Custom design |
+| Real-time communication | WebSocket for agent updates, terminal streaming | Socket.IO + FastAPI WebSockets + xterm.js | Custom design |
+| CLI tool | Custom CLI for headless operation | Click / Typer | Custom design |
+| Plugin system | Agent, tool, template, stage, LLM provider plugins | pluggy + setuptools entry_points | Custom design |
+| Project templates | Parameterized project scaffolding with update/sync | Copier | Custom design |
+| Diagram generation | Auto-generated architecture, ERD, and flow diagrams | Mermaid + D2 + Structurizr + ERAlchemy | Custom design |
+| API documentation | Auto-generated API docs from OpenAPI specs | OpenAPI Generator + Redoc | Custom design |
+| Notifications | Multi-channel alerts (Slack, Discord, email, push) | Apprise | Custom design |
+| Database migrations | Schema migration management | Alembic + dbmate | Custom design |
+| API mocking | Mock servers during development | Prism + Pact | Custom design |
+| Dependency management | Automated dependency updates and vulnerability scanning | Renovate + pip-audit | Custom design |
+| CI/CD generation | Programmatic pipeline generation | Dagger + Nx | Custom design |
+| Infrastructure as Code | Programmatic IaC generation | Pulumi + OpenTofu + Ansible | Custom design |
 
 ### 7.3 Platform Stack (Third-Party Libraries)
 
-| Component | Technology | Rationale |
-|---|---|---|
-| Frontend | React + Vite + TailwindCSS | Fast development, modern tooling |
-| Backend | FastAPI | Async Python, auto-generated docs |
-| Database | SQLite (dev) / PostgreSQL (prod) | Simple dev, scalable prod |
-| Vector store | Chroma (dev) / Weaviate (prod) | Embedding storage for episodic memory and code search |
-| Cache/Pubsub | Redis | Fast, reliable, well-supported |
-| CRDT | Yjs / Automerge | Real-time collaboration |
-| Auth | PyJWT + python-jose | Lightweight, well-maintained |
+| Layer | Component | Technology | License | Rationale |
+|---|---|---|---|---|
+| **Frontend** | UI Framework | React + Next.js | MIT | Industry standard, SSR support |
+| | UI Components | Shadcn/ui + Tremor (charts) | MIT / Apache-2.0 | Modern, customizable, data visualization |
+| | Admin Framework | Refine | MIT | Headless, real-time, 15+ backend connectors |
+| | Code Editor | Monaco Editor | MIT | Powers VS Code, diff view, LSP support |
+| | Terminal | xterm.js | MIT | Powers VS Code terminal, 19.5K stars |
+| | Pipeline Graph | React Flow + ELKjs | MIT / EPL-2.0 | Interactive DAG visualization |
+| | Real-time | Socket.IO | MIT | Rooms, broadcasting, auto-reconnection |
+| | Collaboration | Yjs (y-monaco) | MIT | CRDT-based collaborative editing |
+| **Backend** | API Framework | FastAPI | MIT | Async Python, auto-generated docs, WebSocket support |
+| | Task Queue | Taskiq + NATS broker | MIT / Apache-2.0 | Async-native, multiple broker backends |
+| | Event Bus | NATS + JetStream | Apache-2.0 | Sub-ms pub/sub, durable messaging |
+| | Agent Framework | LangGraph | MIT | Graph-based agent orchestration |
+| | Durable Workflows | Temporal | MIT | Checkpointing, retry, distributed execution |
+| | LLM Gateway | LiteLLM Proxy | MIT | Unified API, cost tracking, rate limiting |
+| | MCP Tools | FastMCP 2.0 | Apache-2.0 | MCP server/client framework |
+| | Plugin System | pluggy | MIT | Battle-tested via pytest ecosystem |
+| **Data** | Primary DB | PostgreSQL 16+ | PostgreSQL License | Reliable, scalable, rich ecosystem |
+| | Dev DB | SQLite | Public Domain | Zero-config, embeddable |
+| | Vector DB | LanceDB (embedded) / Qdrant (production) | Apache-2.0 | Hybrid search, embeddable |
+| | Analytical DB | DuckDB | MIT | In-process OLAP, L2 context queries |
+| | Cache/Pub-Sub | Redis 7+ / Valkey | BSD / BSD | Fast caching, pub-sub, task broker |
+| **DevOps** | IaC | Pulumi + OpenTofu | Apache-2.0 / MPL-2.0 | Programmatic + HCL IaC generation |
+| | CI/CD | Dagger | Apache-2.0 | Pipelines as code in Python/TypeScript |
+| | Monitoring | SigNoz | Open-source | All-in-one: traces, metrics, logs, LLM observability |
+| | Tracing | OpenTelemetry + Jaeger | Apache-2.0 | Distributed tracing across agents |
+| | Error Tracking | Sentry (self-hosted) | FSL→Apache-2.0 | Exception monitoring, session replay |
+| | LLM Observability | Langfuse | MIT | Per-agent cost tracking, prompt management |
+| **Security** | SAST | Semgrep + Bandit | LGPL-2.1 / Apache-2.0 | Multi-language + Python-specific scanning |
+| | SCA | Trivy + Grype + Syft | Apache-2.0 | Container, dependency, SBOM scanning |
+| | Secrets | Gitleaks | MIT | Pre-commit + CI secret detection |
+| | DAST | OWASP ZAP | Apache-2.0 | Dynamic application security testing |
+| | License | ORT + ScanCode | Apache-2.0 | Automated compliance pipeline |
+| **Testing** | E2E | Playwright | Apache-2.0 | Cross-browser, multi-language bindings |
+| | Unit (JS/TS) | Vitest | MIT | Vite-native, browser mode |
+| | Unit (Python) | pytest | MIT | Fixture system, rich plugins |
+| | Mutation | Stryker | Apache-2.0 | Test quality verification |
+| | Load | k6 | AGPL-3.0 | Developer-centric load testing |
+| | Accessibility | axe-core | MPL-2.0 | Zero false positives, WCAG 2.2 |
+| | Contract | Pact | MIT | Consumer-driven contract testing |
+| | Integration | Testcontainers | MIT | Throwaway Docker containers for tests |
+| | Mocking | Prism | Apache-2.0 | OpenAPI-driven mock servers |
 
 ---
 

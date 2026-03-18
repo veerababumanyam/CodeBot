@@ -1,10 +1,10 @@
 # CodeBot System Design Document
 
-> **Version:** 2.3
+> **Version:** 2.4
 > **Date:** 2026-03-18
 > **Status:** Draft
 > **Related:** PRD v2.3
-> **Architecture:** Graph-Centric Multi-Agent System (inspired by MASFactory, arXiv:2603.06007)
+> **Architecture:** Graph-Centric Multi-Agent System (LangGraph engine, inspired by MASFactory, arXiv:2603.06007)
 
 ---
 
@@ -128,6 +128,14 @@ composition. Input/output ports map to the sub-graph's entry/exit nodes.
 
 **LoopNode** contains a body sub-graph that executes repeatedly until a condition
 function returns `True` or `max_iterations` is reached. Used for the debug-fix loop.
+
+**ExperimentLoopNode** extends LoopNode with keep/discard experiment semantics
+(inspired by Karpathy's autoresearch). Each iteration: (1) agent proposes a
+hypothesis and code change, (2) change is applied to an experiment git branch,
+(3) metrics are measured and compared to baseline, (4) the change is merged if
+improved or the branch is discarded if degraded. An experiment log (TSV) tracks
+all attempts. The loop stops when the time budget is exhausted, the token budget
+is exceeded, or N consecutive experiments show no improvement.
 
 **SwitchNode** evaluates the shared state against a list of case predicates and routes
 execution to the first matching branch. The `default` branch catches unmatched cases.
@@ -311,6 +319,70 @@ class ComposedGraph:
             g.add_edge(Edge(node.id, "sec-merge", EdgeType.STATE_FLOW))
         g.add_node(merge)
         return g
+
+    @staticmethod
+    def experiment_loop(
+        agent_template: NodeTemplate,
+        metric_fn: str,
+        time_budget_seconds: int = 600,
+        max_no_improvement: int = 5,
+        improvement_threshold: float = 0.01,
+    ) -> DirectedGraph:
+        """
+        Autonomous experiment loop with keep/discard semantics.
+        Inspired by Karpathy's autoresearch framework.
+
+        Each iteration:
+          1. Agent proposes hypothesis + code change
+          2. Change applied to experiment branch (git checkout -b experiment/N)
+          3. Metric measured against baseline
+          4. If improved beyond threshold: merge to working branch, update baseline
+          5. If degraded or below threshold: discard branch
+          6. Result logged to experiment_log.tsv
+          7. Repeat until: time_budget exhausted, max_no_improvement consecutive
+             non-improvements, or token budget exceeded
+
+        Used for: Debug fix loops (S8), Performance optimization (S6),
+                  Security hardening (S6), Test coverage improvement (S7),
+                  and standalone Improve mode projects.
+        """
+        g = DirectedGraph(name="experiment-loop")
+
+        baseline    = AgentNode("baseline_measure", tools=["test_runner", "metric_collector"])
+        hypothesize = agent_template.instantiate("hypothesize")
+        apply       = AgentNode("apply_experiment", tools=["code_writer", "git_branch_manager"])
+        measure     = AgentNode("measure_experiment", tools=["test_runner", "metric_collector"])
+        evaluate    = SwitchNode("evaluate", cases=[
+            ("improved",   lambda s: s["metric_delta"] >= improvement_threshold),
+            ("regressed",  lambda s: s["metric_delta"] < 0),
+            ("no_change",  lambda s: True),  # default
+        ])
+        keep        = AgentNode("keep_experiment", tools=["git_merge", "experiment_logger"])
+        discard     = AgentNode("discard_experiment", tools=["git_branch_delete", "experiment_logger"])
+
+        for node in [baseline, hypothesize, apply, measure, evaluate, keep, discard]:
+            g.add_node(node)
+
+        g.add_edge(Edge("baseline_measure", "hypothesize",      EdgeType.STATE_FLOW))
+        g.add_edge(Edge("hypothesize",      "apply_experiment", EdgeType.STATE_FLOW))
+        g.add_edge(Edge("apply_experiment", "measure_experiment", EdgeType.STATE_FLOW))
+        g.add_edge(Edge("measure_experiment", "evaluate",        EdgeType.STATE_FLOW))
+        g.add_edge(Edge("evaluate",         "keep_experiment",   EdgeType.CONTROL_FLOW,
+                        condition=lambda s: s["decision"] == "improved"))
+        g.add_edge(Edge("evaluate",         "discard_experiment", EdgeType.CONTROL_FLOW,
+                        condition=lambda s: s["decision"] != "improved"))
+        # Loop back: both keep and discard feed back to hypothesize for next experiment
+        g.add_edge(Edge("keep_experiment",    "hypothesize", EdgeType.STATE_FLOW))
+        g.add_edge(Edge("discard_experiment", "hypothesize", EdgeType.STATE_FLOW))
+
+        g.metadata = {
+            "metric_fn": metric_fn,
+            "time_budget_seconds": time_budget_seconds,
+            "max_no_improvement": max_no_improvement,
+            "improvement_threshold": improvement_threshold,
+            "experiment_log_format": "commit_hash\thyp\tmetric_before\tmetric_after\tdelta\tstatus\tdiff_lines\tduration_s",
+        }
+        return g
 ```
 
 ### 1.7 SDLC Pipeline as a Graph
@@ -349,9 +421,12 @@ def build_sdlc_pipeline() -> DirectedGraph:
     reviewer       = AgentNode("reviewer",       agent=CodeReviewerAgent)
     security       = AgentNode("security",       agent=SecurityAuditorAgent)
     tester         = AgentNode("tester",         agent=TesterAgent)
-    debugger       = LoopNode("debugger",        agent=DebuggerAgent,
+    debugger       = ExperimentLoopNode("debugger", agent=DebuggerAgent,
                               condition=lambda s: s["all_tests_pass"],
-                              max_iterations=5)
+                              max_iterations=5,
+                              metric_fn="test_pass_rate",
+                              time_budget_seconds=600,
+                              max_no_improvement=3)
     doc_writer     = AgentNode("doc_writer",     agent=DocWriterAgent)
     infra_eng      = AgentNode("infra_eng",      agent=InfraEngineerAgent)
     project_mgr    = AgentNode("project_mgr",   agent=ProjectManagerAgent)
@@ -2063,7 +2138,7 @@ have relevant information without overwhelming their context windows.
 - **Episodic memory** (inspired by claude-mem patterns): a built-in persistent memory
   system with lifecycle hooks (on_task_start, on_task_complete, on_pipeline_end), semantic
   compression of stale memories, and progressive disclosure (summary -> full -> linked).
-  Episodic memory is backed by **Chroma + SQLite**.
+  Episodic memory is backed by **LanceDB (dev) / Qdrant (prod) + SQLite**.
 - **CLI agent integrations** (Claude Code, Codex CLI, Gemini CLI) remain mandatory
   external integrations for code generation and development tasks.
 
@@ -2245,7 +2320,7 @@ class MemoryManager:
 
     Provides persistent, semantically-searchable memory with lifecycle hooks,
     semantic compression, and progressive disclosure. Memory is backed by
-    Chroma + SQLite for fast hybrid retrieval (recency + semantic similarity).
+    LanceDB/Qdrant + SQLite for fast hybrid retrieval (recency + semantic similarity).
 
     Memory is organized hierarchically:
       .codebot/memory/
@@ -2311,7 +2386,7 @@ class MemoryManager:
         async with aiofiles.open(path, 'a') as f:
             await f.write(json.dumps(entry.to_dict()) + '\n')
 
-        # Index in vector store (Chroma) for semantic retrieval
+        # Index in vector store (LanceDB/Qdrant) for semantic retrieval
         await self.vector_store.upsert(
             id=entry.id,
             content=entry.content,
@@ -2332,7 +2407,7 @@ class MemoryManager:
         """Retrieve relevant memories using hybrid retrieval (recency + semantic)."""
         # Recency-based from SQLite
         recent = await self._get_recent(agent_role, limit=5)
-        # Semantic from Chroma vector store
+        # Semantic from LanceDB/Qdrant vector store
         semantic = await self.vector_store.query(
             query=task_type,
             filter={"agent_role": agent_role},
@@ -2367,13 +2442,13 @@ class MemoryManager:
 
 ```python
 class VectorStore:
-    """Embedding and retrieval via Chroma or Weaviate."""
+    """Embedding and retrieval via LanceDB (dev) or Qdrant (prod)."""
 
-    def __init__(self, backend: str = "chroma", persist_dir: str = ".codebot/vectors"):
-        if backend == "chroma":
-            self.client = chromadb.PersistentClient(path=persist_dir)
-        elif backend == "weaviate":
-            self.client = weaviate.Client(url=os.getenv("WEAVIATE_URL"))
+    def __init__(self, backend: str = "lancedb", persist_dir: str = ".codebot/vectors"):
+        if backend == "lancedb":
+            self.client = lancedb.connect(persist_dir)
+        elif backend == "qdrant":
+            self.client = QdrantClient(url=os.getenv("QDRANT_URL", "http://localhost:6333"))
         self.embedder = SentenceTransformer("all-MiniLM-L6-v2")
 
     async def upsert(self, id: str, content: str, metadata: dict):
@@ -5832,7 +5907,7 @@ class Checkpoint:
 | PipelinePhase | SQLite/PostgreSQL | -- | Indefinite |
 | Checkpoint | Filesystem (JSON) | -- | 30 days |
 | Events | JSONL files | -- | 90 days |
-| Vector Embeddings | Chroma/Weaviate | -- | Indefinite |
+| Vector Embeddings | LanceDB (dev) / Qdrant (prod) | -- | Indefinite |
 | Memory | JSONL files + vectors | -- | Indefinite |
 
 ---
@@ -6100,13 +6175,14 @@ CodeBot supports dual authentication mechanisms:
 | Component | Technology | Rationale |
 |-----------|-----------|-----------|
 | Core Language | Python 3.12+ | Async support, AI ecosystem |
-| Graph Engine | Custom (NetworkX-inspired) | Tailored for agent workflows |
-| LLM Providers | OpenAI, Anthropic, Google APIs | Multi-model strategy |
+| Graph Engine | LangGraph (primary) | Agent orchestration as composable graphs |
+| LLM Gateway | LiteLLM | Unified proxy for OpenAI, Anthropic, Google, self-hosted models |
+| LLM Providers | OpenAI, Anthropic, Google APIs (via LiteLLM) | Multi-model strategy |
 | CLI Agents (integration) | Claude Code, Codex CLI, Gemini CLI | Mandatory external integrations for coding tasks |
 | Context Store (built-in) | SQLite + file tree | L0/L1/L2 hierarchical context (inspired by OpenViking patterns) |
-| Episodic Memory (built-in) | Chroma + SQLite | Persistent memory with lifecycle hooks, semantic compression, progressive disclosure (inspired by claude-mem patterns) |
+| Episodic Memory (built-in) | LanceDB/Qdrant + SQLite | Persistent memory with lifecycle hooks, semantic compression, progressive disclosure (inspired by claude-mem patterns) |
 | Sandbox Execution (built-in) | Docker + gVisor/Kata | Per-agent container isolation with live preview and hot-reload |
-| Vector Store | Chroma (default), Weaviate (scale) | Embedding retrieval |
+| Vector Store | LanceDB (dev), Qdrant (prod) | Embedding retrieval |
 | Code Parsing | Tree-sitter | Multi-language AST parsing |
 | Git Integration | GitPython + subprocess | Worktree management |
 | Security: SAST | Semgrep + SonarQube | Comprehensive static analysis |
@@ -6115,11 +6191,16 @@ CodeBot supports dual authentication mechanisms:
 | Security: Secrets | Gitleaks | Secret detection |
 | Security: License | ScanCode / FOSSology / ORT | License compliance |
 | Testing | pytest, vitest, Playwright | Multi-framework support |
-| Task Queue | asyncio (in-process) | Simplicity, no external deps |
-| Persistence | SQLite (default), PostgreSQL (scale) | Flexible storage |
-| Event Storage | JSONL files | Simple, auditable |
+| MCP Framework | FastMCP 2.0 | Model Context Protocol server/client framework |
+| Event Bus | NATS | Pub/sub messaging for inter-agent communication |
+| Task Queue | TaskIQ + TaskIQ-NATS | Distributed task queue over NATS |
+| Durable Execution | Temporal (temporalio) | Durable workflow orchestration with retries and checkpoints |
+| Observability | Langfuse | LLM observability, cost tracking, prompt analytics |
+| Persistence | PostgreSQL (prod), SQLite (dev) | Flexible storage |
+| Cache | Redis | Caching and session storage |
+| Analytics DB | DuckDB | Analytical queries and reporting |
+| Event Storage | JSONL files + NATS JetStream | Durable, auditable event log |
 | Configuration | YAML | Human-readable pipeline defs |
-| MCP | Model Context Protocol SDK | Tool/resource injection |
 
 ## Appendix B: Glossary
 

@@ -1,6 +1,6 @@
 # CodeBot — Project Structure
 
-**Version:** 2.3
+**Version:** 2.4
 **Date:** 2026-03-18
 
 ---
@@ -663,3 +663,46 @@ YAML-based configuration for agents, LLM providers, security tools, pipeline def
 ### `templates/` — Templates
 
 Agent system prompts, project scaffolding templates, UI component templates, and mobile app templates for different tech stacks.
+
+---
+
+## Key Dependencies
+
+### Python Dependencies (Backend — `apps/server/`)
+
+| Package | Purpose |
+|---|---|
+| `fastapi`, `uvicorn`, `pydantic` | Web framework, ASGI server, data validation |
+| `langgraph` | Agent orchestration / graph engine |
+| `temporalio` | Durable workflow execution |
+| `litellm` | Unified LLM gateway (OpenAI, Anthropic, Google, self-hosted) |
+| `fastmcp` | MCP framework (Model Context Protocol 2.0) |
+| `nats-py` | Event bus (pub/sub messaging) |
+| `taskiq`, `taskiq-nats` | Distributed task queue over NATS |
+| `lancedb` | Vector database (development / local) |
+| `qdrant-client` | Vector database (production / scaled) |
+| `llama-index` | RAG framework for context retrieval |
+| `tree-sitter` | Multi-language code parsing (AST) |
+| `langfuse` | LLM observability and cost tracking |
+| `pluggy` | Plugin system for extensibility |
+| `copier` | Project scaffolding / template rendering |
+| `alembic`, `sqlalchemy` | Database migrations and ORM |
+| `apprise` | Multi-channel notifications |
+| `gitpython` | Git operations and worktree management |
+| `semgrep`, `bandit` | Security static analysis (SAST) |
+| `promptfoo` | Prompt testing and evaluation |
+
+### Node.js Dependencies (Frontend — `apps/dashboard/`)
+
+| Package | Purpose |
+|---|---|
+| `react`, `next` (or `vite`) | UI framework and build tooling |
+| `@refinedev/core` | Admin / CRUD framework |
+| `@xyflow/react` | Pipeline graph visualization |
+| `@shadcn/ui` | UI component library |
+| `@tremor/react` | Charts and data visualization |
+| `monaco-editor` | In-browser code editor |
+| `@xterm/xterm` | Embedded terminal emulator |
+| `socket.io-client` | Real-time WebSocket communication |
+| `yjs`, `y-monaco` | Real-time collaboration (CRDT) |
+| `mermaid` | Diagram rendering |

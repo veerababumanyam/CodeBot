@@ -20,7 +20,7 @@
    - 3.5 [Implementation Phase](#35-implementation-phase)
    - 3.6 [Quality Assurance Phase](#36-quality-assurance-phase)
    - 3.7 [Testing Phase](#37-testing-phase)
-   - 3.8 [Debug & Fix Loop](#38-debug--fix-loop)
+   - 3.8 [Debug & Fix Loop (ExperimentLoop)](#38-debug--fix-loop-experimentloop)
    - 3.9 [Documentation & Knowledge Phase](#39-documentation--knowledge-phase)
    - 3.10 [Deployment & Delivery Phase](#310-deployment--delivery-phase)
    - 3.11 [Failure Mode Analysis per Phase](#311-failure-mode-analysis-per-phase)
@@ -1725,16 +1725,16 @@ For each transition, the following data flows between phases:
 
 ---
 
-### 3.8 Debug & Fix Loop
+### 3.8 Debug & Fix Loop (ExperimentLoop)
 
-**Description:** The Debugger Agent analyzes test failures, identifies root causes, generates fixes, creates targeted regression tests, and iterates until all tests pass or the maximum iteration count is reached.
+**Description:** The Debugger Agent uses **experiment semantics** (inspired by Karpathy's autoresearch) to fix test failures. Each fix attempt is an isolated experiment on its own git branch: the agent proposes a hypothesis, applies the fix, measures results, and either **keeps** (merges) or **discards** (deletes branch) based on test pass rate improvement. This prevents the "fix cascading into more breakage" problem by ensuring every fix attempt is independently reversible.
 
 **Goals:**
 - Analyze all test failures and identify root causes
-- Generate targeted fixes for each failure
-- Create regression tests to prevent recurrence
-- Iterate until all tests pass
-- Escalate to human if max iterations exceeded
+- Generate targeted fixes as **discrete, reversible experiments**
+- Track every attempt (successful and failed) in an experiment log
+- Keep only fixes that improve test pass rate without regressions
+- Escalate to human after all fix strategies exhausted or time budget exceeded
 
 **Agent(s) Involved:** Debugger, Tester (for re-running tests)
 
@@ -1742,143 +1742,116 @@ For each transition, the following data flows between phases:
 
 ```
  1. Receive test failure details from Testing phase
- 2. Prioritize failures:
+ 2. BASELINE: Record current test pass rate and all secondary metrics
+ 3. Prioritize failures:
     a. Critical: security, data loss, crashes
     b. High: core feature broken
     c. Medium: edge case failure
     d. Low: cosmetic, non-functional
- 3. For each failure (highest priority first):
-    a. Analyze error message and stack trace
-    b. Read related source code
-    c. Identify root cause
-    d. Generate fix
-    e. Generate targeted regression test
-    f. Apply fix to codebase
-    g. Run targeted test to verify fix
-    h. Run full test suite to check for regressions
- 4. If all tests pass: proceed to Documentation & Knowledge
- 5. If new regressions introduced:
-    a. Add regressions to failure queue
-    b. Increment iteration counter
-    c. Loop back to step 3
- 6. If iteration count >= MAX_ITERATIONS (default: 3):
+ 4. For each failure (highest priority first), run EXPERIMENT LOOP:
+    a. Create experiment branch: git checkout -b experiment/{N}
+    b. Formulate hypothesis (natural language: "what this fix does and why")
+    c. Analyze error message and stack trace
+    d. Read related source code
+    e. Identify root cause
+    f. Generate fix + targeted regression test
+    g. Commit to experiment branch with hypothesis as commit message
+    h. Run targeted test to verify fix
+    i. Run full test suite to check for regressions
+    j. EVALUATE:
+       - Calculate delta = tests_passing_after - tests_passing_before
+       - Check regression guards: no secondary metric degraded beyond threshold
+       - Check simplicity: complexity_delta <= acceptable_increase
+    k. DECISION:
+       - If delta > 0 AND no regressions: KEEP → merge experiment branch, update baseline
+       - If delta <= 0 OR new regressions: DISCARD → delete experiment branch
+       - If crash/timeout: log as CRASH/TIMEOUT, discard
+    l. LOG to experiment_log.tsv:
+       commit_hash | hypothesis | metric_before | metric_after | delta | status | diff_lines | duration
+    m. If all tests pass: proceed to Documentation & Knowledge
+    n. If KEEP: try next failure
+    o. If DISCARD: try alternative fix strategy for same failure
+ 5. Circuit breakers (stop loop):
+    a. All tests pass
+    b. Time budget exhausted (default: 600s)
+    c. MAX_NO_IMPROVEMENT consecutive discards (default: 3)
+    d. All fix strategies exhausted for remaining failures
+    e. Token budget exceeded
+ 6. On exit, if failures remain:
     a. Escalate to human with:
        - Remaining failures
-       - Fix attempts history
+       - Full experiment log (all attempts, kept and discarded)
        - Root cause analysis
        - Suggested manual steps
 ```
 
-**Debug/Fix Loop Diagram:**
+**ExperimentLoop Diagram:**
 
 ```
- Test Failure -----> Failure Analysis -----> Root Cause ID
-      ^                                          |
-      |                                          v
-      |                                    Fix Generation
-      |                                          |
-      |                                          v
-      |                              Targeted Test Creation
-      |                                          |
-      |                                          v
-      |                                   Fix Application
-      |                                          |
-      |                                          v
-      |                                   Re-run Tests
-      |                                          |
-      |                                     +----+----+
-      |                                     |         |
-      |                                   pass      fail
-      |                                     |         |
-      |                                     v         |
-      |                              [Continue]       |
-      |                                               |
-      +---- iteration < MAX ----<---------------------+
-                                               |
-                                         iteration >= MAX
-                                               |
-                                               v
-                                      [ESCALATE TO HUMAN]
+ Test Failure -----> BASELINE Measurement -----> Failure Prioritization
+                          |                              |
+                          v                              v
+                   Record baseline           Create experiment branch
+                   test_pass_rate            git checkout -b experiment/N
+                          |                              |
+                          |                              v
+                          |                     Hypothesis + Fix Generation
+                          |                              |
+                          |                              v
+                          |                     Commit to experiment branch
+                          |                              |
+                          |                              v
+                          |                     Run Test Suite
+                          |                              |
+                          |                     +--------+--------+
+                          |                     |                 |
+                          |                  improved          degraded
+                          |                     |                 |
+                          |                     v                 v
+                          |              KEEP: merge       DISCARD: delete
+                          |              update baseline    experiment branch
+                          |                     |                 |
+                          |                     v                 v
+                          |               Log to TSV         Log to TSV
+                          |                     |                 |
+                          |                     v                 v
+                          +<--- next failure ---+    try alt strategy
+                          |                              |
+                          |                     +--------+--------+
+                          |                     |                 |
+                          |                  strategy           no more
+                          |                  available          strategies
+                          |                     |                 |
+                          |                     v                 v
+                          +<--------------------+         ESCALATE or
+                                                         circuit-break
 ```
 
-**Detailed Sequence Diagram:**
+**Fix Strategies (tried in order per failure):**
+
+| Strategy | When Used | Description | Experiment Branch |
+|----------|-----------|-------------|-------------------|
+| Targeted Fix | First attempt: single, isolated bug | Fix the specific line/function causing the failure | `experiment/N-targeted` |
+| Refactor | Targeted fix discarded: systemic issue | Restructure the affected module to address root cause | `experiment/N-refactor` |
+| Alternative Approach | Refactor discarded: fix causes regressions | Try a completely different implementation strategy | `experiment/N-alt` |
+| Rollback + Redo | Alternative discarded: multiple regressions | Revert to last known good state, re-implement differently | `experiment/N-redo` |
+| Partial Skip | All strategies discarded: non-critical, time constrained | Mark test as known-issue, document, and proceed | `experiment/N-skip` |
+
+**Experiment Log Format (`experiment_log.tsv`):**
 
 ```
- Orchestrator      Debugger         Tester           Codebase        User
-     |                |                |                 |              |
-     | Failures       |                |                 |              |
-     |--------------->|                |                 |              |
-     |                | Prioritize     |                 |              |
-     |                |---+            |                 |              |
-     |                |<--+            |                 |              |
-     |                |                |                 |              |
-     |   +----------- ITERATION LOOP (max 3) ----------+              |
-     |   |            |                |                 |              |
-     |   |            | Analyze error  |                 |              |
-     |   |            |---+            |                 |              |
-     |   |            |<--+            |                 |              |
-     |   |            |                |                 |              |
-     |   |            | Read source    |                 |              |
-     |   |            |--------------------------------->|              |
-     |   |            | Source code    |                 |              |
-     |   |            |<---------------------------------|              |
-     |   |            |                |                 |              |
-     |   |            | Generate fix   |                 |              |
-     |   |            |---+            |                 |              |
-     |   |            |<--+            |                 |              |
-     |   |            |                |                 |              |
-     |   |            | Generate test  |                 |              |
-     |   |            |---+            |                 |              |
-     |   |            |<--+            |                 |              |
-     |   |            |                |                 |              |
-     |   |            | Apply fix      |                 |              |
-     |   |            |--------------------------------->|              |
-     |   |            |                |                 |              |
-     |   |            | Run targeted   |                 |              |
-     |   |            | test           |                 |              |
-     |   |            |--------------->|                 |              |
-     |   |            | Result         |                 |              |
-     |   |            |<---------------|                 |              |
-     |   |            |                |                 |              |
-     |   |            | Run full suite |                 |              |
-     |   |            |--------------->|                 |              |
-     |   |            | Results        |                 |              |
-     |   |            |<---------------|                 |              |
-     |   |            |                |                 |              |
-     |   |   +--------+--------+      |                 |              |
-     |   |   |                 |      |                 |              |
-     |   | all pass        new failures                 |              |
-     |   |   |                 |      |                 |              |
-     |   |   v                 v      |                 |              |
-     |   | [DONE]        [LOOP BACK]  |                 |              |
-     |   |                     |      |                 |              |
-     |   +---------------------+      |                 |              |
-     |                |                |                 |              |
-     |   (if max iterations reached)   |                 |              |
-     |                |                |                 |              |
-     | Escalation     |                |                 |              |
-     | report         |                |                 |              |
-     |<---------------|                |                 |              |
-     |                                                                 |
-     | Escalate to human                                               |
-     |---------------------------------------------------------------->|
+commit_hash  hypothesis                              metric_before  metric_after  delta  status   diff_lines  duration_s
+a1b2c3d      Fix null check in auth middleware       0.85           0.92          +0.07  KEEP     +12/-3      45
+e4f5g6h      Refactor date parsing to use ISO 8601   0.92           0.90          -0.02  DISCARD  +28/-15     67
+i7j8k9l      Add retry logic to API client           0.92           0.95          +0.03  KEEP     +18/-2      52
 ```
-
-**Fix Strategies:**
-
-| Strategy | When Used | Description |
-|----------|-----------|-------------|
-| Targeted Fix | Single, isolated bug | Fix the specific line/function causing the failure |
-| Refactor | Systemic issue | Restructure the affected module to address root cause |
-| Alternative Approach | Fix causes regressions | Try a completely different implementation strategy |
-| Rollback + Redo | Multiple regressions | Revert to last known good state, re-implement differently |
-| Partial Skip | Non-critical, time constrained | Mark test as known-issue, document, and proceed |
 
 **Error Handling:**
-- Debugger cannot identify root cause: provide best guess + escalate
-- Fix introduces more failures than it resolves: rollback fix, try alternative
+- Debugger cannot identify root cause: provide best guess, try fix anyway as experiment (can be safely discarded)
+- Fix introduces more failures than it resolves: automatic DISCARD via metric comparison — no manual intervention needed
 - Debugger exceeds token budget: summarize context, continue with essential code only
-- Circular regression loop detected: break cycle, escalate to human
+- Circular regression loop detected: impossible by design — each experiment is independently evaluated against baseline, not against previous experiment
+- Git branch conflict: rebase experiment branch on latest working branch before measurement
 
 ---
 

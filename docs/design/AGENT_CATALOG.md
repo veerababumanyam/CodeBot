@@ -1899,9 +1899,9 @@ infra_engineer:
 ### 16. Security Auditor Agent
 
 #### Overview
-- **Role**: Comprehensive security analysis across SAST, DAST, SCA, secrets, licensing, and IaC
+- **Role**: Comprehensive security analysis across SAST, DAST, SCA, secrets, licensing, and IaC. **Optional ExperimentLoop-based autonomous hardening**
 - **Category**: Quality
-- **Graph Position**: Review phase (parallel with Code Reviewer); after Implementation
+- **Graph Position**: Review phase (parallel with Code Reviewer); after Implementation. Optionally participates in ExperimentLoop (Improve mode or post-pipeline hardening)
 - **Upstream Dependencies**: All Implementation agents (source code), Infrastructure Engineer (IaC configs)
 - **Downstream Consumers**: Debugger, Orchestrator (quality gate), Documentation Writer
 
@@ -1914,6 +1914,7 @@ infra_engineer:
 6. Scan Infrastructure as Code (IaC) for security misconfigurations via KICS
 7. Generate a comprehensive security report with findings, severity scores, and remediation guidance
 8. Enforce security quality gates (zero critical/high findings required to pass)
+9. **ExperimentLoop mode** (optional, Improve mode): Autonomously generate and apply security fixes as discrete experiments — each fix is re-scanned and kept only if it reduces findings count without breaking tests
 
 #### Tools & Capabilities
 | Tool | Purpose | Integration |
@@ -2248,9 +2249,9 @@ accessibility:
 ### 19. Performance Agent
 
 #### Overview
-- **Role**: Performance analysis, optimization recommendations, and benchmark enforcement
+- **Role**: Performance analysis, optimization recommendations, benchmark enforcement, and **optional ExperimentLoop-based autonomous optimization**
 - **Category**: Quality
-- **Graph Position**: Review phase; after Implementation agents
+- **Graph Position**: Review phase; after Implementation agents. Optionally participates in ExperimentLoop (Improve mode or post-pipeline optimization)
 - **Upstream Dependencies**: All Implementation agents (source code), Infrastructure Engineer (deployment configs)
 - **Downstream Consumers**: Debugger, Frontend Developer, Backend Developer, Documentation Writer
 
@@ -2263,6 +2264,7 @@ accessibility:
 6. Analyze memory usage patterns and detect potential memory leaks
 7. Review API response times and recommend caching strategies
 8. Generate performance benchmark report with optimization recommendations
+9. **ExperimentLoop mode** (optional, Improve mode): Autonomously apply optimizations as discrete experiments — each optimization is measured against baseline Lighthouse/bundle/response-time metrics and kept only if it improves the target metric without regressions
 
 #### Tools & Capabilities
 | Tool | Purpose | Integration |
@@ -2601,21 +2603,23 @@ tester:
 ### 22. Debugger Agent
 
 #### Overview
-- **Role**: Root cause analysis, automated fix generation, and iterative fix-test loop management
+- **Role**: Root cause analysis, automated fix generation, and **experiment-based fix-test loop** with keep/discard semantics (inspired by Karpathy's autoresearch)
 - **Category**: Testing
-- **Graph Position**: Debug/Fix phase; after Testing; loops back to Implementation agents
+- **Graph Position**: Debug/Fix phase (ExperimentLoopNode); after Testing; loops back to Implementation agents
 - **Upstream Dependencies**: Tester (failed tests), Security Auditor (security findings), Code Reviewer (review comments)
 - **Downstream Consumers**: All Implementation agents (via fix loop), Orchestrator, Documentation Writer
 
 #### Responsibilities
 1. Analyze test failures to identify root causes through stack trace parsing and code analysis
 2. Parse and prioritize issues from security findings, review comments, and accessibility violations
-3. Generate targeted code fixes for identified issues
-4. Create targeted test cases that verify each fix resolves the original issue
-5. Run regression tests to ensure fixes do not break existing functionality
-6. Manage the iterative fix-test loop (max 5 iterations before escalation)
-7. Track fix attempts and convergence to prevent infinite loops
-8. Generate a debug report documenting all issues found, fixes applied, and remaining items
+3. **Formulate fix hypotheses** — each fix attempt is a discrete experiment with a stated hypothesis
+4. **Create experiment branches** — each fix gets its own git branch (`experiment/N`) for isolation
+5. Generate targeted code fixes and regression tests
+6. **Measure experiment outcomes** — compare test pass rate before/after, check regression guards
+7. **Keep or discard** — merge experiment branch if improved, delete if degraded (no cascading breakage)
+8. **Log all experiments** to `experiment_log.tsv` — both kept and discarded attempts for learning
+9. Apply **circuit breakers**: stop after time budget, token budget, or N consecutive non-improvements
+10. Generate experiment report documenting all attempts (kept + discarded), root causes, and remaining items
 
 #### Tools & Capabilities
 | Tool | Purpose | Integration |
@@ -2627,6 +2631,9 @@ tester:
 | `grep` | Search for error patterns in codebase | ripgrep integration |
 | `stack_trace_parser` | Parse and analyze stack traces | Internal parser |
 | `git_diff` | Compare changes between fix iterations | Git CLI |
+| `git_branch_manager` | Create/merge/delete experiment branches | Git CLI |
+| `experiment_logger` | Log experiment results to experiment_log.tsv | Internal logger |
+| `metric_collector` | Measure test pass rate, coverage, and secondary metrics | Test runner integration |
 
 #### Input/Output Specification
 **Inputs:**
@@ -2648,6 +2655,7 @@ tester:
 | Debug report | Orchestrator, Documentation Writer | Markdown report |
 | Remaining issues | Orchestrator (for human escalation) | JSON issue list |
 | Fix iteration metrics | Dashboard | JSON metrics |
+| Experiment log | Dashboard, Knowledge system | TSV (commit, hypothesis, metrics, status) |
 
 #### LLM Configuration
 | Task | Recommended Model | Fallback | Rationale |
@@ -2666,18 +2674,23 @@ tester:
 
 #### Agent State Machine
 ```
-IDLE --> INITIALIZING --> ANALYZING --> FIXING --> TESTING --> VERIFYING --> COMPLETED/FAILED
-                                          |                       |
-                                          +<---[test fails]-------+
-                                          |
-                                     [max iterations]
-                                          |
-                                          v
-                                      ESCALATED
+IDLE --> INITIALIZING --> BASELINING --> HYPOTHESIZING --> BRANCHING --> FIXING --> MEASURING
+                                              ^                                       |
+                                              |                              +--------+--------+
+                                              |                              |                 |
+                                              |                           KEEP              DISCARD
+                                              |                           (merge)           (delete branch)
+                                              |                              |                 |
+                                              +-----[next experiment]--------+-----------------+
+                                              |
+                                     [circuit breaker triggered]
+                                              |
+                                              v
+                                      COMPLETED / ESCALATED
 ```
 
 #### Error Handling
-- **Recovery strategies**: If fix introduces new failures, revert and try alternative approach; if root cause is unclear, expand analysis context; if fix loop does not converge after 3 iterations, simplify the fix strategy
+- **Recovery strategies**: If fix degrades test pass rate, it is automatically DISCARDED (branch deleted) — no manual rollback needed. If root cause is unclear, expand analysis context. Circular regression loops are impossible by design since each experiment is evaluated against the stable baseline, not the previous experiment
 - **Fallback behaviors**: Apply minimal fixes (suppress warnings, add error handling) if root cause fix is too complex; skip non-critical issues and document as known limitations
 - **Escalation paths**: After 5 fix iterations without convergence, escalate to human with full debug report; immediately escalate security-critical bugs that resist automated fixing
 

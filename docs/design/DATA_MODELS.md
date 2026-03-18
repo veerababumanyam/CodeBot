@@ -1,6 +1,6 @@
 # CodeBot — Data Models & Configuration Design
 
-**Version:** 2.3
+**Version:** 2.4
 **Date:** 2026-03-18
 
 ---
@@ -37,7 +37,7 @@ ProjectStatus: CREATED | PLANNING | BRAINSTORMING | RESEARCHING | ARCHITECTING |
                DOCUMENTING | DEPLOYING | DELIVERING | COMPLETED | FAILED |
                PAUSED | CANCELLED
 
-ProjectType: GREENFIELD | INFLIGHT | BROWNFIELD
+ProjectType: GREENFIELD | INFLIGHT | BROWNFIELD | IMPROVE
 ```
 
 ### 1.2 Pipeline
@@ -223,7 +223,41 @@ ExecutionStatus: SUCCESS | FAILURE | TIMEOUT | RATE_LIMITED | CANCELLED
 TestStatus: PASSED | FAILED | SKIPPED | ERROR
 ```
 
-### 1.9 SecurityFinding
+### 1.9 ExperimentLog
+
+Tracks individual experiments within an ExperimentLoop (Debug, Performance, Security, Improve mode). Inspired by autoresearch's `results.tsv` pattern — each row captures a hypothesis, its measured outcome, and the keep/discard decision.
+
+```
+┌──────────────────────────────────────────┐
+│           ExperimentLog                  │
+├──────────────────────────────────────────┤
+│ id: UUID (PK)                            │
+│ project_id: UUID (FK → Project)          │
+│ pipeline_id: UUID (FK → Pipeline)        │
+│ stage: String                            │  # e.g., "S8_DEBUG", "S6_PERF", "IMPROVE"
+│ experiment_number: Integer               │  # sequential within the loop session
+│ hypothesis: Text                         │  # natural language description of proposed change
+│ git_branch: String                       │  # experiment branch name (e.g., "experiment/7")
+│ git_commit_sha: String                   │  # commit hash of the applied change
+│ metric_name: String                      │  # e.g., "test_pass_rate", "lighthouse_score"
+│ metric_before: Decimal                   │  # baseline measurement
+│ metric_after: Decimal                    │  # post-experiment measurement
+│ metric_delta: Decimal                    │  # metric_after - metric_before
+│ regression_checks: JSONB                 │  # {metric_name: {before, after, passed}} for all secondary metrics
+│ status: ExperimentStatus                 │  # KEEP, DISCARD, CRASH, TIMEOUT
+│ decision_reason: Text                    │  # why the experiment was kept or discarded
+│ diff_lines_added: Integer                │  # lines of code added
+│ diff_lines_removed: Integer              │  # lines of code removed
+│ complexity_delta: Integer (nullable)     │  # change in cyclomatic complexity
+│ duration_seconds: Integer                │  # wall-clock time for this experiment
+│ token_cost: Integer                      │  # LLM tokens consumed by this experiment
+│ created_at: DateTime                     │
+└──────────────────────────────────────────┘
+
+ExperimentStatus: KEEP | DISCARD | CRASH | TIMEOUT | REGRESSION
+```
+
+### 1.10 SecurityFinding
 
 ```
 ┌──────────────────────────────────────────┐
@@ -256,7 +290,7 @@ Severity: CRITICAL | HIGH | MEDIUM | LOW | INFO
 FindingStatus: OPEN | IN_PROGRESS | FIXED | ACCEPTED_RISK | FALSE_POSITIVE
 ```
 
-### 1.10 ReviewComment
+### 1.11 ReviewComment
 
 ```
 ┌──────────────────────────────────────────┐
@@ -281,7 +315,7 @@ CommentType: BUG | STYLE | PERFORMANCE | SECURITY | ARCHITECTURE | SUGGESTION
 CommentStatus: OPEN | RESOLVED | DISMISSED
 ```
 
-### 1.11 Event
+### 1.12 Event
 
 ```
 ┌──────────────────────────────────────────┐
@@ -315,7 +349,7 @@ EventType: AGENT_STARTED | AGENT_COMPLETED | AGENT_FAILED |
            ACCESSIBILITY_REPORT_GENERATED
 ```
 
-### 1.12 Checkpoint
+### 1.13 Checkpoint
 
 ```
 ┌──────────────────────────────────────────┐
@@ -1319,7 +1353,7 @@ context:
         - external_docs
         - research_results
   vector_store:
-    provider: chroma  # chroma | weaviate
+    provider: lancedb  # lancedb (dev) | qdrant (prod)
     embedding_model: text-embedding-3-small
     chunk_size: 512
     chunk_overlap: 50
@@ -1446,12 +1480,21 @@ server:
     - "http://localhost:5173"
 
 database:
-  url: "sqlite:///./workspace/codebot.db"
-  # url: "postgresql://user:pass@localhost:5432/codebot"
+  url: "sqlite:///./workspace/codebot.db"          # dev default
+  # url: "postgresql://user:pass@localhost:5432/codebot"  # prod
+
+vector_store:
+  provider: lancedb                                 # dev default
+  # provider: qdrant                                # prod
+  # qdrant_url: "http://localhost:6333"
+
+analytics:
+  provider: duckdb
+  path: "./workspace/analytics.duckdb"
 
 redis:
-  url: "redis://localhost:6379/0"
-  # Set to null to use in-memory pubsub
+  url: "redis://localhost:6379/0"                   # caching & session storage
+  # Set to null to disable Redis caching
   # url: null
 
 logging:

@@ -1,6 +1,6 @@
 # CodeBot -- System Architecture Document
 
-**Version:** 2.3
+**Version:** 2.4
 **Date:** 2026-03-18
 **Status:** Draft
 **Author:** Architecture Team
@@ -42,9 +42,11 @@ or natural language requirements and orchestrates a fleet of specialized AI agen
 to plan, research, architect, design, implement, review, test, debug, and deliver
 a fully working application.
 
-The system is founded on the MASFactory framework (arXiv:2603.06007), which models
-multi-agent workflows as directed computation graphs where nodes execute agents or
-sub-workflows and edges encode dependencies and message passing.
+The system uses LangGraph (~24.6K stars, MIT) as the primary agent graph engine,
+with Temporal (~18.9K stars, MIT) for durable workflow orchestration. The architecture
+follows graph-centric multi-agent patterns (originally inspired by MASFactory,
+arXiv:2603.06007) where workflows are expressed as directed computation graphs with
+nodes executing agents or sub-workflows and edges encoding dependencies and message passing.
 
 ### 1.1 C4 Model -- Level 1: System Context
 
@@ -218,8 +220,9 @@ sub-workflows and edges encode dependencies and message passing.
 
 ## 2. High-Level Architecture
 
-CodeBot is structured in five logical layers, following the MASFactory paradigm and
-extending it with infrastructure and security concerns specific to autonomous
+CodeBot is structured in five logical layers, following graph-centric multi-agent
+patterns (inspired by MASFactory, now implemented via LangGraph + Temporal) and
+extending them with infrastructure and security concerns specific to autonomous
 software development.
 
 ### 2.1 Layer Model
@@ -237,7 +240,7 @@ software development.
          |                    |                    |
 +===================================================================+
 |  LAYER 3 -- COMPONENT LAYER                                      |
-|  Agents | Graph | Loop | Switch | ComposedGraph | NodeTemplate    |
+|  Agents | Graph | Loop | ExperimentLoop | Switch | ComposedGraph | NodeTemplate |
 +===================================================================+
          |                    |                    |
 +===================================================================+
@@ -330,8 +333,9 @@ Vibe Graphing allows natural language workflow definition.
 ## 3. Agent Graph Engine
 
 The Agent Graph Engine is the core execution substrate. It implements the
-MASFactory graph-centric model where multi-agent workflows are expressed as
-directed computation graphs.
+graph-centric model (via LangGraph, replacing MASFactory as the primary engine)
+where multi-agent workflows are expressed as directed computation graphs.
+MASFactory patterns remain as architectural inspiration.
 
 ### 3.1 Graph Skeleton (Node/Edge Primitives)
 
@@ -475,6 +479,8 @@ Graph Execution Lifecycle:
 | `DebugFixLoop` | Loop with exit condition | Debugger -> Developer -> Tester -> [exit if pass] |
 | `ResearchSpike` | Parallel fan-out, merge | [Researcher_1, ..., Researcher_N] -> Merge -> Architect |
 | `FullSDLC` | End-to-end pipeline | Orchestrator -> Brainstormer -> Researcher -> Architect -> Planner -> CodingPipeline -> ReviewGate -> TestingGate -> DebugFixLoop -> DocWriter -> Delivery |
+| `ExperimentLoop` | Autonomous keep/discard optimization | Baseline -> Hypothesize -> Apply(branch) -> Measure -> Evaluate -> [Keep(merge) \| Discard(delete)] -> loop back. Inspired by Karpathy's autoresearch. Used by: DebugFixLoop (S8), Performance optimization (S6), Security hardening (S6), Test coverage (S7), and standalone Improve mode |
+| `ImproveModePipeline` | Bounded autonomous optimization | CodebaseAnalysis -> MetricBaseline -> ExperimentLoop(target_metrics) -> ResultsReport -> HumanReviewGate |
 
 ### 3.5 Agent Role Definitions
 
@@ -814,7 +820,7 @@ maximizing relevance.
 +---------------------------+     +---------------------------+
 |   Filesystem Paradigm     |     |   Vector Store            |
 |   (Built-in, inspired by  |
-|    OpenViking patterns)   |     |   (Chroma / Weaviate)     |
+|    OpenViking patterns)   |     |   (LanceDB / Qdrant)      |
 |                           |     |                           |
 | project/                  |     | - Code embeddings         |
 |   .codebot/               |     |   (Tree-sitter + embed)   |
@@ -1046,15 +1052,19 @@ Finding:
 |  |  Projects                 |     |  Session cache            |      |
 |  |  +-----------------+      |     |  Agent state cache        |      |
 |  |  | id              |      |     |  Rate limit counters      |      |
-|  |  | name            |      |     |  PubSub channels          |      |
-|  |  | prd_content     |      |     |  Task queue (BullMQ)      |      |
-|  |  | config          |      |     |  LLM response cache       |      |
-|  |  | status          |      |     |                           |      |
-|  |  | created_at      |      |     +---------------------------+      |
-|  |  +-----------------+      |                                        |
+|  |  | name            |      |     |  LLM response cache       |      |
+|  |  | prd_content     |      |     |                           |      |
+|  |  | config          |      |                                        |
+|  |  | status          |      |     +---------------------------+      |
+|  |  | created_at      |      |     |     NATS + JetStream       |      |
+|  |  +-----------------+      |     |                           |      |
+|  |                           |     |  Event streaming          |      |
+|  |                           |     |  Inter-agent messaging    |      |
+|  |                           |     |  Task queue (Taskiq)      |      |
 |  |                           |     +---------------------------+      |
+|  |                           |                                        |
 |  |  Pipeline Runs            |     |     Vector Store           |      |
-|  |  +-----------------+      |     |     (Chroma / Weaviate)    |      |
+|  |  +-----------------+      |     |     (LanceDB / Qdrant)     |      |
 |  |  | id              |      |     |                           |      |
 |  |  | project_id (FK) |      |     |  Code embeddings          |      |
 |  |  | graph_snapshot  |      |     |  +-----------------+      |      |
@@ -1126,13 +1136,13 @@ PRD Input
 [PostgreSQL: Pipeline Runs] ---- create run record
     |
     v
-[Redis: Task Queue] ---- enqueue agent tasks
+[NATS: Task Queue] ---- enqueue agent tasks (via Taskiq + NATS broker)
     |
     +---> [Agent executes] ---> [PostgreSQL: Agent Tasks] (status, result)
     |         |
     |         +---> [Vector Store] (index new code)
     |         +---> [Object Store] (store artifacts)
-    |         +---> [Redis: PubSub] (real-time events to dashboard)
+    |         +---> [NATS: JetStream] (real-time events to dashboard)
     |         +---> [Knowledge Graph] (update decision/dependency graph)
     |         +---> [PostgreSQL: LLM Usage] (track tokens/cost)
     |
@@ -1335,7 +1345,7 @@ Resource Governor:
 
 ### 10.1 Inter-Agent Messaging
 
-Following MASFactory's three communication flows, CodeBot implements a layered
+Following the graph-centric three communication flows (inspired by MASFactory), CodeBot implements a layered
 messaging system.
 
 ```
@@ -1567,18 +1577,26 @@ Internal Communication:
 |---|---|---|---|
 | **Language** | Python | 3.12+ | Orchestration engine, agents, CLI |
 | **Language** | TypeScript | 5.x | Web dashboard, CLI agent integrations |
-| **Web Framework** | FastAPI | 0.110+ | REST API, WebSocket, async support |
-| **Web Frontend** | Next.js | 14+ | Dashboard UI |
-| **Task Queue** | Redis + BullMQ | 7.x | Agent task scheduling and messaging |
+| **Web Framework** | FastAPI | 0.115+ | REST API, WebSocket, async support |
+| **Web Frontend** | Refine + React Flow + Shadcn/ui | latest | Dashboard UI with agent graph visualization |
+| **Agent Orchestration** | LangGraph (~24.6K stars, MIT) | latest | Stateful agent graph execution with persistence |
+| **Workflow Engine** | Temporal (~18.9K stars, MIT) | latest | Durable workflow orchestration, retry, and scheduling |
+| **LLM Gateway** | LiteLLM Proxy (~39.2K stars, MIT) + RouteLLM | v1.82+ | Unified multi-provider LLM routing and proxy |
+| **MCP** | FastMCP 2.0 (~21.9K stars, Apache-2.0) | 2.0 | Model Context Protocol server framework |
+| **Event Bus** | NATS + JetStream (~19.4K stars, Apache-2.0) | latest | Inter-agent messaging, event streaming |
+| **Task Queue** | Taskiq (~2K stars, MIT) with NATS broker | latest | Async task scheduling and execution |
 | **CLI Framework** | Click | 8.x | CodeBot CLI interface |
+| **Code Editor** | Monaco Editor + xterm.js | latest | In-browser code editing and terminal |
+| **Real-time** | Socket.IO + Yjs | latest | WebSocket communication and collaborative editing |
 
 ### 12.2 Data Stores
 
 | Store | Technology | Purpose |
 |---|---|---|
-| **Relational DB** | PostgreSQL 16 | Projects, runs, tasks, findings, usage logs |
-| **Cache / PubSub** | Redis 7 | State cache, event bus, task queues, rate limits |
-| **Vector Store** | Chroma / Weaviate | Code and document embeddings for semantic search |
+| **Relational DB** | PostgreSQL 16+ | Projects, runs, tasks, findings, usage logs |
+| **Cache** | Redis 7+ | State cache, rate limits, session state (note: Redis remains for caching; event bus moved to NATS) |
+| **Vector Store (Dev)** | LanceDB | Embedded vector database for development (replaces ChromaDB, deprecated in favor of LanceDB for embedded use) |
+| **Vector Store (Prod)** | Qdrant | Managed/self-hosted vector database for production |
 | **Object Store** | MinIO (local) / S3 (cloud) | Artifacts, reports, build outputs |
 | **Knowledge Graph** | Cognee | Architecture decisions, dependency graphs |
 | **Memory** | Letta (MemGPT) | Agent memory hierarchy, learnings, decisions |
@@ -1623,13 +1641,12 @@ projects as design references.
 | **SAST** | Semgrep | CLI subprocess, rule packs |
 | **SAST + Quality** | SonarQube Community | REST API, quality profiles |
 | **SAST (GitHub)** | CodeQL | GitHub Actions integration |
-| **DAST** | Shannon | CLI subprocess |
+| **DAST** | OWASP ZAP | CLI subprocess, API scanning |
+| **Python Security** | Bandit | CLI subprocess, AST-based Python security linter |
 | **Container Scanning** | Trivy | CLI subprocess |
+| **SBOM + Vulnerability** | Syft + Grype | SBOM generation (Syft) and vulnerability matching (Grype) |
 | **Secrets Detection** | Gitleaks | CLI subprocess + pre-commit hook |
-| **License Compliance** | ScanCode Toolkit | CLI subprocess |
-| **License Compliance** | FOSSology | REST API |
-| **License Compliance** | ORT (OSS Review Toolkit) | CLI subprocess |
-| **SCA** | OpenSCA | CLI subprocess |
+| **License Compliance** | ORT (OSS Review Toolkit) | CLI subprocess, dependency analysis and license orchestration |
 | **IaC Security** | KICS | CLI subprocess |
 | **Code Formatting** | Prettier, Black, Ruff | CLI subprocess |
 | **Linting** | ESLint, Ruff, Clippy | CLI subprocess |
@@ -1638,10 +1655,10 @@ projects as design references.
 
 | Component | Technology | Purpose |
 |---|---|---|
-| **RAG Pipeline** | RAGFlow | Document chunking, retrieval, re-ranking |
-| **Code Parsing** | Tree-sitter | AST-aware code chunking for embeddings |
+| **RAG Pipeline** | LlamaIndex (~47.7K stars, MIT) | Document chunking, retrieval, re-ranking, and RAG orchestration |
+| **Code Parsing** | Tree-sitter (v0.26+) + ast-grep (v0.42+) | AST-aware code chunking, structural search, and semantic code analysis |
 | **Embeddings** | OpenAI `text-embedding-3-large` / Cohere | Code and document embedding generation |
-| **MCP Protocol** | MCP SDK | Standardized tool interface for agents |
+| **MCP Protocol** | FastMCP 2.0 (~21.9K stars, Apache-2.0) | Standardized tool interface for agents |
 
 ### 12.8 Infrastructure
 
@@ -1649,25 +1666,42 @@ projects as design references.
 |---|---|---|
 | **Containerization** | Docker / Podman | Service isolation, reproducible environments |
 | **Orchestration** | Docker Compose (local) / K8s (cloud) | Multi-container management |
+| **IaC** | Pulumi + OpenTofu | Infrastructure as Code (Pulumi for programmatic, OpenTofu for Terraform-compatible) |
+| **CI/CD Pipeline** | Dagger | Containerized CI/CD pipeline engine |
+| **Configuration Mgmt** | Ansible | Server provisioning and configuration management |
 | **Version Control** | Git 2.40+ | Source management, worktree isolation |
 | **Reverse Proxy** | Caddy / Nginx | TLS termination, routing |
 | **CI/CD** | GitHub Actions / GitLab CI | Pipeline automation |
-| **Monitoring** | Prometheus + Grafana | Metrics collection and dashboards |
+| **Observability** | SigNoz / Prometheus + Grafana + Jaeger | Unified metrics, traces, and dashboards |
+| **LLM Observability** | Langfuse | LLM-specific tracing, prompt management, and evaluation |
+| **Tracing** | OpenTelemetry | Distributed tracing instrumentation |
 | **Logging** | Structured JSON + Loki | Centralized log aggregation |
+| **Sandbox** | E2B / Nsjail + code-server | Cloud sandboxes (E2B) and local sandbox isolation (Nsjail) with in-browser IDE (code-server) |
 
 ### 12.9 Testing
 
 | Category | Technology | Purpose |
 |---|---|---|
-| **Unit Testing** | pytest (Python), Vitest (TS) | Component-level testing |
-| **Integration Testing** | pytest + testcontainers | Service integration testing |
-| **E2E Testing** | Playwright | Browser-based end-to-end testing |
+| **Unit Testing** | pytest v9+ (Python), Vitest v4+ (TS) | Component-level testing |
+| **Integration Testing** | pytest + Testcontainers | Service integration testing with real dependencies |
+| **E2E Testing** | Playwright v1.58+ | Browser-based end-to-end testing |
+| **Accessibility Testing** | axe-core | Automated accessibility compliance checking |
+| **Contract Testing** | Pact | Consumer-driven contract testing for API boundaries |
 | **UI Component Testing** | Storybook + Chromatic | Visual regression and isolated UI component testing |
 | **Smoke Testing** | Custom test suites (Playwright + pytest) | Quick post-deploy sanity checks for critical paths |
 | **Regression Testing** | pytest + Playwright (tagged suites) | Verifying previously fixed bugs remain fixed |
 | **Mutation Testing** | mutmut (Python), Stryker (TS/JS) | Evaluating test suite effectiveness by injecting faults |
-| **Load Testing** | k6 / Locust | Performance benchmarking |
+| **Load Testing** | k6 | Performance and load benchmarking |
 | **Coverage** | coverage.py, c8 | Code coverage measurement |
+
+### 12.10 Plugins, Templates, and Utilities
+
+| Category | Technology | Purpose |
+|---|---|---|
+| **Plugin System** | pluggy | Extensible plugin architecture for custom agent behaviors |
+| **Project Templates** | Copier | Template-based project scaffolding and generation |
+| **Notifications** | Apprise | Unified notification delivery (Slack, email, Discord, etc.) |
+| **Diagrams** | Mermaid + D2 | Architecture and flow diagram generation from code |
 
 ---
 
@@ -2271,7 +2305,7 @@ Large Message Flow:
 | **Metrics** | Prometheus + Grafana | Time-series metrics collection, dashboarding, and alerting rules |
 | **Logs** | Structured JSON (structlog/pino) + Loki | Centralized, queryable log aggregation with correlation IDs |
 | **Traces** | OpenTelemetry -> Jaeger | Distributed tracing across agents, phases, and LLM calls |
-| **Events** | Event Bus (Redis PubSub) + WebSocket (Socket.IO) | Real-time pipeline events streamed to dashboard and CLI |
+| **Events** | Event Bus (NATS JetStream) + WebSocket (Socket.IO) | Real-time pipeline events streamed to dashboard and CLI |
 | **Alerts** | Alertmanager (Prometheus) | Threshold-based alerts routed to Slack, email, or PagerDuty |
 
 ### 17.2 Observability Integration
@@ -2595,11 +2629,15 @@ Every agent prompt follows a five-section structure:
 
 **Status:** Accepted
 **Context:** Need to orchestrate 15+ specialized agents with complex dependencies.
-**Decision:** Adopt MASFactory's graph-centric model with DAG-based execution.
-**Rationale:** Provides explicit dependency modeling, parallel execution, reusable
-patterns, and formal scheduling guarantees (topological sort). Alternatives
-considered: sequential pipeline (too rigid), blackboard architecture (hard to
-reason about), market-based (unpredictable scheduling).
+**Decision:** Adopt graph-centric model with DAG-based execution, implemented via
+LangGraph (primary engine) + Temporal (durable workflows). MASFactory patterns
+remain as architectural inspiration.
+**Rationale:** LangGraph provides stateful, cyclical agent graph execution with
+built-in persistence and human-in-the-loop support. Temporal adds durable workflow
+guarantees with automatic retry and scheduling. Provides explicit dependency
+modeling, parallel execution, reusable patterns, and formal scheduling guarantees
+(topological sort). Alternatives considered: sequential pipeline (too rigid),
+blackboard architecture (hard to reason about), market-based (unpredictable scheduling).
 
 ### ADR-002: Multi-LLM with Intelligent Routing
 
@@ -2630,15 +2668,18 @@ deferred to agent-initiated retrieval (expensive but comprehensive). CodeBot's
 built-in hierarchical context system was inspired by OpenViking patterns as
 research inspiration, not as a direct integration or dependency.
 
-### ADR-005: Redis as Message Bus and State Cache
+### ADR-005: NATS + JetStream as Event Bus (Redis for Caching)
 
-**Status:** Accepted
+**Status:** Accepted (Updated)
 **Context:** Need low-latency inter-agent communication and real-time event streaming.
-**Decision:** Use Redis for PubSub (events), Streams (messages), and caching (state).
-**Rationale:** Redis provides sub-millisecond latency, supports multiple messaging
-patterns, and is operationally simple. For persistence guarantees, critical state
-is also written to PostgreSQL. The trade-off is that Redis is single-threaded, but
-our message volume (hundreds/minute, not millions) is well within capacity.
+**Decision:** Use NATS + JetStream (~19.4K stars, Apache-2.0) for event bus, messaging,
+and streaming. Redis remains for caching, session state, and rate limiting.
+**Rationale:** NATS provides sub-millisecond latency with JetStream adding persistence,
+exactly-once delivery, and replay capabilities superior to Redis Streams. NATS
+supports multiple messaging patterns (pub/sub, request/reply, queue groups) and
+scales horizontally. Redis is retained for caching where its data structures
+(sorted sets, hashes) excel. For persistence guarantees, critical state is also
+written to PostgreSQL.
 
 ---
 
@@ -2657,7 +2698,10 @@ our message volume (hundreds/minute, not millions) is well within capacity.
 | **Control Flow** | Orchestrator-driven signals for phase transitions and error handling |
 | **DAST** | Dynamic Application Security Testing (testing running applications) |
 | **Edge** | Connection between graph nodes encoding dependency or message channel |
-| **Fix Loop** | Iterative debug-fix-test cycle (implemented as a Loop node in the graph) |
+| **ExperimentLoop** | Autonomous optimization loop with keep/discard semantics: hypothesize → apply to branch → measure → keep if improved, discard otherwise. Inspired by Karpathy's autoresearch |
+| **ExperimentLoopNode** | Graph node type extending LoopNode with experiment tracking, metric comparison, and git branch management for keep/discard decisions |
+| **Fix Loop** | Iterative debug-fix-test cycle (implemented as an ExperimentLoopNode in the graph with test_pass_rate as metric) |
+| **Improve Mode** | Project type for autonomous codebase optimization via ExperimentLoop within a time/token budget |
 | **Graph Skeleton** | Core DAG data structure with Node and Edge primitives |
 | **MCP** | Model Context Protocol -- standardized interface for agent tools |
 | **Message Adapter** | Protocol layer component that normalizes inter-agent messages |
@@ -2671,10 +2715,10 @@ our message volume (hundreds/minute, not millions) is well within capacity.
 | **SAST** | Static Application Security Testing (analyzing source code without execution) |
 | **SCA** | Software Composition Analysis (analyzing third-party dependencies) |
 | **State Flow** | Shared mutable state propagated through the graph |
-| **Vibe Graphing** | Natural language to workflow graph compilation (MASFactory concept) |
+| **Vibe Graphing** | Natural language to workflow graph compilation (inspired by MASFactory concepts, implemented via LangGraph) |
 | **Worktree** | Git worktree providing an isolated working directory per coding agent |
 
 ---
 
-*Document generated for CodeBot v2.3 architecture planning. Subject to revision
+*Document generated for CodeBot v2.4 architecture planning. Subject to revision
 as the system evolves through milestones M1-M8.*

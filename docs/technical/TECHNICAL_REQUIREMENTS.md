@@ -1,6 +1,6 @@
 # CodeBot Technical Requirements Document
 
-**Version:** 2.3
+**Version:** 2.4
 **Last Updated:** 2026-03-18
 **Status:** Draft
 **Authors:** CodeBot Core Team
@@ -146,20 +146,20 @@ This document defines the complete set of technical requirements for building, d
 
 | Dependency | Version | Purpose | Install |
 |------------|---------|---------|---------|
-| **MASFactory** | >=0.1.0 | Graph-centric multi-agent orchestration framework; defines agent DAGs, manages execution order, handles inter-agent messaging and context propagation | `pip install masfactory` |
+| **LangGraph** | latest (~24.6K stars, MIT) | Primary agent graph engine; stateful, cyclical agent graph execution with built-in persistence and human-in-the-loop support | `pip install langgraph` |
+| **Temporal** | latest (~18.9K stars, MIT) | Durable workflow orchestration with automatic retry, scheduling, and failure recovery | `pip install temporalio` |
 | **LangChain** | >=0.3.0 | LLM chain composition, prompt management, output parsing, and tool integration | `pip install langchain` |
-| **LangGraph** | >=0.2.0 | Stateful, cyclical agent graph execution with built-in persistence and human-in-the-loop support | `pip install langgraph` |
 | **LangSmith** | >=0.1.0 | Observability, tracing, and evaluation for LLM chains (optional but recommended) | `pip install langsmith` |
 
-**MASFactory Integration Details:**
+**LangGraph + Temporal Integration Details:**
 
-MASFactory serves as the primary orchestration layer. Each CodeBot agent (Planner, Researcher, Architect, Designer, Coder, Reviewer, Tester, Debugger, Deployer, Project Manager) is registered as a node in a MASFactory execution graph. The framework provides:
+LangGraph serves as the primary agent graph engine, replacing MASFactory (whose patterns remain as architectural inspiration). Each CodeBot agent (Planner, Researcher, Architect, Designer, Coder, Reviewer, Tester, Debugger, Deployer, Project Manager) is registered as a node in a LangGraph execution graph. Temporal provides durable workflow orchestration for long-running pipelines. The combined stack provides:
 
-- **Graph Definition:** Declarative YAML or Python-based DAG specification for agent execution order and conditional branching.
-- **Context Bus:** Typed message passing between agents with schema validation.
-- **Checkpoint/Resume:** Serializable execution state for long-running development workflows.
+- **Graph Definition:** LangGraph's Python-native graph API for agent DAGs with conditional branching and cycles.
+- **Context Bus:** Typed message passing between agents with schema validation via NATS + JetStream.
+- **Checkpoint/Resume:** LangGraph's built-in checkpointing + Temporal's durable execution for long-running workflows.
 - **Parallel Execution:** Automatic parallelization of independent agent subgraphs.
-- **Error Recovery:** Configurable retry policies, fallback agents, and graceful degradation.
+- **Error Recovery:** Temporal's configurable retry policies, LangGraph fallback agents, and graceful degradation.
 
 ### 3.2 Backend API
 
@@ -179,13 +179,19 @@ MASFactory serves as the primary orchestration layer. Each CodeBot agent (Planne
 | Dependency | Version | Purpose | Install |
 |------------|---------|---------|---------|
 | **React** | >=18.3.0 | UI component framework | `pnpm add react react-dom` |
+| **Refine** | latest | React-based admin/dashboard framework with data provider abstraction | `pnpm add @refinedev/core` |
+| **React Flow** | latest | Interactive agent graph visualization and workflow editor | `pnpm add @xyflow/react` |
 | **Vite** | >=6.0.0 | Build tool and dev server | `pnpm add -D vite` |
 | **TailwindCSS** | >=4.0.0 | Utility-first CSS framework | `pnpm add -D tailwindcss` |
+| **Shadcn/ui** | latest | Pre-built accessible UI components (copy-paste pattern) | `pnpm dlx shadcn@latest init` |
+| **Monaco Editor** | latest | In-browser code editor (VS Code editor component) | `pnpm add @monaco-editor/react` |
+| **xterm.js** | latest | In-browser terminal emulator for agent output | `pnpm add @xterm/xterm` |
+| **Socket.IO** | latest | Real-time WebSocket communication | `pnpm add socket.io-client` |
+| **Yjs** | latest | CRDT-based collaborative editing | `pnpm add yjs` |
 | **Zustand** | >=5.0.0 | Lightweight state management | `pnpm add zustand` |
 | **React Router** | >=7.0.0 | Client-side routing | `pnpm add react-router` |
 | **TanStack Query** | >=5.60.0 | Server state management and data fetching | `pnpm add @tanstack/react-query` |
 | **Recharts** | >=2.13.0 | Charting library for metrics dashboards | `pnpm add recharts` |
-| **shadcn/ui** | latest | Pre-built accessible UI components (copy-paste pattern) | `pnpm dlx shadcn@latest init` |
 | **Lucide React** | >=0.460.0 | Icon set | `pnpm add lucide-react` |
 
 ### 3.4 Desktop Application (Optional)
@@ -205,9 +211,11 @@ MASFactory serves as the primary orchestration layer. Each CodeBot agent (Planne
 | **Alembic** | >=1.14.0 | Database migration management | `pip install alembic` |
 | **aiosqlite** | >=0.20.0 | Async SQLite driver (development) | `pip install aiosqlite` |
 | **asyncpg** | >=0.30.0 | Async PostgreSQL driver (production) | `pip install asyncpg` |
-| **ChromaDB** | >=0.5.0 | Embedded vector database (development) | `pip install chromadb` |
-| **Weaviate Client** | >=4.9.0 | Managed vector database client (production) | `pip install weaviate-client` |
-| **Redis** (via `redis-py`) | >=5.2.0 | Caching, pub/sub, session state | `pip install redis[hiredis]` |
+| **LanceDB** | >=0.15.0 | Embedded vector database (development); replaces ChromaDB (deprecated) | `pip install lancedb` |
+| **Qdrant Client** | >=1.12.0 | Managed/self-hosted vector database client (production) | `pip install qdrant-client` |
+| **Redis** (via `redis-py`) | >=5.2.0 | Caching, session state, rate limiting (note: event bus moved to NATS) | `pip install redis[hiredis]` |
+| **NATS** (via `nats-py`) | latest | Event bus, inter-agent messaging, streaming via JetStream | `pip install nats-py` |
+| **Taskiq** | latest (~2K stars, MIT) | Async task queue with NATS broker | `pip install taskiq taskiq-nats` |
 
 ### 3.6 DevOps & Tooling
 
@@ -291,7 +299,7 @@ CodeBot operates with a multi-provider LLM strategy. No single provider is a har
 
 | Property | Requirement |
 |----------|-------------|
-| **Abstraction Layer** | LiteLLM >= 1.50.0 (`pip install litellm`) or custom `LLMRouter` class |
+| **Abstraction Layer** | LiteLLM Proxy v1.82+ (~39.2K stars, MIT) + RouteLLM (`pip install litellm`) |
 | **Fallback Strategy** | Ordered provider list per use case; automatic failover on error |
 | **Rate Limiting** | Token bucket algorithm; per-provider and per-model limits |
 | **Retry Policy** | Exponential backoff with jitter: base 1s, max 60s, max retries 5 |
@@ -538,22 +546,47 @@ gitleaks detect --report-format json --report-path gitleaks-report.json
 
 ### 6.5 Dynamic Application Security Testing (DAST)
 
-#### 6.5.1 Shannon
+#### 6.5.1 OWASP ZAP
 
 | Property | Requirement |
 |----------|-------------|
-| **Purpose** | Autonomous DAST for web applications generated by CodeBot |
+| **Version** | >= 2.15.0 |
+| **Install** | Docker image `ghcr.io/zaproxy/zaproxy` or standalone |
+| **Purpose** | Automated DAST for web applications generated by CodeBot |
 | **Integration Point** | Post-deployment to staging environment |
 | **Target** | HTTP endpoints of generated applications |
-| **Output Format** | Structured findings report (JSON) |
+| **Output Format** | JSON, HTML, and SARIF reports |
 | **Scope Control** | Restrict scanning to the generated application domain only |
 
-### 6.6 License Compliance
+### 6.6 Python Security Linting
+
+#### 6.6.1 Bandit
+
+| Property | Requirement |
+|----------|-------------|
+| **Version** | >= 1.8.0 |
+| **Install** | `pip install bandit` |
+| **Purpose** | AST-based Python security linter for common vulnerabilities |
+| **Integration Point** | Post-code-generation, pre-commit, CI pipeline |
+| **Output Format** | JSON (`-f json`) for programmatic consumption |
+
+### 6.7 SBOM and Vulnerability Scanning
+
+#### 6.7.1 Syft + Grype
+
+| Property | Requirement |
+|----------|-------------|
+| **Syft Version** | >= 1.0.0 |
+| **Grype Version** | >= 0.80.0 |
+| **Install** | `brew install syft grype` or Docker images |
+| **Purpose** | SBOM generation (Syft) and vulnerability matching against SBOMs (Grype) |
+| **Integration Point** | Post-build, CI pipeline |
+| **Output Format** | SPDX, CycloneDX (Syft); JSON (Grype) |
+
+### 6.8 License Compliance
 
 | Tool | Version | Purpose | Install |
 |------|---------|---------|---------|
-| **ScanCode Toolkit** | >= 32.3.0 | License detection in source code and dependencies | `pip install scancode-toolkit` |
-| **FOSSology** | >= 4.4.0 | Open-source license compliance (server-based) | Docker image `fossology/fossology` |
 | **ORT (OSS Review Toolkit)** | >= 27.0.0 | Dependency analysis and license compliance orchestration | Docker image or standalone |
 
 **License Policy:**
@@ -573,7 +606,7 @@ gitleaks detect --report-format json --report-path gitleaks-report.json
 
 | Dependency | Version | Purpose | Install |
 |------------|---------|---------|---------|
-| **pytest** | >= 8.3.0 | Test runner and framework | `pip install pytest` |
+| **pytest** | >= 9.0.0 | Test runner and framework | `pip install pytest` |
 | **pytest-asyncio** | >= 0.24.0 | Async test support | `pip install pytest-asyncio` |
 | **pytest-cov** | >= 6.0.0 | Coverage reporting plugin | `pip install pytest-cov` |
 | **pytest-mock** | >= 3.14.0 | Mock/patch utilities | `pip install pytest-mock` |
@@ -621,7 +654,7 @@ markers = [
 
 | Dependency | Version | Purpose | Install |
 |------------|---------|---------|---------|
-| **Vitest** | >= 2.1.0 | Primary test runner (Vite-native) | `pnpm add -D vitest` |
+| **Vitest** | >= 4.0.0 | Primary test runner (Vite-native) | `pnpm add -D vitest` |
 | **Jest** | >= 29.7.0 | Alternative test runner (for non-Vite projects) | `pnpm add -D jest` |
 | **Testing Library** | >= 16.0.0 | React component testing utilities | `pnpm add -D @testing-library/react` |
 | **MSW** | >= 2.6.0 | API mocking (Mock Service Worker) | `pnpm add -D msw` |
@@ -631,7 +664,7 @@ markers = [
 
 | Dependency | Version | Purpose | Install |
 |------------|---------|---------|---------|
-| **Playwright** | >= 1.49.0 | Cross-browser E2E testing | `pnpm add -D @playwright/test` or `pip install playwright` |
+| **Playwright** | >= 1.58.0 | Cross-browser E2E testing | `pnpm add -D @playwright/test` or `pip install playwright` |
 | **Browsers** | Chromium, Firefox, WebKit | Multi-browser verification | `npx playwright install` |
 
 **Playwright Configuration:**
@@ -813,8 +846,8 @@ project-repo/
 
 | Environment | Backend | Configuration |
 |-------------|---------|---------------|
-| **Development** | ChromaDB (embedded mode) | Persistent storage at `~/.codebot/chroma/` |
-| **Production** | Weaviate (managed or self-hosted) | gRPC connection; batch import enabled |
+| **Development** | LanceDB (embedded mode) | Persistent storage at `~/.codebot/lancedb/`; replaces ChromaDB (deprecated in favor of LanceDB for embedded use) |
+| **Production** | Qdrant (managed or self-hosted) | gRPC/HTTP connection; batch import enabled |
 
 **Vector Storage Use Cases:**
 
@@ -1056,7 +1089,7 @@ CodeBot implements a hybrid memory system inspired by hierarchical episodic memo
 |----------|-------------|
 | **Purpose** | Expose CodeBot tools and data sources to LLM agents via standardized protocol |
 | **Transport** | stdio (for CLI agents), SSE (for web-based agents) |
-| **SDK** | `mcp` Python SDK >= 1.0.0 (`pip install mcp`) |
+| **SDK** | FastMCP 2.0 (~21.9K stars, Apache-2.0) (`pip install fastmcp`) |
 
 **MCP Servers Provided by CodeBot:**
 
@@ -1226,7 +1259,7 @@ repos:
 | Property | Requirement |
 |----------|-------------|
 | **SDK** | `opentelemetry-sdk` >= 1.28.0, `opentelemetry-api` >= 1.28.0 |
-| **Exporter** | OTLP (gRPC or HTTP) to Jaeger, Grafana Tempo, or Datadog |
+| **Exporter** | OTLP (gRPC or HTTP) to SigNoz, Jaeger, Grafana Tempo, or Datadog |
 | **Auto-Instrumentation** | FastAPI, httpx, SQLAlchemy, Redis |
 | **Custom Spans** | Agent execution, LLM API calls, tool invocations, file operations |
 | **Sampling** | Configurable; default 100% in dev, 10% in prod (always sample errors) |
@@ -1453,9 +1486,10 @@ cost_alerts:
 |----------|-----------------|---------------------|----------|
 | SQLite | 3.45.0 | 3.47.x | Development metadata |
 | PostgreSQL | 16.0 | 16.x (latest) | Production metadata |
-| Redis | 7.4.0 | 7.4.x (latest) | Caching, pub/sub |
-| ChromaDB | 0.5.0 | 0.5.x (latest) | Development vector store |
-| Weaviate | 1.27.0 | 1.27.x (latest) | Production vector store |
+| Redis | 7.0.0 | 7.x (latest) | Caching, session state |
+| NATS | latest | latest | Event bus, messaging, streaming |
+| LanceDB | 0.15.0 | latest | Development vector store (replaces ChromaDB) |
+| Qdrant | 1.12.0 | latest | Production vector store |
 
 ---
 
@@ -1465,10 +1499,11 @@ CodeBot requires comprehensive observability across all platform components to e
 
 | Signal | Technology | Purpose |
 |--------|------------|---------|
-| Metrics | Prometheus + Grafana | Agent throughput, token usage, cost, latency, error rates |
-| Logs | Structured JSON → stdout | Agent actions, LLM calls, tool invocations |
-| Traces | OpenTelemetry → Jaeger | End-to-end request tracing across agents |
-| Events | Event bus + WebSocket | Real-time pipeline state to dashboard |
+| Metrics | SigNoz / Prometheus + Grafana | Agent throughput, token usage, cost, latency, error rates |
+| Logs | Structured JSON -> stdout | Agent actions, LLM calls, tool invocations |
+| Traces | OpenTelemetry -> Jaeger | End-to-end request tracing across agents |
+| LLM Observability | Langfuse | LLM-specific tracing, prompt management, evaluation, and cost tracking |
+| Events | NATS JetStream + WebSocket (Socket.IO) | Real-time pipeline state to dashboard |
 | Alerts | Prometheus Alertmanager | Budget exhaustion, agent failures, pipeline stalls |
 
 ---
@@ -1626,7 +1661,7 @@ The following features must be automatically disabled when offline mode is activ
 | Property | Requirement |
 |----------|-------------|
 | **Dependencies** | Pre-cached; all Python and Node.js packages available locally |
-| **Vector Store** | Local ChromaDB instance (embedded mode) |
+| **Vector Store** | Local LanceDB instance (embedded mode) |
 | **UI/CLI Indicator** | Offline mode clearly indicated in both web dashboard and CLI output |
 
 ---
@@ -1646,7 +1681,7 @@ The following features must be automatically disabled when offline mode is activ
 | `GOOGLE_API_KEY` | Conditional | None | Google AI API key (required if using Google models) |
 | `DATABASE_URL` | No | `sqlite:///~/.codebot/metadata.db` | Database connection string |
 | `REDIS_URL` | No | `redis://localhost:6379/0` | Redis connection URL |
-| `VECTOR_DB_URL` | No | None (embedded ChromaDB) | Vector database connection URL |
+| `VECTOR_DB_URL` | No | None (embedded LanceDB) | Vector database connection URL |
 | `CODEBOT_API_HOST` | No | `0.0.0.0` | API server bind host |
 | `CODEBOT_API_PORT` | No | `8000` | API server bind port |
 | `CODEBOT_SANDBOX_IMAGE` | No | `codebot-sandbox:latest` | Docker image for code execution sandbox |
@@ -1701,8 +1736,8 @@ url = "sqlite:///~/.codebot/metadata.db"
 url = "redis://localhost:6379/0"
 
 [vector_db]
-backend = "chroma"
-persist_dir = "~/.codebot/chroma"
+backend = "lancedb"
+persist_dir = "~/.codebot/lancedb"
 
 [sandbox]
 enabled = true
@@ -1765,7 +1800,7 @@ cd cli && pnpm install
 # Start all services (development)
 docker compose up -d
 
-# Services started: PostgreSQL, Redis, ChromaDB, SonarQube
+# Services started: PostgreSQL, Redis, NATS, LanceDB, SonarQube
 ```
 
 ### 21.4 Version Pinning Policy
@@ -1786,4 +1821,4 @@ docker compose up -d
 
 ---
 
-*End of Technical Requirements Document*
+*End of Technical Requirements Document (v2.4)*
