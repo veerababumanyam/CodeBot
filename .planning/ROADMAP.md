@@ -173,14 +173,14 @@ Plans:
   3. S3 Architecture agents (Architect, API Designer, DB Designer, UI/UX Designer) execute in parallel and produce architecture, API specs, schemas, and wireframes
   4. S5 Implementation agents (Frontend, Backend, Mobile, Infrastructure) execute in parallel in isolated worktrees and produce code for their respective platforms
   5. S6 QA agents (Security Scanner, Accessibility, Performance, i18n) execute in parallel and all quality gates pass before advancing to Testing
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
-- [ ] 09-03: TBD
-- [ ] 09-04: TBD
-- [ ] 09-05: TBD
+- [ ] 09-01-PLAN.md — Agent registry, S1 Brainstorming agent, S2 Researcher agent, test scaffolding with mock fixtures
+- [ ] 09-02-PLAN.md — S3 Architecture agents (Architect, Designer, Template, Database, API Gateway) and S4 Planning agents (Planner, TechStack Builder)
+- [ ] 09-03-PLAN.md — S5 Implementation agents (Frontend Dev, Mobile Dev, Infrastructure Engineer, Middleware Dev, Integrations)
+- [ ] 09-04-PLAN.md — S6 QA agents (Security Auditor, Accessibility, Performance, i18n) and S7/S8 extensions (Tester with E2E, Debugger with security debugging)
+- [ ] 09-05-PLAN.md — Remaining agents (Documentation, Operations, Cross-cutting, Tooling stubs), stage subgraph configs, full registry integration test
 
 ### Phase 10: FastAPI Server + API Layer
 **Goal**: Users and frontends can control the entire CodeBot system through a REST API with real-time updates via WebSocket
