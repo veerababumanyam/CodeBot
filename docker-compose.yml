@@ -19,7 +19,7 @@ services:
       POSTGRES_USER: codebot
       POSTGRES_PASSWORD: codebot_dev
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -55,10 +55,10 @@ services:
     volumes:
       - nats_data:/data
     healthcheck:
-      test: ["CMD", "nats-server", "--signal", "ldm"]
-      interval: 10s
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8222/healthz"]
+      interval: 5s
       timeout: 5s
-      retries: 3
+      retries: 5
 
   # ──────────────────────────────────────────────
   # Observability

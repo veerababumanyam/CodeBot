@@ -70,3 +70,7 @@ coverage.xml
 
 # ruff
 .ruff_cache/
+
+# LanceDB embedded vector store data (keep directory structure via .gitkeep)
+data/lancedb/*.lance
+data/lancedb/*.idx
