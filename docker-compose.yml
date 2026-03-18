@@ -3,6 +3,7 @@
 # Dashboard: http://localhost:3000
 # API: http://localhost:8000
 # NATS Monitor: http://localhost:8222
+# Temporal UI: http://localhost:8233
 
 version: "3.9"
 
@@ -59,6 +60,40 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  # ──────────────────────────────────────────────
+  # Workflow Orchestration
+  # ──────────────────────────────────────────────
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    container_name: codebot-temporal
+    ports:
+      - "7233:7233"
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=codebot
+      - POSTGRES_PWD=codebot_dev
+      - POSTGRES_SEEDS=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "temporal", "operator", "namespace", "describe", "--namespace", "default"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    container_name: codebot-temporal-ui
+    ports:
+      - "8233:8080"
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+    depends_on:
+      - temporal
 
   # ──────────────────────────────────────────────
   # Observability

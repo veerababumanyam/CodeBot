@@ -15,6 +15,8 @@ Public API:
     - :func:`adapt_pipeline_for_project_type` -- filter phases by project type
     - :class:`PipelineEvent` -- typed pipeline event dataclass
     - :class:`PipelineEventEmitter` -- NATS JetStream event publisher
+    - :func:`create_worker` -- build a configured Temporal Worker
+    - :func:`run_worker` -- connect to Temporal and run the worker
 """
 
 from codebot.pipeline.events import PipelineEvent, PipelineEventEmitter
@@ -36,6 +38,7 @@ from codebot.pipeline.project_detector import (
     detect_project_type,
 )
 from codebot.pipeline.registry import PhaseRegistry
+from codebot.pipeline.worker import create_worker, run_worker
 
 __all__ = [
     "GateConfig",
@@ -50,6 +53,8 @@ __all__ = [
     "PipelineInput",
     "PipelineSettings",
     "adapt_pipeline_for_project_type",
+    "create_worker",
     "detect_project_type",
     "load_preset",
+    "run_worker",
 ]
