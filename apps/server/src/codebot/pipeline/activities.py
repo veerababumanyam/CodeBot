@@ -7,18 +7,42 @@ workflow functions.
 Activities:
     load_pipeline_config: Load a YAML pipeline preset and return serialized config.
     execute_phase_activity: Execute a single pipeline phase with heartbeating.
-    emit_pipeline_event: Emit a pipeline event (NATS integration wired in Plan 03).
+    emit_pipeline_event: Emit a pipeline event to NATS JetStream (with logging fallback).
+
+Functions:
+    set_event_emitter: Set the shared PipelineEventEmitter singleton (called by worker on startup).
 """
 
 from __future__ import annotations
 
+import logging
 import time
 from datetime import UTC, datetime
 
 from temporalio import activity
 
 from codebot.pipeline.checkpoint import PhaseInput, PhaseResult
+from codebot.pipeline.events import PipelineEventEmitter
 from codebot.pipeline.loader import load_preset
+
+logger = logging.getLogger(__name__)
+
+# Module-level emitter singleton (set by worker on startup via set_event_emitter)
+_emitter: PipelineEventEmitter | None = None
+
+
+def set_event_emitter(emitter: PipelineEventEmitter) -> None:
+    """Set the shared event emitter (called by worker on startup).
+
+    This avoids creating a new NATS connection for every activity call.
+    The worker initialises the NATS connection once and passes the
+    emitter here before registering activities.
+
+    Args:
+        emitter: A fully initialised :class:`PipelineEventEmitter`.
+    """
+    global _emitter  # noqa: PLW0603
+    _emitter = emitter
 
 
 @activity.defn
@@ -82,20 +106,29 @@ async def execute_phase_activity(phase_input: PhaseInput) -> PhaseResult:
 
 @activity.defn
 async def emit_pipeline_event(event_data: dict) -> None:  # type: ignore[type-arg]
-    """Emit a pipeline event.
+    """Emit a pipeline event to NATS JetStream.
 
-    In the full implementation, this publishes to NATS JetStream.
-    Plan 03 adds the NATS integration.  This activity provides
-    the Temporal activity boundary now.
+    Uses the module-level singleton emitter set by :func:`set_event_emitter`.
+    Falls back to logging when NATS is unavailable (graceful degradation).
 
     Args:
         event_data: Event payload dictionary with at least a ``"type"`` key.
     """
-    activity.heartbeat(f"Emitting event: {event_data.get('type', 'unknown')}")
-    # TODO: Plan 03 wires NATS JetStream here
+    event_type = event_data.get("type", "unknown")
+    activity.heartbeat(f"Emitting event: {event_type}")
+
+    if _emitter is not None:
+        try:
+            await _emitter.emit(event_type, event_data)
+            return
+        except Exception as exc:
+            logger.warning("NATS emit failed, falling back to log: %s", exc)
+
+    # Fallback: log the event when NATS is unavailable
     timestamp = datetime.now(UTC).isoformat()
-    activity.logger.info(
-        "Pipeline event: type=%s timestamp=%s",
-        event_data.get("type", "unknown"),
+    logger.info(
+        "Pipeline event: type=%s timestamp=%s data=%s",
+        event_type,
         timestamp,
+        event_data,
     )

@@ -139,16 +139,19 @@ class TestEmitPipelineEvent:
         mock_activity.heartbeat.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_logs_event(self) -> None:
-        """emit_pipeline_event logs the event type and timestamp."""
-        with patch("codebot.pipeline.activities.activity") as mock_activity:
+    async def test_logs_event_fallback(self) -> None:
+        """emit_pipeline_event falls back to logging when NATS emitter is not set."""
+        with (
+            patch("codebot.pipeline.activities.activity") as mock_activity,
+            patch("codebot.pipeline.activities.logger") as mock_logger,
+            patch("codebot.pipeline.activities._emitter", None),
+        ):
             mock_activity.heartbeat = MagicMock()
-            mock_activity.logger = MagicMock()
 
             await emit_pipeline_event({"type": "pipeline.phase_completed"})
 
-        mock_activity.logger.info.assert_called_once()
-        call_args = mock_activity.logger.info.call_args
+        mock_logger.info.assert_called_once()
+        call_args = mock_logger.info.call_args
         assert "pipeline.phase_completed" in str(call_args)
 
     @pytest.mark.asyncio
