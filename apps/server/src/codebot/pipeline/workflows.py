@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import timedelta
+from typing import Any
 
 from temporalio import workflow
 from temporalio.common import RetryPolicy
@@ -65,18 +66,18 @@ class PhaseAgentWorkflow:
     """
 
     @workflow.run
-    async def run(self, input: PhaseInput) -> PhaseResult:
+    async def run(self, phase_input: PhaseInput) -> PhaseResult:
         """Execute a single agent's phase activity.
 
         Args:
-            input: Phase execution parameters scoped to one agent.
+            phase_input: Phase execution parameters scoped to one agent.
 
         Returns:
             The :class:`PhaseResult` from the activity.
         """
         return await workflow.execute_activity(
             execute_phase_activity,
-            input,
+            phase_input,
             start_to_close_timeout=timedelta(minutes=30),
             heartbeat_timeout=timedelta(seconds=60),
             retry_policy=AGENT_RETRY,
@@ -141,7 +142,7 @@ class SDLCPipelineWorkflow:
     # ------------------------------------------------------------------
 
     @workflow.query
-    def get_status(self) -> dict:  # type: ignore[type-arg]
+    def get_status(self) -> dict[str, Any]:
         """Return the current pipeline status.
 
         Returns:
@@ -159,27 +160,27 @@ class SDLCPipelineWorkflow:
     # ------------------------------------------------------------------
 
     @workflow.run
-    async def run(self, input: PipelineInput) -> dict:  # type: ignore[type-arg]
+    async def run(self, pipeline_input: PipelineInput) -> dict[str, Any]:
         """Execute the SDLC pipeline end-to-end.
 
         Args:
-            input: Pipeline execution parameters.
+            pipeline_input: Pipeline execution parameters.
 
         Returns:
             Summary dictionary with ``status``, ``phases_completed``, and
             ``results`` list.
         """
         # Load config via activity (non-deterministic I/O)
-        config = await workflow.execute_activity(
+        config: dict[str, Any] = await workflow.execute_activity(
             load_pipeline_config,
-            input.preset_name,
+            pipeline_input.preset_name,
             start_to_close_timeout=timedelta(seconds=30),
             retry_policy=FAST_RETRY,
         )
 
-        phases: list[dict] = config["phases"]  # type: ignore[assignment]
-        start_idx = input.resume_from_phase or 0
-        results: list[dict] = []  # type: ignore[type-arg]
+        phases: list[dict[str, Any]] = config["phases"]
+        start_idx = pipeline_input.resume_from_phase or 0
+        results: list[dict[str, Any]] = []
 
         for idx, phase in enumerate(phases):
             if idx < start_idx:
@@ -205,11 +206,11 @@ class SDLCPipelineWorkflow:
             # Execute phase (parallel or sequential)
             if not phase.get("sequential", True):
                 result = await self._execute_parallel_phase(
-                    input.project_id, phase, idx
+                    pipeline_input.project_id, phase, idx
                 )
             else:
                 result = await self._execute_sequential_phase(
-                    input.project_id, phase, idx
+                    pipeline_input.project_id, phase, idx
                 )
 
             results.append(
@@ -260,9 +261,9 @@ class SDLCPipelineWorkflow:
                 await workflow.wait_condition(workflow.all_handlers_finished)
                 workflow.continue_as_new(
                     PipelineInput(
-                        project_id=input.project_id,
-                        preset_name=input.preset_name,
-                        project_type=input.project_type,
+                        project_id=pipeline_input.project_id,
+                        preset_name=pipeline_input.preset_name,
+                        project_type=pipeline_input.project_type,
                         resume_from_phase=idx + 1,
                     )
                 )
@@ -280,7 +281,7 @@ class SDLCPipelineWorkflow:
     async def _execute_sequential_phase(
         self,
         project_id: str,
-        phase: dict,  # type: ignore[type-arg]
+        phase: dict[str, Any],
         idx: int,
     ) -> PhaseResult:
         """Execute a phase sequentially via a single activity.
@@ -311,7 +312,7 @@ class SDLCPipelineWorkflow:
     async def _execute_parallel_phase(
         self,
         project_id: str,
-        phase: dict,  # type: ignore[type-arg]
+        phase: dict[str, Any],
         idx: int,
     ) -> PhaseResult:
         """Execute a phase in parallel via child workflows.
@@ -390,7 +391,7 @@ class SDLCPipelineWorkflow:
                 timeout=timedelta(minutes=timeout_minutes),
             )
             return self.gate_decisions[gate_id]
-        except asyncio.TimeoutError:
+        except TimeoutError:
             if timeout_action == "pause":
                 self.is_paused = True
                 await workflow.wait_condition(lambda: not self.is_paused)

@@ -432,4 +432,4 @@ class TestSDLCPipelineWorkflowContinueAsNew:
 
         source = inspect.getsource(SDLCPipelineWorkflow.run)
         assert "resume_from_phase=idx + 1" in source
-        assert "project_id=input.project_id" in source
+        assert "project_id=pipeline_input.project_id" in source
