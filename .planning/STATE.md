@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 06-03-PLAN.md
-last_updated: "2026-03-18T20:21:17.876Z"
-last_activity: 2026-03-18 -- Completed 06-03 (NATS JetStream event emission)
+stopped_at: Completed 06-04-PLAN.md
+last_updated: "2026-03-18T20:26:44Z"
+last_activity: 2026-03-18 -- Completed 06-04 (Temporal workflows, worker, integration tests)
 progress:
   total_phases: 12
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 36
-  completed_plans: 14
-  percent: 39
+  completed_plans: 15
+  percent: 42
 ---
 
 # Project State
@@ -26,18 +26,18 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 6 of 11 (Pipeline Orchestration)
-Plan: 3 of 4 in current phase
-Status: In Progress
-Last activity: 2026-03-18 -- Completed 06-03 (NATS JetStream event emission)
+Plan: 4 of 4 in current phase
+Status: Phase Complete
+Last activity: 2026-03-18 -- Completed 06-04 (Temporal workflows, worker, integration tests)
 
-Progress: [████░░░░░░] 39%
+Progress: [████░░░░░░] 42%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 2, Phase 6: 3)
+- Total plans completed: 17 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 2, Phase 6: 4)
 - Average duration: 7min (Phases 2+3+4+5+6)
-- Total execution time: 86min (Phases 2+3+4+5+6, Phase 1 pre-GSD)
+- Total execution time: 98min (Phases 2+3+4+5+6, Phase 1 pre-GSD)
 
 **By Phase:**
 
@@ -48,14 +48,15 @@ Progress: [████░░░░░░] 39%
 | 3. Agent Framework | 2/2 | 14min | 7min |
 | 4. Multi-LLM Abstraction | 2/3 | 21min | 11min |
 | 5. Context Management | 3/3 | 21min | 7min |
-| 6. Pipeline Orchestration | 3/4 | 15min | 5min |
+| 6. Pipeline Orchestration | 4/4 | 27min | 7min |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (9min), 04-02 (12min), 06-01 (5min), 06-02 (5min), 06-03 (5min)
+- Last 5 plans: 04-02 (12min), 06-01 (5min), 06-02 (5min), 06-03 (5min), 06-04 (12min)
 - Trend: Stable
 
 *Updated after each plan completion*
 | Phase 06 P03 | 5min | 2 tasks | 5 files |
+| Phase 06 P04 | 12min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -124,6 +125,9 @@ Recent decisions affecting current work:
 - [Phase 06]: NATSClient import from nats.aio.client.Client for mypy strict compatibility
 - [Phase 06]: Module-level _emitter singleton for NATS connection reuse in Temporal activities
 - [Phase 06]: max_age as seconds float (7*24*3600.0) -- nats-py internally converts to nanoseconds
+- [Phase 6-04]: UnsandboxedWorkflowRunner for tests -- Temporal sandbox restricts pathlib.Path.resolve from transitive imports
+- [Phase 6-04]: pipeline_input/phase_input parameter names in workflow run() methods to avoid ruff A002
+- [Phase 6-04]: NATS event emitter initialization is best-effort in worker -- pipeline runs without NATS
 
 ### Pending Todos
 
@@ -137,6 +141,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-18T20:21:17.873Z
-Stopped at: Completed 06-03-PLAN.md
+Last session: 2026-03-18T20:26:44Z
+Stopped at: Completed 06-04-PLAN.md
 Resume file: None
