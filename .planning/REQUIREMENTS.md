@@ -55,7 +55,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **PIPE-05**: Temporal provides durable workflow orchestration with retry, timeout, and crash recovery
 - [ ] **PIPE-06**: Pipeline can resume from last checkpoint after failure or manual pause
 - [x] **PIPE-07**: Pipeline detects project type (greenfield, inflight, brownfield) and adapts stage configuration
-- [ ] **PIPE-08**: Pipeline emits events to NATS JetStream for every stage transition, agent action, and gate decision
+- [x] **PIPE-08**: Pipeline emits events to NATS JetStream for every stage transition, agent action, and gate decision
 
 ### Input Processing (S0)
 
@@ -280,7 +280,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PIPE-05 | Phase 6 | Complete |
 | PIPE-06 | Phase 6 | Pending |
 | PIPE-07 | Phase 6 | Complete |
-| PIPE-08 | Phase 6 | Pending |
+| PIPE-08 | Phase 6 | Complete |
 | INPT-01 | Phase 7 | Pending |
 | INPT-02 | Phase 7 | Pending |
 | INPT-03 | Phase 9 | Pending |
