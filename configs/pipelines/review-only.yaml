@@ -1,0 +1,21 @@
+pipeline:
+  name: review-only
+  version: "1.0"
+  description: "Review-only preset -- runs only QA (S6) for code review workflows."
+
+  settings:
+    max_parallel_agents: 3
+    checkpoint_after_each_phase: false
+    cost_limit_usd: 10.0
+    timeout_minutes: 30
+
+  phases:
+    # S6: Quality Assurance (parallel)
+    - name: qa
+      agents:
+        - code_reviewer
+        - security_auditor
+      sequential: false
+      human_gate:
+        enabled: false
+      on_failure: escalate

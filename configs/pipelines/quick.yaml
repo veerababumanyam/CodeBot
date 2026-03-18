@@ -1,0 +1,78 @@
+pipeline:
+  name: quick
+  version: "1.0"
+  description: "Quick pipeline -- skips brainstorm (S1), research (S2), and documentation (S9). All gates auto-approve."
+
+  settings:
+    max_parallel_agents: 5
+    checkpoint_after_each_phase: true
+    cost_limit_usd: 25.0
+    timeout_minutes: 60
+
+  phases:
+    # S0: Project Initialization
+    - name: initialize
+      agents:
+        - orchestrator
+      sequential: true
+
+    # S3: Architecture & Design (parallel, auto-approve gate)
+    - name: design
+      agents:
+        - architect
+        - designer
+      sequential: false
+      human_gate:
+        enabled: true
+        prompt: "Review architecture and design."
+        timeout_minutes: 10
+        timeout_action: auto_approve
+
+    # S4: Planning & Configuration
+    - name: plan
+      agents:
+        - planner
+      sequential: true
+
+    # S5: Implementation (full parallel)
+    - name: implement
+      agents:
+        - frontend_dev
+        - backend_dev
+        - middleware_dev
+      sequential: false
+
+    # S6: Quality Assurance (parallel)
+    - name: qa
+      agents:
+        - code_reviewer
+        - security_auditor
+      sequential: false
+      on_failure: reroute_to_implement
+
+    # S7: Testing & Validation
+    - name: test
+      agents:
+        - tester
+      sequential: true
+
+    # S8: Debug & Stabilization (loop)
+    - name: fix
+      agents:
+        - debugger
+      sequential: true
+      loop:
+        condition: "all_tests_pass AND no_critical_security"
+        max_iterations: 3
+
+    # S10: Deployment & Delivery (auto-approve gate)
+    - name: deliver
+      agents:
+        - infra_engineer
+        - project_manager
+      sequential: true
+      human_gate:
+        enabled: true
+        prompt: "Review and deploy."
+        timeout_minutes: 10
+        timeout_action: auto_approve

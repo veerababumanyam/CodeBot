@@ -1,0 +1,121 @@
+pipeline:
+  name: full-sdlc
+  version: "1.0"
+  description: "Complete software development lifecycle -- all 10 stages (S0-S10)"
+
+  settings:
+    max_parallel_agents: 5
+    checkpoint_after_each_phase: true
+    cost_limit_usd: 50.0
+    timeout_minutes: 120
+
+  phases:
+    # S0: Project Initialization
+    - name: initialize
+      agents:
+        - orchestrator
+      sequential: true
+      human_gate:
+        enabled: false
+
+    # S1: Discovery & Brainstorming
+    - name: brainstorm
+      agents:
+        - brainstorm
+      sequential: true
+      human_gate:
+        enabled: false
+      skip_for_project_types:
+        - brownfield
+        - improve
+
+    # S2: Research & Analysis
+    - name: research
+      agents:
+        - researcher
+      sequential: true
+      human_gate:
+        enabled: false
+      skip_for_project_types:
+        - brownfield
+        - improve
+
+    # S3: Architecture & Design (parallel agents, human gate)
+    - name: design
+      agents:
+        - architect
+        - designer
+      sequential: false
+      human_gate:
+        enabled: true
+        prompt: "Review architecture and design. Approve to proceed?"
+        timeout_minutes: 60
+        timeout_action: pause
+        mandatory: true
+
+    # S4: Planning & Configuration
+    - name: plan
+      agents:
+        - planner
+      sequential: true
+      human_gate:
+        enabled: false
+
+    # S5: Implementation (full parallel)
+    - name: implement
+      agents:
+        - frontend_dev
+        - backend_dev
+        - middleware_dev
+      sequential: false
+      human_gate:
+        enabled: false
+
+    # S6: Quality Assurance (parallel)
+    - name: qa
+      agents:
+        - code_reviewer
+        - security_auditor
+      sequential: false
+      human_gate:
+        enabled: false
+      on_failure: reroute_to_implement
+
+    # S7: Testing & Validation
+    - name: test
+      agents:
+        - tester
+      sequential: true
+      human_gate:
+        enabled: false
+
+    # S8: Debug & Stabilization (loop)
+    - name: fix
+      agents:
+        - debugger
+      sequential: true
+      loop:
+        condition: "all_tests_pass AND no_critical_security"
+        max_iterations: 5
+      on_failure: escalate
+
+    # S9: Documentation & Knowledge
+    - name: document
+      agents:
+        - doc_writer
+      sequential: true
+      human_gate:
+        enabled: false
+
+    # S10: Deployment & Delivery (human gate)
+    - name: deliver
+      agents:
+        - infra_engineer
+        - project_manager
+      sequential: true
+      human_gate:
+        enabled: true
+        prompt: "Review documentation and deployment plan. Approve to deploy?"
+        timeout_minutes: 120
+        timeout_action: pause
+        mandatory: true
