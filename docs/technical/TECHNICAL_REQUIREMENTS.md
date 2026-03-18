@@ -1666,9 +1666,91 @@ The following features must be automatically disabled when offline mode is activ
 
 ---
 
-## 21. Appendix
+## 21. Configuration Management
 
-### 21.1 Environment Variables
+### 21.1 Configuration Hierarchy
+
+Configuration sources are loaded in priority order (highest to lowest):
+
+| Priority | Source | Example |
+|----------|--------|---------|
+| 1 (highest) | Environment variables | `CODEBOT_ENV=production` |
+| 2 | CLI flags | `--port 8080` |
+| 3 | `.env` file (project root) | `DATABASE_URL=postgres://...` |
+| 4 | User config | `~/.codebot/config.yaml` |
+| 5 (lowest) | Default values | Built-in defaults in code |
+
+### 21.2 Environment-Specific Configuration
+
+| Environment | Database | Vector Store | Event Bus | LLM Gateway |
+|-------------|----------|-------------|-----------|-------------|
+| **development** | SQLite | LanceDB (embedded) | In-memory | Direct API calls |
+| **docker** | PostgreSQL | LanceDB (file) | NATS (single) | LiteLLM (local) |
+| **staging** | PostgreSQL | Qdrant (single) | NATS (cluster) | LiteLLM (cluster) |
+| **production** | PostgreSQL (HA) | Qdrant (cluster) | NATS (cluster) | LiteLLM (cluster) |
+
+### 21.3 Configuration Validation
+
+All configuration is validated at startup using Pydantic settings models:
+
+| Validation | Rule |
+|------------|------|
+| **Required fields** | Missing required fields cause immediate startup failure with clear error message |
+| **Type checking** | All values validated against expected types (int, str, bool, URL, etc.) |
+| **Range checking** | Numeric values validated against min/max bounds |
+| **Dependency checking** | Cross-field dependencies validated (e.g., if `CODEBOT_ENV=production`, `DATABASE_URL` must use PostgreSQL) |
+
+### 21.4 Runtime Configuration
+
+| Feature | Mechanism |
+|---------|-----------|
+| **Hot reload** | Feature flags and LLM routing weights reload without restart (via NATS config events) |
+| **Immutable** | Database URLs, encryption keys, and port bindings require restart |
+| **Discovery** | Services register with NATS for dynamic discovery in clustered deployments |
+
+---
+
+## 22. Migration & Upgrade Strategy
+
+### 22.1 Database Migrations
+
+| Property | Requirement |
+|----------|-------------|
+| **Tool** | Alembic (SQLAlchemy-based) |
+| **Auto-generation** | `alembic revision --autogenerate` for schema changes |
+| **Forward-only** | All migrations must be forward-compatible; no destructive down-migrations in production |
+| **Testing** | Every migration tested against a copy of production schema before deployment |
+
+### 22.2 Data Migration
+
+| Scenario | Strategy |
+|----------|----------|
+| Schema addition (new column/table) | Non-breaking; deploy migration then code |
+| Schema modification (type change) | Two-phase: add new column → migrate data → drop old column |
+| Vector store re-indexing | Background job; old index serves reads until new index is ready |
+| Configuration format change | Versioned config with automatic migration on first load |
+
+### 22.3 Version Compatibility
+
+| Component | Policy |
+|-----------|--------|
+| **API** | Semantic versioning; breaking changes only in major versions; deprecated endpoints supported for 2 minor versions |
+| **Plugins** | Plugin API versioned independently; plugins declare compatible CodeBot version range |
+| **Database** | Forward-only migrations; rollback requires restoring from backup |
+| **Configuration** | Automatic migration with backup of previous config file |
+
+### 22.4 Upgrade Procedure
+
+1. **Backup**: Automatic database and config backup before upgrade
+2. **Migration**: Run `alembic upgrade head` for database schema changes
+3. **Validation**: Health check endpoint verifies all services operational
+4. **Rollback trigger**: If health check fails within 5 minutes, automatic rollback to previous version
+
+---
+
+## 23. Appendix
+
+### 23.1 Environment Variables
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
@@ -1687,7 +1769,7 @@ The following features must be automatically disabled when offline mode is activ
 | `CODEBOT_SANDBOX_IMAGE` | No | `codebot-sandbox:latest` | Docker image for code execution sandbox |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | No | `http://localhost:4317` | OpenTelemetry collector endpoint |
 
-### 21.2 Configuration File Structure
+### 23.2 Configuration File Structure
 
 CodeBot uses a layered configuration system with the following precedence (highest to lowest):
 
@@ -1759,7 +1841,7 @@ metrics_enabled = true
 otel_endpoint = "http://localhost:4317"
 ```
 
-### 21.3 Dependency Installation Quick Reference
+### 23.3 Dependency Installation Quick Reference
 
 **Python Environment Setup:**
 
@@ -1803,7 +1885,7 @@ docker compose up -d
 # Services started: PostgreSQL, Redis, NATS, LanceDB, SonarQube
 ```
 
-### 21.4 Version Pinning Policy
+### 23.4 Version Pinning Policy
 
 | Dependency Category | Pinning Strategy | Update Frequency |
 |---------------------|------------------|------------------|

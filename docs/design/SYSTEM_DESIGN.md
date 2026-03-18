@@ -6170,6 +6170,67 @@ CodeBot supports dual authentication mechanisms:
 
 ---
 
+## 20. Dead Letter Queue (DLQ) Processing
+
+### 20.1 DLQ Architecture
+
+Messages that fail processing after all retry attempts are routed to a Dead Letter Queue for inspection, diagnosis, and replay.
+
+```
+ [Agent/Service]
+       |
+  [NATS JetStream]
+       |
+  (processing fails after max_retries)
+       |
+       v
+  [DLQ Subject: codebot.dlq.{original_subject}]
+       |
+       v
+  [DLQ Consumer Service]
+       |
+       +---> [Store in PostgreSQL dlq_items table]
+       +---> [Emit dashboard notification]
+       +---> [Log to SigNoz with correlation ID]
+```
+
+### 20.2 DLQ Item Structure
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | UUID | Unique DLQ item identifier |
+| `original_subject` | string | NATS subject the message was originally published to |
+| `payload` | JSONB | Original message payload |
+| `error_code` | string | Error code from the error taxonomy (e.g., E2002) |
+| `error_message` | string | Human-readable error description |
+| `retry_count` | int | Number of retries attempted before DLQ routing |
+| `first_failed_at` | timestamp | When the first failure occurred |
+| `last_failed_at` | timestamp | When the final retry failed |
+| `status` | enum | `pending`, `reviewing`, `replayed`, `discarded` |
+| `resolved_by` | string | User ID of the person who resolved the item |
+| `resolved_at` | timestamp | When the item was resolved |
+
+### 20.3 DLQ Operations
+
+| Operation | Method | Description |
+|-----------|--------|-------------|
+| **List** | `GET /api/v1/dlq` | List DLQ items with filtering by status, subject, error code, date range |
+| **Inspect** | `GET /api/v1/dlq/{id}` | View full DLQ item details including payload and error context |
+| **Replay** | `POST /api/v1/dlq/{id}/replay` | Re-publish the original message to its original subject |
+| **Batch Replay** | `POST /api/v1/dlq/batch-replay` | Replay multiple items matching a filter criteria |
+| **Discard** | `DELETE /api/v1/dlq/{id}` | Mark item as discarded (soft delete) |
+| **Purge** | `DELETE /api/v1/dlq?status=discarded&before={date}` | Permanently remove discarded items older than date |
+
+### 20.4 Automatic Resolution
+
+| Condition | Action |
+|-----------|--------|
+| Error code is E1001 (rate limit) and retry window has passed | Auto-replay after cooldown period |
+| Error code is E3002 (event bus unavailable) and NATS is healthy | Auto-replay when health check passes |
+| DLQ item age > 30 days and status is `pending` | Auto-discard with notification |
+
+---
+
 ## Appendix A: Technology Stack Summary
 
 | Component | Technology | Rationale |

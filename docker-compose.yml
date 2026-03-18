@@ -1,0 +1,103 @@
+# CodeBot Development Environment
+# Usage: docker compose up -d
+# Dashboard: http://localhost:3000
+# API: http://localhost:8000
+# NATS Monitor: http://localhost:8222
+
+version: "3.9"
+
+services:
+  # ──────────────────────────────────────────────
+  # Core Services
+  # ──────────────────────────────────────────────
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: codebot-postgres
+    environment:
+      POSTGRES_DB: codebot
+      POSTGRES_USER: codebot
+      POSTGRES_PASSWORD: codebot_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codebot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: codebot-redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  nats:
+    image: nats:2-alpine
+    container_name: codebot-nats
+    command: >
+      --jetstream
+      --store_dir /data
+      --http_port 8222
+    ports:
+      - "4222:4222"   # Client connections
+      - "8222:8222"   # HTTP monitoring
+    volumes:
+      - nats_data:/data
+    healthcheck:
+      test: ["CMD", "nats-server", "--signal", "ldm"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ──────────────────────────────────────────────
+  # Observability
+  # ──────────────────────────────────────────────
+
+  langfuse:
+    image: langfuse/langfuse:latest
+    container_name: codebot-langfuse
+    environment:
+      DATABASE_URL: postgresql://codebot:codebot_dev@postgres:5432/langfuse
+      NEXTAUTH_URL: http://localhost:3001
+      NEXTAUTH_SECRET: codebot-langfuse-dev-secret
+      SALT: codebot-langfuse-dev-salt
+    ports:
+      - "3001:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ──────────────────────────────────────────────
+  # LLM Gateway
+  # ──────────────────────────────────────────────
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: codebot-litellm
+    environment:
+      LITELLM_MASTER_KEY: sk-codebot-dev-key
+      DATABASE_URL: postgresql://codebot:codebot_dev@postgres:5432/litellm
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./config/litellm_config.yaml:/app/config.yaml
+    command: --config /app/config.yaml --port 4000
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  nats_data:

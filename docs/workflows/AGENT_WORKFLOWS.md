@@ -48,6 +48,20 @@
    - 7.3 [Real-time Collaboration](#73-real-time-collaboration)
 8. [Multi-LLM Routing Workflows](#8-multi-llm-routing-workflows)
 9. [Sequence Diagrams](#9-sequence-diagrams)
+10. [Error Taxonomy](#10-error-taxonomy)
+    - 10.1 [Error Code Structure](#101-error-code-structure)
+    - 10.2 [Error Code Registry](#102-error-code-registry)
+    - 10.3 [Escalation Chain](#103-escalation-chain)
+    - 10.4 [Error Reporting](#104-error-reporting)
+11. [Real-Time Collaboration Workflow](#11-real-time-collaboration-workflow)
+    - 11.1 [Architecture](#111-architecture)
+    - 11.2 [Conflict Resolution](#112-conflict-resolution)
+    - 11.3 [Presence Tracking](#113-presence-tracking)
+    - 11.4 [Shared State](#114-shared-state)
+12. [Mobile Development Phase](#12-mobile-development-phase)
+    - 12.1 [Mobile Pipeline Extension](#121-mobile-pipeline-extension)
+    - 12.2 [Mobile Quality Gates](#122-mobile-quality-gates)
+    - 12.3 [Platform-Specific Agents](#123-platform-specific-agents)
    - 9.1 [Complete Pipeline Execution](#91-complete-pipeline-execution)
    - 9.2 [Debug/Fix Loop](#92-debugfix-loop)
    - 9.3 [Agent Collaboration](#93-agent-collaboration)
@@ -4427,6 +4441,181 @@ Complete list of all agents in the CodeBot system with their roles and capabilit
 | 28 | DevOps Agent | CI/CD pipelines, monitoring, logging, alerting | S10 | Deployment & Delivery | Sonnet |
 | 29 | GitHub Agent | Repository management, PRs, Issues, Actions, releases | S0 + S10 | Initialization + Deployment & Delivery | Haiku |
 | 30 | Project Manager | Project progress tracking, status reports, timeline management, blocker identification, notifications | S0-S10 | Cross-cutting (All) | Sonnet |
+
+---
+
+## 10. Error Taxonomy
+
+CodeBot uses a hierarchical error code system for consistent error handling across all agents and pipeline stages.
+
+### 10.1 Error Code Structure
+
+Format: `E{category}{number}` — e.g., `E1001`
+
+| Category | Range | Description |
+|----------|-------|-------------|
+| **E1xxx** | 1000–1999 | LLM Provider Errors |
+| **E2xxx** | 2000–2999 | Agent Execution Errors |
+| **E3xxx** | 3000–3999 | System/Infrastructure Errors |
+| **E4xxx** | 4000–4999 | User/Input Errors |
+
+### 10.2 Error Code Registry
+
+#### E1xxx — LLM Provider Errors
+
+| Code | Name | Severity | Recovery |
+|------|------|----------|----------|
+| E1001 | Rate limit exceeded | Transient | Exponential backoff, then failover to alternate provider |
+| E1002 | Context window exceeded | Recoverable | Summarize/truncate context; split task |
+| E1003 | Model unavailable | Transient | Failover via RouteLLM to next-priority model |
+| E1004 | Content policy violation | Blocking | Sanitize prompt; escalate if persistent |
+| E1005 | Invalid API key | Fatal | Halt; notify admin |
+| E1006 | Token budget exhausted | Blocking | Pause pipeline; request budget increase |
+
+#### E2xxx — Agent Execution Errors
+
+| Code | Name | Severity | Recovery |
+|------|------|----------|----------|
+| E2001 | Agent timeout | Transient | Retry with extended timeout; reduce task scope |
+| E2002 | Invalid output format | Recoverable | Re-prompt with stricter schema; switch model |
+| E2003 | Dependency not met | Blocking | Wait or re-order; escalate after timeout |
+| E2004 | Quality gate failed | Recoverable | Re-run agent with feedback from gate |
+| E2005 | Sandbox violation | Fatal | Kill agent; log violation; alert admin |
+| E2006 | Circular dependency | Fatal | Halt subgraph; escalate to orchestrator |
+
+#### E3xxx — System/Infrastructure Errors
+
+| Code | Name | Severity | Recovery |
+|------|------|----------|----------|
+| E3001 | Database connection failed | Transient | Retry with backoff; failover to replica |
+| E3002 | Event bus unavailable | Transient | Buffer locally; retry NATS connection |
+| E3003 | Sandbox container crash | Recoverable | Restart container; retry from checkpoint |
+| E3004 | Disk space exhausted | Fatal | Halt; trigger cleanup; notify admin |
+| E3005 | Vector DB unreachable | Transient | Fallback to keyword search; retry connection |
+
+#### E4xxx — User/Input Errors
+
+| Code | Name | Severity | Recovery |
+|------|------|----------|----------|
+| E4001 | Invalid project configuration | Blocking | Return validation errors to user |
+| E4002 | Missing required input | Blocking | Prompt user for missing fields |
+| E4003 | Unauthorized action | Blocking | Return 403; log attempt |
+| E4004 | Conflicting requirements | Recoverable | Flag conflict; request user clarification |
+| E4005 | Unsupported language/framework | Blocking | Return supported options list |
+
+### 10.3 Escalation Chain
+
+```
+Agent Self-Recovery (retries, fallbacks)
+    ↓ (failed after max_retries)
+Orchestrator Intervention (reassign, reroute, skip)
+    ↓ (failed after orchestrator strategies)
+Human-in-the-Loop (dashboard alert, approval request)
+    ↓ (no response within SLA)
+Pipeline Suspension (checkpoint saved, notification sent)
+```
+
+### 10.4 Error Reporting
+
+All errors are:
+1. **Logged** to structured logs with full context (agent ID, task ID, pipeline ID, error code, stack trace)
+2. **Emitted** as NATS events on `codebot.errors.{severity}` subjects
+3. **Tracked** in SigNoz/Langfuse with correlation to the originating LLM request
+4. **Surfaced** in the dashboard with severity-appropriate UI treatment (toast for transient, modal for blocking/fatal)
+
+---
+
+## 11. Real-Time Collaboration Workflow
+
+CodeBot supports real-time multi-user collaboration on shared projects using CRDT-based conflict resolution.
+
+### 11.1 Architecture
+
+```
+ [User A Browser]     [User B Browser]     [User C Browser]
+       |                     |                     |
+   Socket.IO             Socket.IO             Socket.IO
+       |                     |                     |
+       +----------+----------+----------+----------+
+                  |                     |
+           [WebSocket Gateway]    [Presence Service]
+                  |                     |
+           [Yjs CRDT Engine]      [NATS pub/sub]
+                  |                     |
+           [PostgreSQL]          [Redis (presence TTL)]
+```
+
+### 11.2 Conflict Resolution
+
+| Scenario | Strategy |
+|----------|----------|
+| Concurrent text edits | Yjs CRDT automatic merge (character-level) |
+| Concurrent config changes | Last-writer-wins with conflict notification |
+| Pipeline control conflicts | Lock-based: only one user can start/stop/approve at a time |
+| Agent assignment conflicts | Optimistic lock with retry on conflict |
+
+### 11.3 Presence Tracking
+
+- Each connected user broadcasts presence via NATS every 10 seconds
+- Presence includes: user ID, cursor position, active file, current view
+- Stale presence entries expire after 30 seconds (Redis TTL)
+- Dashboard shows active collaborators with colored cursors and avatars
+
+### 11.4 Shared State
+
+| State Type | Sync Mechanism | Latency Target |
+|------------|----------------|----------------|
+| Code edits | Yjs CRDT over WebSocket | < 100ms |
+| Pipeline status | NATS broadcast | < 500ms |
+| Chat messages | PostgreSQL + Socket.IO | < 200ms |
+| File tree changes | Filesystem watcher + NATS | < 1s |
+
+---
+
+## 12. Mobile Development Phase
+
+When the project type includes mobile targets (iOS, Android, React Native, Flutter), the pipeline activates mobile-specific workflows.
+
+### 12.1 Mobile Pipeline Extension
+
+```
+ [S3: Architecture] ──► [S4: Code Generation]
+                              |
+                    ┌─────────┼─────────┐
+                    │         │         │
+               [Web Code] [Mobile   [Shared
+                           Code]    Libraries]
+                    │         │         │
+                    └─────────┼─────────┘
+                              |
+                    [S5: Code Review]
+                              |
+                    [S6: Testing]
+                              |
+                    ┌─────────┼─────────┐
+                    │         │         │
+               [Unit Tests] [Device  [E2E
+                             Tests]  Tests]
+```
+
+### 12.2 Mobile Quality Gates
+
+| Gate | Criteria | Tool |
+|------|----------|------|
+| Build verification | iOS/Android builds compile without errors | Xcode CLI / Gradle |
+| Lint compliance | Platform-specific lint rules pass | SwiftLint / ktlint / ESLint (RN) |
+| Accessibility | WCAG 2.1 AA compliance for mobile | Accessibility Inspector / TalkBack |
+| Performance | App startup < 2s; no jank > 16ms frames | Xcode Instruments / Android Profiler |
+| Bundle size | APK < 50MB; IPA < 100MB (configurable) | Bundletool / App Thinning |
+
+### 12.3 Platform-Specific Agents
+
+| Platform | Code Gen Agent | Test Agent | Deploy Agent |
+|----------|---------------|------------|--------------|
+| iOS (Swift/SwiftUI) | Coder (Swift mode) | Tester (XCTest) | Deployer (Fastlane) |
+| Android (Kotlin/Compose) | Coder (Kotlin mode) | Tester (Espresso) | Deployer (Fastlane) |
+| React Native | Coder (RN mode) | Tester (Detox) | Deployer (EAS Build) |
+| Flutter | Coder (Dart mode) | Tester (Flutter Test) | Deployer (Fastlane) |
 
 ---
 
