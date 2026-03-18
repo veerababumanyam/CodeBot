@@ -13,8 +13,11 @@ Public API:
     - :func:`load_preset` -- load a YAML preset by name
     - :func:`detect_project_type` -- classify project as greenfield/inflight/brownfield
     - :func:`adapt_pipeline_for_project_type` -- filter phases by project type
+    - :class:`PipelineEvent` -- typed pipeline event dataclass
+    - :class:`PipelineEventEmitter` -- NATS JetStream event publisher
 """
 
+from codebot.pipeline.events import PipelineEvent, PipelineEventEmitter
 from codebot.pipeline.checkpoint import (
     PhaseInput,
     PhaseResult,
@@ -42,6 +45,8 @@ __all__ = [
     "PhaseResult",
     "PipelineCheckpoint",
     "PipelineConfig",
+    "PipelineEvent",
+    "PipelineEventEmitter",
     "PipelineInput",
     "PipelineSettings",
     "adapt_pipeline_for_project_type",
