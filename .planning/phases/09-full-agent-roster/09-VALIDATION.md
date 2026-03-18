@@ -7,7 +7,7 @@ wave_0_complete: false
 created: 2026-03-18
 ---
 
-# Phase 9 — Validation Strategy
+# Phase 9 -- Validation Strategy
 
 > Per-phase validation contract for feedback sampling during execution.
 
@@ -38,34 +38,37 @@ created: 2026-03-18
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 09-01-01 | 01 | 1 | BRST-01..07 | unit | `uv run pytest tests/unit/agents/test_brainstorm_agents.py -v` | ❌ W0 | ⬜ pending |
-| 09-01-02 | 01 | 1 | RSRC-01..04 | unit | `uv run pytest tests/unit/agents/test_research_agents.py -v` | ❌ W0 | ⬜ pending |
-| 09-02-01 | 02 | 1 | ARCH-01..06 | unit | `uv run pytest tests/unit/agents/test_architecture_agents.py -v` | ❌ W0 | ⬜ pending |
-| 09-02-02 | 02 | 1 | PLAN-01..03 | unit | `uv run pytest tests/unit/agents/test_planning_agents.py -v` | ❌ W0 | ⬜ pending |
-| 09-03-01 | 03 | 2 | IMPL-01,03,04 | unit | `uv run pytest tests/unit/agents/test_implementation_agents.py -v` | ❌ W0 | ⬜ pending |
-| 09-04-01 | 04 | 2 | QA-02..05,07 | unit | `uv run pytest tests/unit/agents/test_qa_agents.py -v` | ❌ W0 | ⬜ pending |
-| 09-04-02 | 04 | 2 | TEST-03,04 | unit | `uv run pytest tests/unit/agents/test_testing_agents.py -v` | ❌ W0 | ⬜ pending |
-| 09-05-01 | 05 | 3 | DBUG-04, DOCS-01..04 | unit | `uv run pytest tests/unit/agents/test_debug_docs_agents.py -v` | ❌ W0 | ⬜ pending |
-| 09-05-02 | 05 | 3 | AGNT-08 | integration | `uv run pytest tests/integration/agents/test_agent_registry.py -v` | ❌ W0 | ⬜ pending |
-| 09-05-03 | 05 | 3 | EVNT-02..04 | integration | `uv run pytest tests/integration/agents/test_parallel_subgraphs.py -v` | ❌ W0 | ⬜ pending |
+| 09-01-01 | 01 | 1 | AGNT-08 | unit | `uv run pytest tests/unit/agents/test_agent_registry.py -v` | W0 | pending |
+| 09-01-02 | 01 | 1 | BRST-01..07 | unit | `uv run pytest tests/unit/agents/test_brainstorming.py -v` | W0 | pending |
+| 09-01-03 | 01 | 1 | RSRC-01..04 | unit | `uv run pytest tests/unit/agents/test_researcher.py -v` | W0 | pending |
+| 09-02-01 | 02 | 1 | ARCH-01..06 | unit | `uv run pytest tests/unit/agents/test_architecture_agents.py -v` | W0 | pending |
+| 09-02-02 | 02 | 1 | PLAN-01..03 | unit | `uv run pytest tests/unit/agents/test_planning_agents.py -v` | W0 | pending |
+| 09-03-01 | 03 | 2 | IMPL-01,03,04 | unit | `uv run pytest tests/unit/agents/test_implementation_agents.py -v` | W0 | pending |
+| 09-04-01 | 04 | 2 | QA-02..05,07 | unit | `uv run pytest tests/unit/agents/test_qa_agents.py -v` | W0 | pending |
+| 09-04-02 | 04 | 2 | TEST-03,04 | unit | `uv run pytest tests/unit/agents/test_testing_agents.py -v` | W0 | pending |
+| 09-05-01 | 05 | 3 | DOCS-01..04 | unit | `uv run pytest tests/unit/agents/test_doc_writer.py tests/unit/agents/test_remaining_agents.py -v` | W0 | pending |
+| 09-05-02 | 05 | 3 | AGNT-08 | integration | `uv run pytest tests/integration/agents/test_agent_registry.py -v` | W0 | pending |
+| 09-05-03 | 05 | 3 | EVNT-02..04 | integration | `uv run pytest tests/integration/agents/test_event_audit.py -v` | W0 | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending -- green -- red -- flaky*
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `tests/unit/agents/conftest.py` — shared agent fixtures (mock LLM, mock tools, mock context)
-- [ ] `tests/unit/agents/test_brainstorm_agents.py` — stubs for BRST-01..07
-- [ ] `tests/unit/agents/test_research_agents.py` — stubs for RSRC-01..04
-- [ ] `tests/unit/agents/test_architecture_agents.py` — stubs for ARCH-01..06
-- [ ] `tests/unit/agents/test_planning_agents.py` — stubs for PLAN-01..03
-- [ ] `tests/unit/agents/test_implementation_agents.py` — stubs for IMPL-01,03,04
-- [ ] `tests/unit/agents/test_qa_agents.py` — stubs for QA-02..05,07
-- [ ] `tests/unit/agents/test_testing_agents.py` — stubs for TEST-03,04
-- [ ] `tests/unit/agents/test_debug_docs_agents.py` — stubs for DBUG-04, DOCS-01..04
-- [ ] `tests/integration/agents/test_agent_registry.py` — stubs for AGNT-08
-- [ ] `tests/integration/agents/test_parallel_subgraphs.py` — stubs for EVNT-02..04
+- [ ] `tests/unit/agents/conftest.py` -- shared agent fixtures (mock LLM, mock tools, mock context)
+- [ ] `tests/unit/agents/test_agent_registry.py` -- tests for AgentRegistry register/create/list
+- [ ] `tests/unit/agents/test_brainstorming.py` -- stubs for BRST-01..07
+- [ ] `tests/unit/agents/test_researcher.py` -- stubs for RSRC-01..04
+- [ ] `tests/unit/agents/test_architecture_agents.py` -- stubs for ARCH-01..06
+- [ ] `tests/unit/agents/test_planning_agents.py` -- stubs for PLAN-01..03
+- [ ] `tests/unit/agents/test_implementation_agents.py` -- stubs for IMPL-01,03,04
+- [ ] `tests/unit/agents/test_qa_agents.py` -- stubs for QA-02..05,07
+- [ ] `tests/unit/agents/test_testing_agents.py` -- stubs for TEST-03,04
+- [ ] `tests/unit/agents/test_doc_writer.py` -- stubs for DOCS-01..04
+- [ ] `tests/unit/agents/test_remaining_agents.py` -- stubs for remaining 10 agents
+- [ ] `tests/integration/agents/test_agent_registry.py` -- stubs for AGNT-08 (all 30 registered)
+- [ ] `tests/integration/agents/test_event_audit.py` -- stubs for EVNT-02..04
 
 ---
 
