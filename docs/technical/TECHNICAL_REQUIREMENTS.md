@@ -1,6 +1,6 @@
 # CodeBot Technical Requirements Document
 
-**Version:** 2.1
+**Version:** 2.3
 **Last Updated:** 2026-03-18
 **Status:** Draft
 **Authors:** CodeBot Core Team

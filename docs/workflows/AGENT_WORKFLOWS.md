@@ -1,6 +1,6 @@
 # CodeBot Agent Workflows
 
-**Version:** 2.1
+**Version:** 2.3
 **Date:** 2026-03-18
 **Status:** Draft
 **Author:** Architecture Team
@@ -14,17 +14,16 @@
 2. [End-to-End Pipeline Workflow](#2-end-to-end-pipeline-workflow)
 3. [Phase Workflows (Detailed)](#3-phase-workflows-detailed)
    - 3.1 [Brainstorming Phase](#31-brainstorming-phase)
-   - 3.2 [Planning Phase](#32-planning-phase)
-   - 3.3 [Research Phase](#33-research-phase)
-   - 3.4 [Architecture & Design Phase](#34-architecture--design-phase)
-   - 3.5 [Tech Stack & Template Selection Phase](#35-tech-stack--template-selection-phase)
-   - 3.6 [Implementation Phase](#36-implementation-phase)
-   - 3.7 [Review Phase](#37-review-phase)
-   - 3.8 [Testing Phase](#38-testing-phase)
-   - 3.9 [Debug & Fix Loop](#39-debug--fix-loop)
-   - 3.10 [Deployment Phase](#310-deployment-phase)
-   - 3.11 [Delivery Phase](#311-delivery-phase)
-   - 3.12 [Failure Mode Analysis per Phase](#312-failure-mode-analysis-per-phase)
+   - 3.2 [Research Phase](#32-research-phase)
+   - 3.3 [Architecture & Design Phase](#33-architecture--design-phase)
+   - 3.4 [Planning & Configuration Phase](#34-planning--configuration-phase)
+   - 3.5 [Implementation Phase](#35-implementation-phase)
+   - 3.6 [Quality Assurance Phase](#36-quality-assurance-phase)
+   - 3.7 [Testing Phase](#37-testing-phase)
+   - 3.8 [Debug & Fix Loop](#38-debug--fix-loop)
+   - 3.9 [Documentation & Knowledge Phase](#39-documentation--knowledge-phase)
+   - 3.10 [Deployment & Delivery Phase](#310-deployment--delivery-phase)
+   - 3.11 [Failure Mode Analysis per Phase](#311-failure-mode-analysis-per-phase)
 4. [Agent Interaction Patterns](#4-agent-interaction-patterns)
    - 4.1 [State Flow Pattern](#41-state-flow-pattern)
    - 4.2 [Message Flow Pattern](#42-message-flow-pattern)
@@ -72,16 +71,18 @@ which defines multi-agent systems as composable graphs of specialized workers.
                         +---------------------------+
                         |   COMPUTATION GRAPH        |
                         |                           |
-  User Input ---------> |  [Brainstorm] --> [Plan]  |
-                        |       |             |     |
-                        |       v             v     |
-                        |  [Research] --> [Architect]|
-                        |       |        /    |     |
-                        |       v       v     v     |
-                        |  [TechStack] [Design] [DB]|
+  User Input ---------> |  [Brainstorm]             |
+                        |       |                   |
+                        |       v                   |
+                        |  [Research]               |
+                        |       |                   |
+                        |       v                   |
+                        |  [Architect] [Design] [DB]|
+                        |  [API GW]  (parallel)     |
                         |       |        |      |   |
                         |       v        v      v   |
-                        |      [Template Selection] |
+                        |  [Plan] [TechStack]       |
+                        |  [Template] (sequential)  |
                         |              |            |
                         |    +---------+---------+  |
                         |    |    |    |    |     |  |
@@ -92,7 +93,7 @@ which defines multi-agent systems as composable graphs of specialized workers.
                         |              |            |
                         |    +---------+---------+  |
                         |    v    v    v    v     v  |
-                        |  Review Sec  A11y Perf    |
+                        |  Review Sec A11y i18n Perf|
                         |    +---------+---------+  |
                         |              |            |
                         |              v            |
@@ -103,10 +104,10 @@ which defines multi-agent systems as composable graphs of specialized workers.
                         |       pass      fail      |
                         |         |         |       |
                         |         v         v       |
-                        |      [Deploy] [Debug]--+  |
+                        |      [Docs]   [Debug]--+  |
                         |         |         |    |  |
                         |         v         +----+  |
-                        |     [Deliver]             |
+                        |     [Deploy/Deliver]      |
                         +---------------------------+
                                    |
                                    v
@@ -154,17 +155,16 @@ execution logic, and an exit gate (quality checks). A phase cannot advance until
 
 | Gate | Phase Boundary | Type | Description |
 |------|---------------|------|-------------|
-| G1 | Brainstorming -> Planning | Approval | User confirms refined requirements |
-| G2 | Planning -> Research | Automatic | Plan passes structural validation |
-| G3 | Research -> Architecture | Automatic | Research report completeness check |
-| G4 | Architecture -> Design | Approval | User approves system architecture |
-| G5 | Design -> Tech Stack | Approval | User approves UI/UX direction |
-| G6 | Tech Stack -> Implementation | Approval | User confirms tech stack selections |
-| G7 | Implementation -> Review | Automatic | All agents complete, code compiles |
-| G8 | Review -> Testing | Automatic | No critical/blocker findings |
-| G9 | Testing -> Debug/Fix | Automatic | Test results collected |
-| G10 | Debug/Fix -> Deployment | Automatic | All tests pass, coverage met |
-| G11 | Deployment -> Delivery | Automatic | Deployment health checks pass |
+| G1 | Brainstorming -> Research | Approval | User confirms refined requirements |
+| G2 | Research -> Architecture | Automatic | Research report completeness check |
+| G3 | Architecture -> Planning | Approval | User approves system architecture |
+| G4 | Planning -> Implementation | Approval | User confirms plan + tech stack selections |
+| G5 | Implementation -> Quality Assurance | Automatic | All agents complete, code compiles |
+| G6 | Quality Assurance -> Testing | Automatic | No critical/blocker findings |
+| G7 | Testing -> Debug/Fix | Automatic | Test results collected |
+| G8 | Debug/Fix -> Documentation | Automatic | All tests pass, coverage met |
+| G9 | Documentation -> Deployment | Automatic | Documentation completeness check |
+| G10 | Deployment -> Delivery | Automatic | Deployment health checks pass |
 
 ### 1.3 Parallel vs Sequential Execution Strategies
 
@@ -188,19 +188,19 @@ execution logic, and an exit gate (quality checks). A phase cannot advance until
               A2 -+-> B2      used for real-time code streaming)
 ```
 
-| Phase | Strategy | Parallelism Details |
-|-------|----------|-------------------|
-| Brainstorming | Sequential | Single agent, interactive with user |
-| Planning | Sequential | Orchestrator + Planner pipeline |
-| Research | Internal parallel | Multiple research queries run concurrently |
-| Architecture & Design | Fan-out / Fan-in | Architect, Designer, DB Agent, API Gateway work in parallel |
-| Tech Stack & Template | Sequential | Requires user approval at each step |
-| Implementation | **Full parallel** | FE, BE, MW, Mobile, Infra in isolated git worktrees |
-| Review | **Full parallel** | Code Reviewer, Security Auditor, A11y, Perf run simultaneously |
-| Testing | Internal parallel | Unit, integration, E2E suites run concurrently |
-| Debug & Fix | Sequential per issue | Issues fixed one at a time to avoid conflicts |
-| Deployment | Sequential | Pipeline stages must execute in order |
-| Delivery | Internal parallel | Multiple doc types generated concurrently |
+| Stage | Phase | Strategy | Parallelism Details |
+|-------|-------|----------|-------------------|
+| S0 | Project Initialization | Sequential | Orchestrator + GitHub Agent setup |
+| S1 | Brainstorming | Sequential | Single agent, interactive with user |
+| S2 | Research | Internal parallel | Multiple research queries run concurrently |
+| S3 | Architecture & Design | **Fan-out / Fan-in** | Architect, Designer, DB Agent, API Gateway work in parallel |
+| S4 | Planning & Configuration | Sequential | Planner + TechStack Builder + Template Agent pipeline |
+| S5 | Implementation | **Full parallel** | FE, BE, MW, Mobile, Infra, Integrations in isolated git worktrees |
+| S6 | Quality Assurance | **Full parallel** | Code Reviewer, Security Auditor, A11y, i18n, Perf run simultaneously |
+| S7 | Testing | Internal parallel | Unit, integration, E2E, UI component, smoke, regression, mutation suites run concurrently |
+| S8 | Debug & Stabilization | Sequential per issue | Issues fixed one at a time to avoid conflicts |
+| S9 | Documentation & Knowledge | Internal parallel | Doc Writer, Skill/Hook/Tool Creators work concurrently |
+| S10 | Deployment & Delivery | Sequential | Pipeline stages must execute in order |
 
 ### 1.4 Human-in-the-Loop Intervention Points
 
@@ -215,18 +215,16 @@ execution logic, and an exit gate (quality checks). A phase cannot advance until
   "autopilot"          "supervised"          "collaborative"      "manual"
 ```
 
-| Intervention Point | Trigger | Required? | Timeout Action | Mode Override |
-|--------------------|---------|-----------|----------------|---------------|
-| Requirements Refinement | Brainstorming complete | Configurable (default: yes) | Auto-accept after 15 min | autopilot: skip |
-| Plan Approval | Plan phase complete | Configurable (default: yes) | Auto-approve after 30 min | autopilot: skip |
-| Architecture Approval | Architecture phase complete | Configurable (default: yes) | Auto-approve after 30 min | autopilot: skip |
-| Design Approval | Design phase complete | Configurable (default: no) | Auto-approve after 30 min | always skippable |
-| Tech Stack Approval | Tech stack selected | Configurable (default: yes) | Auto-approve after 30 min | autopilot: skip |
-| Requirement Clarification | Ambiguous requirements detected | Always | Skip ambiguous items, document assumptions | N/A |
-| Debug Escalation | 3 failed fix iterations | Always | Pause pipeline, alert user | N/A |
-| Security Exception | Critical vulnerability found | Always | Block delivery until resolved | N/A |
-| Deployment Approval | Pre-production deploy | Configurable (default: yes) | Auto-approve after 30 min | autopilot: skip |
-| Code Review Override | Major architectural issue flagged | Optional | Auto-accept suggestions | N/A |
+| Intervention Point | Gate | Trigger | Required? | Timeout Action | Mode Override |
+|--------------------|------|---------|-----------|----------------|---------------|
+| Requirements Refinement | G1 | Brainstorming complete (S1) | Configurable (default: yes) | Auto-accept after 15 min | autopilot: skip |
+| Architecture Approval | G3 | Architecture phase complete (S3) | Configurable (default: yes) | Auto-approve after 30 min | autopilot: skip |
+| Plan + Tech Stack Approval | G4 | Planning & configuration complete (S4) | Configurable (default: yes) | Auto-approve after 30 min | autopilot: skip |
+| Requirement Clarification | -- | Ambiguous requirements detected | Always | Skip ambiguous items, document assumptions | N/A |
+| Debug Escalation | -- | 3 failed fix iterations (S8) | Always | Pause pipeline, alert user | N/A |
+| Security Exception | -- | Critical vulnerability found (S6) | Always | Block delivery until resolved | N/A |
+| Deployment Approval | G10 | Pre-production deploy (S10) | Configurable (default: yes) | Auto-approve after 30 min | autopilot: skip |
+| Code Review Override | -- | Major architectural issue flagged (S6) | Optional | Auto-accept suggestions | N/A |
 
 ### 1.5 Checkpoint and Resume Mechanism
 
@@ -240,23 +238,23 @@ successful checkpoint without repeating completed work.
    checkpoints/
      +--- session_<uuid>/
      |      +--- manifest.json              (session metadata, current phase)
+     |      +--- phase_00_initialization.json (project setup, repo creation)
      |      +--- phase_01_brainstorming.json (refined requirements)
-     |      +--- phase_02_planning.json      (plan + task graph)
-     |      +--- phase_03_research.json      (research report)
-     |      +--- phase_04_architecture.json  (arch docs + schemas)
-     |      +--- phase_05_design.json        (design spec + wireframes)
-     |      +--- phase_06_techstack.json     (tech stack + template selections)
-     |      +--- phase_07_implementation/    (per-agent snapshots)
+     |      +--- phase_02_research.json      (research report)
+     |      +--- phase_03_architecture.json  (arch docs + schemas + design)
+     |      +--- phase_04_planning.json      (plan + task graph + tech stack + scaffold)
+     |      +--- phase_05_implementation/    (per-agent snapshots)
      |      |       +--- frontend.json
      |      |       +--- backend.json
      |      |       +--- middleware.json
      |      |       +--- mobile.json
      |      |       +--- infrastructure.json
-     |      +--- phase_08_review.json        (review + security reports)
-     |      +--- phase_09_testing.json       (test results + coverage)
-     |      +--- phase_10_debug_fix.json     (fix history + iterations)
-     |      +--- phase_11_deployment.json    (deploy config + status)
-     |      +--- phase_12_delivery.json      (build + handoff report)
+     |      |       +--- integrations.json
+     |      +--- phase_06_quality.json       (review + security + a11y + i18n reports)
+     |      +--- phase_07_testing.json       (test results + coverage)
+     |      +--- phase_08_debug_fix.json     (fix history + iterations)
+     |      +--- phase_09_documentation.json (docs + knowledge artifacts)
+     |      +--- phase_10_deployment.json    (deploy config + status + handoff)
      +--- latest -> session_<uuid>/          (symlink to latest session)
 
  RESUME BEHAVIOR:
@@ -290,9 +288,9 @@ successful checkpoint without repeating completed work.
 ### 2.1 Complete Pipeline Flow
 
 ```
- User Input --> Brainstorming --> Planning --> Research --> Architecture -->
- Design --> Tech Stack Selection --> Template Selection --> Implementation -->
- Review --> Testing --> Debug/Fix --> Deployment --> Delivery
+ User Input --> Initialization --> Brainstorming --> Research --> Architecture & Design -->
+ Planning & Configuration --> Implementation --> Quality Assurance --> Testing --> Debug/Fix -->
+ Documentation --> Deployment & Delivery
 ```
 
 ### 2.2 Complete Sequence Diagram
@@ -302,43 +300,31 @@ successful checkpoint without repeating completed work.
   |                      |                     |                          |
   |  Submit idea/PRD     |                     |                          |
   |--------------------->|                     |                          |
+  |                      |  S0: INITIALIZATION |                          |
   |                      |  Init project repo  |                          |
   |                      |----------------------------------------------->|
   |                      |                     |                     repo created
   |                      |                     |                          |
-  |                      |  PHASE 1: BRAINSTORMING                        |
+  |                      |  S1: BRAINSTORMING  |                          |
   |                      |-------------------->|                          |
   |  Interactive Q&A     |                     |                          |
   |<-------------------->|                     |                          |
   |                      |  Requirements refined                          |
   |                      |<--------------------|                          |
   |                      |                     |                          |
-  |  [GATE] Confirm      |                     |                          |
+  |  [GATE G1] Confirm   |                     |                          |
   |  requirements?       |                     |                          |
   |<---------------------|                     |                          |
   |  Confirmed           |                     |                          |
   |--------------------->|                     |                          |
   |                      |                     |                          |
-  |                      |  PHASE 2: PLANNING  |                          |
-  |                      |-------------------->|                          |
-  |  Clarification Q?    |                     |                          |
-  |<---------------------|                     |                          |
-  |  Answers             |                     |                          |
-  |--------------------->|                     |                          |
-  |                      |  Plan complete      |                          |
-  |                      |<--------------------|                          |
-  |                      |                     |                          |
-  |  [GATE] Approve plan?|                     |                          |
-  |<---------------------|                     |                          |
-  |  Approved            |                     |                          |
-  |--------------------->|                     |                          |
-  |                      |                     |                          |
-  |                      |  PHASE 3: RESEARCH  |                          |
+  |                      |  S2: RESEARCH       |                          |
   |                      |-------------------->|                          |
   |                      |  Research complete  |                          |
   |                      |<--------------------|                          |
+  |                      |  [GATE G2]          |                          |
   |                      |                     |                          |
-  |                      |  PHASE 4: ARCHITECTURE & DESIGN (parallel)     |
+  |                      |  S3: ARCHITECTURE & DESIGN (parallel)          |
   |                      |-------------------->| Architect --|            |
   |                      |-------------------->| Designer  --|            |
   |                      |-------------------->| DB Agent  --|            |
@@ -346,13 +332,20 @@ successful checkpoint without repeating completed work.
   |                      |  All outputs ready  |                          |
   |                      |<--------------------|                          |
   |                      |                     |                          |
-  |  [GATE] Approve arch?|                     |                          |
+  |  [GATE G3] Approve   |                     |                          |
+  |  architecture?       |                     |                          |
   |<---------------------|                     |                          |
   |  Approved            |                     |                          |
   |--------------------->|                     |                          |
   |                      |                     |                          |
-  |                      |  PHASE 5: TECH STACK & TEMPLATE                |
+  |                      |  S4: PLANNING & CONFIGURATION                  |
   |                      |-------------------->|                          |
+  |  Clarification Q?    |                     |                          |
+  |<---------------------|                     |                          |
+  |  Answers             |                     |                          |
+  |--------------------->|                     |                          |
+  |                      |  Plan + stack ready |                          |
+  |                      |<--------------------|                          |
   |  Select tech stack   |                     |                          |
   |<-------------------->|                     |                          |
   |  Select templates    |                     |                          |
@@ -362,32 +355,40 @@ successful checkpoint without repeating completed work.
   |                      |  Commit scaffold    |                          |
   |                      |----------------------------------------------->|
   |                      |                     |                          |
-  |                      |  PHASE 6: IMPLEMENTATION (PARALLEL)            |
+  |  [GATE G4] Approve   |                     |                          |
+  |  plan + tech stack?  |                     |                          |
+  |<---------------------|                     |                          |
+  |  Approved            |                     |                          |
+  |--------------------->|                     |                          |
+  |                      |                     |                          |
+  |                      |  S5: IMPLEMENTATION (PARALLEL)                 |
   |                      |-------------------->| Frontend --|             |
   |                      |-------------------->| Backend  --|-- worktrees |
   |                      |-------------------->| Middleware--|             |
   |                      |-------------------->| Mobile   --|             |
   |                      |-------------------->| Infra    --|             |
+  |                      |-------------------->| Integrations-|           |
   |                      |  All agents done    |                          |
   |                      |<--------------------|                          |
   |                      |  Merge worktrees    |                          |
   |                      |----------------------------------------------->|
   |                      |                     |                     merged
   |                      |                     |                          |
-  |                      |  PHASE 7: REVIEW (PARALLEL)                    |
+  |                      |  S6: QUALITY ASSURANCE (PARALLEL)              |
   |                      |-------------------->| Code Review --|          |
   |                      |-------------------->| Security Audit|          |
   |                      |-------------------->| A11y Check ---|          |
+  |                      |-------------------->| i18n Check ---|          |
   |                      |-------------------->| Perf Check ---|          |
   |                      |  Reviews complete   |                          |
   |                      |<--------------------|                          |
   |                      |                     |                          |
-  |                      |  PHASE 8: TESTING   |                          |
+  |                      |  S7: TESTING        |                          |
   |                      |-------------------->|                          |
   |                      |  Tests complete     |                          |
   |                      |<--------------------|                          |
   |                      |                     |                          |
-  |                      |  PHASE 9: DEBUG & FIX LOOP                     |
+  |                      |  S8: DEBUG & STABILIZATION LOOP                |
   |                      |-------------------->|                          |
   |                      |  (iterates until    |                          |
   |                      |   all pass or       |                          |
@@ -397,19 +398,22 @@ successful checkpoint without repeating completed work.
   |  [GATE] Human needed?|                     |                          |
   |<------(if stuck)-----|                     |                          |
   |                      |                     |                          |
-  |                      |  PHASE 10: DEPLOYMENT                          |
+  |                      |  S9: DOCUMENTATION & KNOWLEDGE                 |
+  |                      |-------------------->|                          |
+  |                      |  Docs complete      |                          |
+  |                      |<--------------------|                          |
+  |                      |                     |                          |
+  |                      |  S10: DEPLOYMENT & DELIVERY                    |
   |                      |-------------------->|                          |
   |                      |  Deployed           |                          |
   |                      |<--------------------|                          |
   |                      |                     |                          |
-  |  [GATE] Approve      |                     |                          |
+  |  [GATE G10] Approve  |                     |                          |
   |  deployment?         |                     |                          |
   |<---------------------|                     |                          |
   |  Approved            |                     |                          |
   |--------------------->|                     |                          |
   |                      |                     |                          |
-  |                      |  PHASE 11: DELIVERY |                          |
-  |                      |-------------------->|                          |
   |                      |  Package ready      |                          |
   |                      |<--------------------|                          |
   |                      |                     |                          |
@@ -427,7 +431,12 @@ successful checkpoint without repeating completed work.
      |
      v
  +--------------+
- |BRAINSTORMING |
+ |INITIALIZATION|  (S0: Orchestrator + GitHub Agent)
+ +--------------+
+     | project repo created
+     v
+ +--------------+
+ |BRAINSTORMING |  (S1: interactive with user)
  +--------------+
      | refined requirements
      v
@@ -436,59 +445,54 @@ successful checkpoint without repeating completed work.
  +----------+
      | confirmed
      v
- +--------+    fail     +----------+
- |PLANNING|------------>|ESCALATION|---> [HUMAN]
- +--------+             +----------+
-     | ok
-     v
- +---------+   GATE G2: Plan Approval
- |GATE_PLAN|---[rejected]---> PLANNING (revise)
- +---------+
-     | approved
-     v
  +--------+
- |RESEARCH|
+ |RESEARCH|  (S2: technology evaluation)
  +--------+
      | ok
      v
+ +----------+   GATE G2: Research Completeness
+ |GATE_RES  |---[incomplete]---> RESEARCH (extend)
+ +----------+
+     | complete
+     v
  +---------------------+
- |ARCHITECTURE & DESIGN|  (parallel sub-agents)
+ |ARCHITECTURE & DESIGN|  (S3: parallel sub-agents)
  +---------------------+
      | ok
      v
- +---------+   GATE G4: Architecture Approval
+ +---------+   GATE G3: Architecture Approval
  |GATE_ARCH|---[rejected]---> ARCHITECTURE (revise)
  +---------+
      | approved
      v
- +-----------+
- |TECH_STACK |
- +-----------+
-     | ok
+ +------------------------+    fail     +----------+
+ |PLANNING & CONFIGURATION|----------->|ESCALATION|---> [HUMAN]
+ +------------------------+             +----------+
+     | ok (S4: plan + tech stack + scaffold)
      v
- +----------+   GATE G6: Tech Stack Approval
- |GATE_TECH |---[rejected]---> TECH_STACK (revise)
+ +----------+   GATE G4: Plan + Tech Stack Approval
+ |GATE_PLAN |---[rejected]---> PLANNING (revise)
  +----------+
      | approved
      v
  +--------------+
- |IMPLEMENTATION|  (parallel sub-states: FE, BE, MW, Mobile, Infra)
+ |IMPLEMENTATION|  (S5: parallel sub-states: FE, BE, MW, Mobile, Infra, Integrations)
  +--------------+
      | all merged
      v
- +------+
- |REVIEW|  (parallel sub-states: Code, Security, A11y, Perf)
- +------+
+ +-----------------+
+ |QUALITY ASSURANCE|  (S6: parallel sub-states: Code, Security, A11y, i18n, Perf)
+ +-----------------+
      | ok (no critical/blocker findings)
      v
  +-------+
- |TESTING|
+ |TESTING|  (S7: all test suites)
  +-------+
      | results
      v
- +---------+
- |DEBUG_FIX|<-----+
- +---------+      |
+ +-------------------+
+ |DEBUG_STABILIZATION|<-----+  (S8: sequential fix loop)
+ +-------------------+      |
      |            |
      |--[pass]--->|--- (loop if regressions)
      |            |
@@ -498,20 +502,20 @@ successful checkpoint without repeating completed work.
      |
      |--[all pass]
      v
- +----------+
- |DEPLOYMENT|
- +----------+
+ +-------------------------+
+ |DOCUMENTATION & KNOWLEDGE|  (S9: Doc Writer, Skill/Hook/Tool Creators)
+ +-------------------------+
      | ok
      v
- +----------+   GATE G11: Deployment Approval (optional)
+ +---------------------+
+ |DEPLOYMENT & DELIVERY|  (S10: DevOps, Infra, PM)
+ +---------------------+
+     | ok
+     v
+ +----------+   GATE G10: Deployment Approval (optional)
  |GATE_DEPLOY|---[rejected]---> DEPLOYMENT (rollback)
  +----------+
      | approved
-     v
- +--------+
- |DELIVERY|
- +--------+
-     |
      v
   [END]
 ```
@@ -522,34 +526,34 @@ For each transition, the following data flows between phases:
 
 | From | To | Trigger | Data Flowing | Gate | On Failure |
 |------|----|---------|-------------|------|------------|
-| User Input | Brainstorming | User submits idea/PRD | Raw requirements, user preferences | None | N/A |
-| Brainstorming | Planning | Requirements refined | Refined PRD, risk assessment, tech recs | G1: User confirms | Re-enter brainstorming |
-| Planning | Research | Plan approved | Task graph, dependency map, schedule | G2: Plan validation | Revise plan |
-| Research | Architecture | Research complete | Research report, dep manifest, patterns | G3: Completeness | Extend research |
-| Architecture | Tech Stack | Architecture approved | C4 docs, API specs, schemas, wireframes | G4: User approves | Revise architecture |
-| Tech Stack | Implementation | Stack confirmed | Tech config, template code, scaffold | G6: User approves | Revise stack |
-| Implementation | Review | All agents complete | Complete codebase, merged branches | G7: Compiles | Fix compilation |
-| Review | Testing | No critical findings | Review reports, remediation items | G8: No blockers | Fix blockers |
-| Testing | Debug/Fix | Tests collected | Test results, coverage, failures | G9: Auto | N/A |
-| Debug/Fix | Deployment | All tests pass | Fixed codebase, regression tests | G10: Coverage met | Continue fixing |
-| Deployment | Delivery | Health checks pass | Deployed app, CI/CD config | G11: Optional | Rollback |
-| Delivery | End | Package ready | Docs, release, handoff report | None | N/A |
+| User Input | Initialization (S0) | User submits idea/PRD | Raw requirements, user preferences | None | N/A |
+| Initialization | Brainstorming (S1) | Repo created | Project repo, session metadata | None | N/A |
+| Brainstorming | Research (S2) | Requirements refined | Refined PRD, risk assessment, tech recs | G1: User confirms | Re-enter brainstorming |
+| Research | Architecture (S3) | Research complete | Research report, dep manifest, patterns | G2: Completeness | Extend research |
+| Architecture | Planning (S4) | Architecture approved | C4 docs, API specs, schemas, wireframes | G3: User approves | Revise architecture |
+| Planning | Implementation (S5) | Plan + stack confirmed | Task graph, tech config, scaffold | G4: User approves | Revise plan/stack |
+| Implementation | Quality Assurance (S6) | All agents complete | Complete codebase, merged branches | G5: Compiles | Fix compilation |
+| Quality Assurance | Testing (S7) | No critical findings | Review reports, remediation items | G6: No blockers | Fix blockers |
+| Testing | Debug/Fix (S8) | Tests collected | Test results, coverage, failures | G7: Auto | N/A |
+| Debug/Fix | Documentation (S9) | All tests pass | Fixed codebase, regression tests | G8: Coverage met | Continue fixing |
+| Documentation | Deployment (S10) | Docs complete | Documentation, knowledge artifacts | G9: Completeness | Re-generate |
+| Deployment | End | Package ready | Deployed app, docs, handoff report | G10: Optional | Rollback |
 
 ### 2.5 Parallel Execution Opportunities
 
-| Phase | Parallelism | Details |
-|-------|-------------|---------|
-| Brainstorming | Sequential | Single Brainstorming Agent, interactive with user |
-| Planning | Sequential | Single Orchestrator + Planner pipeline |
-| Research | Internal parallelism | Multiple research queries can run concurrently |
-| Architecture & Design | **Fan-out** | Architect, Designer, DB Agent, API Gateway work in parallel |
-| Tech Stack & Template | Sequential | Requires user selection steps |
-| Implementation | **Full parallelism** | 5 agents in isolated worktrees (FE, BE, MW, Mobile, Infra) |
-| Review | **Full parallelism** | Code Reviewer + Security Auditor + A11y + Perf simultaneously |
-| Testing | Internal parallelism | Unit, integration, E2E test suites run concurrently |
-| Debug & Fix | Sequential per issue | Issues prioritized and fixed one at a time |
-| Deployment | Sequential | Pipeline stages must execute in order |
-| Delivery | Internal parallelism | Multiple doc types generated concurrently |
+| Stage | Phase | Parallelism | Details |
+|-------|-------|-------------|---------|
+| S0 | Initialization | Sequential | Orchestrator + GitHub Agent setup |
+| S1 | Brainstorming | Sequential | Single Brainstorming Agent, interactive with user |
+| S2 | Research | Internal parallelism | Multiple research queries can run concurrently |
+| S3 | Architecture & Design | **Fan-out** | Architect, Designer, DB Agent, API Gateway work in parallel |
+| S4 | Planning & Configuration | Sequential | Planner + TechStack Builder + Template Agent pipeline |
+| S5 | Implementation | **Full parallelism** | 6 agents in isolated worktrees (FE, BE, MW, Mobile, Infra, Integrations) |
+| S6 | Quality Assurance | **Full parallelism** | Code Reviewer + Security Auditor + A11y + i18n + Perf simultaneously |
+| S7 | Testing | Internal parallelism | Unit, integration, E2E, UI component, smoke, regression, mutation suites run concurrently |
+| S8 | Debug & Stabilization | Sequential per issue | Issues prioritized and fixed one at a time |
+| S9 | Documentation & Knowledge | Internal parallelism | Doc Writer, Skill/Hook/Tool Creators work concurrently |
+| S10 | Deployment & Delivery | Sequential | Pipeline stages must execute in order |
 
 ---
 
@@ -644,7 +648,7 @@ For each transition, the following data flows between phases:
  6. Agent identifies risks and challenges
  7. Agent produces refined requirements document
  8. User reviews and confirms requirements
- 9. Checkpoint saved, transition to Planning
+ 9. Checkpoint saved, transition to Research
 ```
 
 **Sequence Diagram:**
@@ -723,174 +727,9 @@ For each transition, the following data flows between phases:
 
 ---
 
-### 3.2 Planning Phase
+### 3.2 Research Phase
 
-**Description:** The Planner Agent decomposes the refined requirements into a structured execution plan with epics, user stories, and tasks organized in a dependency graph.
-
-**Goals:**
-- Break requirements into implementable tasks
-- Create dependency graph with topological ordering
-- Identify parallel execution opportunities
-- Estimate complexity and timeline
-
-**Agent(s) Involved:** Planner, Orchestrator
-
-**Input:**
-```json
-{
-  "refined_requirements": { },
-  "risk_assessment": [ ],
-  "tech_recommendations": { },
-  "project_type": "greenfield | inflight | brownfield"
-}
-```
-
-**Output:**
-```json
-{
-  "plan": {
-    "epics": [
-      {
-        "id": "E001",
-        "name": "User Authentication System",
-        "stories": [
-          {
-            "id": "S001",
-            "name": "User Registration",
-            "tasks": [
-              {
-                "id": "T001",
-                "name": "Create User model and migration",
-                "agent": "database",
-                "depends_on": [],
-                "estimated_complexity": "low",
-                "estimated_tokens": 2000
-              },
-              {
-                "id": "T002",
-                "name": "Implement registration API endpoint",
-                "agent": "backend",
-                "depends_on": ["T001"],
-                "estimated_complexity": "medium",
-                "estimated_tokens": 5000
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    "dependency_graph": {
-      "nodes": ["T001", "T002", "T003"],
-      "edges": [["T001", "T002"], ["T001", "T003"]]
-    },
-    "execution_schedule": {
-      "wave_1": ["T001", "T004", "T007"],
-      "wave_2": ["T002", "T003", "T005"],
-      "wave_3": ["T006", "T008"]
-    },
-    "parallel_groups": [
-      {
-        "agents": ["frontend", "backend", "infrastructure"],
-        "tasks": { "frontend": ["T003"], "backend": ["T002"], "infrastructure": ["T007"] }
-      }
-    ]
-  }
-}
-```
-
-**Step-by-Step Workflow:**
-
-```
- 1. Receive refined requirements from Brainstorming
- 2. Orchestrator parses requirements into structured format
- 3. Detect ambiguities or gaps
-    3a. If gaps found -> request clarification from user
-    3b. If clear -> continue
- 4. Planner decomposes into epics and stories
- 5. Planner creates task-level breakdown
- 6. Planner assigns each task to an agent type
- 7. Planner builds dependency graph
- 8. Planner computes topological ordering
- 9. Planner identifies parallel execution waves
- 10. Planner estimates complexity per task
- 11. Generate execution schedule
- 12. Present plan to user for approval
- 13. [GATE G2] User approves plan
- 14. Checkpoint saved, transition to Research
-```
-
-**Sequence Diagram:**
-
-```
- User          Orchestrator       Planner          Context DB        Git
-  |                 |                |                  |              |
-  | (auto from G1)  |                |                  |              |
-  |                 | Parse reqs     |                  |              |
-  |                 |---+            |                  |              |
-  |                 |<--+            |                  |              |
-  |                 |                |                  |              |
-  |                 | Detect gaps    |                  |              |
-  |                 |---+            |                  |              |
-  |                 |<--+            |                  |              |
-  |                 |                |                  |              |
-  | Clarification?  |                |                  |              |
-  |<----------------|                |                  |              |
-  | Answers         |                |                  |              |
-  |---------------->|                |                  |              |
-  |                 |                |                  |              |
-  |                 | Decompose      |                  |              |
-  |                 |--------------->|                  |              |
-  |                 |                | Load similar     |              |
-  |                 |                | project plans    |              |
-  |                 |                |----------------->|              |
-  |                 |                |<-----------------|              |
-  |                 |                |                  |              |
-  |                 |                | Build task graph |              |
-  |                 |                |---+              |              |
-  |                 |                |<--+              |              |
-  |                 |                |                  |              |
-  |                 |                | Compute schedule |              |
-  |                 |                |---+              |              |
-  |                 |                |<--+              |              |
-  |                 |                |                  |              |
-  |                 | Plan ready     |                  |              |
-  |                 |<---------------|                  |              |
-  |                 |                |                  |              |
-  | Review plan     |                |                  |              |
-  |<----------------|                |                  |              |
-  |                 |                |                  |              |
-  | Approve/Reject  |                |                  |              |
-  |---------------->|                |                  |              |
-  |                 | [GATE G2]      |                  |              |
-  |                 | Save checkpoint|                  |              |
-  |                 |---+            |                  |              |
-  |                 |<--+            |                  |              |
-  |                 | Store plan     |                  |              |
-  |                 |------------------------------------+------------>|
-```
-
-**Decision Points:**
-- If requirements map to a known template: suggest template-based acceleration
-- If complexity exceeds estimated budget: present trade-off options to user
-- If circular dependencies detected: resolve and notify
-
-**Error Handling:**
-- Planner produces invalid graph: retry with explicit constraints
-- Task count exceeds agent capacity: break into sub-projects
-- User rejects plan 3 times: escalate to human architect consultation
-
-**Quality Gate G2: Plan Approval**
-- All requirements mapped to at least one task
-- Dependency graph is a valid DAG (no cycles)
-- Every task has an assigned agent type
-- Complexity estimates are within budget tolerance
-- User has approved the plan
-
----
-
-### 3.3 Research Phase
-
-**Description:** The Researcher Agent investigates technologies, patterns, libraries, and reference implementations relevant to the project. It evaluates dependencies for security, licensing, and maintenance health.
+**Description:** The Researcher Agent investigates technologies, patterns, libraries, and reference implementations relevant to the project. It evaluates dependencies for security, licensing, and maintenance health. This phase runs AFTER brainstorming and BEFORE architecture, ensuring design decisions are informed by thorough research.
 
 **Goals:**
 - Evaluate technology choices for the project
@@ -903,9 +742,8 @@ For each transition, the following data flows between phases:
 **Input:**
 ```json
 {
-  "plan": { },
-  "tech_recommendations": { },
   "refined_requirements": { },
+  "tech_recommendations": { },
   "constraints": {
     "licensing": "MIT | Apache-2.0 | any-oss",
     "security_requirements": "SOC2 | HIPAA | none",
@@ -966,7 +804,7 @@ For each transition, the following data flows between phases:
 **Step-by-Step Workflow:**
 
 ```
- 1. Receive plan and tech recommendations from Planning
+ 1. Receive refined requirements and tech recommendations from Brainstorming
  2. Researcher identifies technology categories to evaluate
  3. For each category, research top 3-5 options
  4. Evaluate each option against criteria:
@@ -979,8 +817,8 @@ For each transition, the following data flows between phases:
  6. Check license compatibility across all dependencies
  7. Find reference implementations for key patterns
  8. Compile research report
- 9. [GATE G3] Report completeness validation
- 10. Checkpoint saved, transition to Architecture
+ 9. [GATE G2] Report completeness validation
+ 10. Checkpoint saved, transition to Architecture & Design
 ```
 
 **Sequence Diagram:**
@@ -1015,7 +853,7 @@ For each transition, the following data flows between phases:
      |                 |                  |               |              |
      | Research report |                  |               |              |
      |<----------------|                  |               |              |
-     | [GATE G3]       |                  |               |              |
+     | [GATE G2]       |                  |               |              |
 ```
 
 **Error Handling:**
@@ -1023,7 +861,7 @@ For each transition, the following data flows between phases:
 - Vulnerability database unavailable: flag as "unverified" and continue
 - No viable option for a technology category: escalate to user with alternatives
 
-**Quality Gate G3: Research Completeness**
+**Quality Gate G2: Research Completeness**
 - All technology categories have at least one evaluated option
 - No unresolved licensing conflicts
 - No critical unpatched vulnerabilities in recommended dependencies
@@ -1031,7 +869,7 @@ For each transition, the following data flows between phases:
 
 ---
 
-### 3.4 Architecture & Design Phase
+### 3.3 Architecture & Design Phase
 
 **Description:** Multiple agents collaborate in parallel to produce the complete system architecture, UI/UX design, database schemas, and API contracts. This phase uses the fan-out/fan-in pattern.
 
@@ -1120,8 +958,8 @@ For each transition, the following data flows between phases:
     c. Architecture supports all non-functional requirements
  7. If inconsistencies found: targeted re-work by affected agent(s)
  8. Present architecture to user
- 9. [GATE G4] User approves architecture
- 10. Checkpoint saved, transition to Tech Stack Selection
+ 9. [GATE G3] User approves architecture
+ 10. Checkpoint saved, transition to Planning & Configuration
 ```
 
 **Parallel Execution Diagram:**
@@ -1146,7 +984,7 @@ For each transition, the following data flows between phases:
               [Orchestrator]  <--- fan-in, consistency check
                     |
                     v
-              [GATE G4: User Approval]
+              [GATE G3: User Approval]
 ```
 
 **Cross-Agent Coordination:**
@@ -1169,7 +1007,7 @@ For each transition, the following data flows between phases:
 - User rejects architecture: capture feedback, re-enter phase with constraints
 - Timeout on any agent: use partial results, flag incomplete sections
 
-**Quality Gate G4: Architecture Approval**
+**Quality Gate G3: Architecture Approval**
 - C4 context and container diagrams complete
 - All API endpoints documented with request/response schemas
 - Database schema supports all CRUD operations implied by features
@@ -1179,17 +1017,21 @@ For each transition, the following data flows between phases:
 
 ---
 
-### 3.5 Tech Stack & Template Selection Phase
+### 3.4 Planning & Configuration Phase
 
-**Description:** Based on the architecture and research outputs, the TechStack Builder recommends specific technologies and the Template Agent presents scaffolding options. The user makes final selections, and the scaffold is generated.
+**Description:** The Planning & Configuration phase combines project planning, technology selection, and scaffold generation into a single cohesive stage. The Planner Agent decomposes the refined requirements into a structured execution plan, the TechStack Builder recommends specific technologies based on the architecture and research outputs, and the Template Agent generates the project scaffold. This phase runs AFTER architecture is approved, ensuring plans are grounded in concrete architectural decisions.
 
 **Goals:**
+- Break requirements into implementable tasks
+- Create dependency graph with topological ordering
+- Identify parallel execution opportunities
+- Estimate complexity and timeline
 - Finalize technology selections for every layer
 - Validate compatibility across all selections
 - Select UI/UX templates and design kits
 - Generate project scaffold with all boilerplate
 
-**Agent(s) Involved:** TechStack Builder, Template Agent, Orchestrator
+**Agent(s) Involved:** Planner, TechStack Builder, Template Agent, Orchestrator
 
 **Input:**
 ```json
@@ -1267,7 +1109,7 @@ For each transition, the following data flows between phases:
     2c. Verifies license compliance
  3. Present tech stack recommendation to user
  4. User selects/modifies tech stack
- 5. [GATE G5] User confirms tech stack
+ 5. [GATE G4a] User confirms tech stack
  6. Template Agent searches template registry
     6a. Filters by tech stack compatibility
     6b. Filters by design system compatibility
@@ -1282,7 +1124,7 @@ For each transition, the following data flows between phases:
     9e. Create initial directory structure
     9f. Generate configuration files
  10. Scaffold committed to repository
- 11. [GATE G6] Scaffold validation (compiles, lints pass)
+ 11. [GATE G4] Plan + scaffold validation (compiles, lints pass)
  12. Checkpoint saved, transition to Implementation
 ```
 
@@ -1307,7 +1149,7 @@ For each transition, the following data flows between phases:
   |<----------------|              |               |             |
   | Select/modify   |              |               |             |
   |---------------->|              |               |             |
-  |                 | [GATE G5]    |               |             |
+  |                 | [GATE G4a]   |               |             |
   |                 |              |               |             |
   |                 | Search       |               |             |
   |                 | templates    |               |             |
@@ -1331,7 +1173,7 @@ For each transition, the following data flows between phases:
   |                 | Commit scaffold              |             |
   |                 |---------------------------------------------->|
   |                 |              |               |         committed
-  |                 | [GATE G6]    |               |             |
+  |                 | [GATE G4]    |               |             |
 ```
 
 **Decision Points:**
@@ -1346,7 +1188,7 @@ For each transition, the following data flows between phases:
 - User rejects all template options: generate custom scaffold from architecture outputs
 - Version mismatch detected post-scaffold: auto-fix versions, re-validate
 
-**Quality Gate G6: Scaffold Validation**
+**Quality Gate G4: Plan + Scaffold Validation**
 - Project compiles/builds successfully
 - Linting passes with zero errors
 - All configuration files are valid
@@ -1355,7 +1197,7 @@ For each transition, the following data flows between phases:
 
 ---
 
-### 3.6 Implementation Phase
+### 3.5 Implementation Phase
 
 **Description:** The Implementation Phase is the core production phase where multiple developer agents work in parallel, each in an isolated git worktree, to build the complete application. The Orchestrator coordinates task assignment and monitors progress in real time.
 
@@ -1442,10 +1284,10 @@ For each transition, the following data flows between phases:
      c. Merge middleware (depends on backend)
      d. Merge frontend (depends on API contracts)
      e. Merge mobile (depends on API contracts)
- 11. Resolve any merge conflicts (see 3.6.2)
+ 11. Resolve any merge conflicts (see 3.5.2)
  12. Run compilation check on merged code
- 13. [GATE G7] Code compiles successfully
- 14. Checkpoint saved, transition to Review
+ 13. [GATE G5] Code compiles successfully
+ 14. Checkpoint saved, transition to Quality Assurance
 ```
 
 **Worktree Isolation Model:**
@@ -1540,18 +1382,19 @@ For each transition, the following data flows between phases:
 
 ---
 
-### 3.7 Review Phase
+### 3.6 Quality Assurance Phase
 
-**Description:** Multiple review agents run in parallel to assess code quality, security, accessibility, and performance. Each produces a findings report that feeds into the testing and debug phases.
+**Description:** Multiple review agents run in parallel to assess code quality, security, accessibility, internationalization, and performance. Each produces a findings report that feeds into the testing and debug phases.
 
 **Goals:**
 - Verify code quality and adherence to best practices
 - Identify security vulnerabilities (SAST, DAST, SCA)
 - Check accessibility compliance (WCAG 2.1 AA)
+- Verify internationalization readiness
 - Profile initial performance characteristics
 - Verify architecture conformance
 
-**Agent(s) Involved:** Code Reviewer, Security Auditor, Accessibility Agent, Performance Agent
+**Agent(s) Involved:** Code Reviewer, Security Auditor, Accessibility Agent, i18n/L10n Agent, Performance Agent
 
 **Input:**
 ```json
@@ -1612,11 +1455,12 @@ For each transition, the following data flows between phases:
 **Step-by-Step Workflow:**
 
 ```
- 1. Orchestrator fans out to 4 review agents in parallel:
+ 1. Orchestrator fans out to 5 review agents in parallel:
     a. Code Reviewer: style, patterns, architecture conformance
     b. Security Auditor: SAST, SCA, secret scanning
     c. Accessibility Agent: WCAG compliance check
-    d. Performance Agent: bundle analysis, profiling
+    d. i18n/L10n Agent: internationalization readiness check
+    e. Performance Agent: bundle analysis, profiling
  2. Each agent scans the entire codebase
  3. Agents produce findings reports with severity ratings
  4. Orchestrator collects and aggregates all findings
@@ -1631,7 +1475,7 @@ For each transition, the following data flows between phases:
  7. If critical/blocker findings exist:
     a. Route back to relevant developer agent for fix
     b. Re-run affected reviews after fix
- 8. [GATE G8] No critical/blocker findings remain
+ 8. [GATE G6] No critical/blocker findings remain
  9. Checkpoint saved, transition to Testing
 ```
 
@@ -1672,7 +1516,7 @@ For each transition, the following data flows between phases:
      | Aggregate     |              |              |              |
      |---+           |              |              |              |
      |<--+           |              |              |              |
-     | [GATE G8]     |              |              |              |
+     | [GATE G6]     |              |              |              |
 ```
 
 **Error Handling:**
@@ -1681,7 +1525,7 @@ For each transition, the following data flows between phases:
 - SAST tool unavailable: log warning, proceed with available tools
 - Performance profiling fails: skip, flag for manual review
 
-**Quality Gate G8: Review Clearance**
+**Quality Gate G6: Review Clearance**
 - Zero critical or blocker severity findings
 - Security audit shows no critical vulnerabilities
 - No hardcoded secrets detected
@@ -1689,14 +1533,18 @@ For each transition, the following data flows between phases:
 
 ---
 
-### 3.8 Testing Phase
+### 3.7 Testing Phase
 
-**Description:** The Tester Agent generates and executes comprehensive test suites covering unit, integration, and end-to-end tests. The Performance Agent runs load tests and the Accessibility Agent runs automated a11y tests.
+**Description:** The Tester Agent generates and executes comprehensive test suites covering unit, integration, end-to-end, UI component, smoke, regression, and mutation tests. The Performance Agent runs load tests and the Accessibility Agent runs automated a11y tests.
 
 **Goals:**
 - Generate unit tests for all business logic
 - Generate integration tests for API endpoints
 - Generate E2E tests for critical user flows
+- Generate UI component tests (Storybook, Testing Library)
+- Run smoke tests (post-build/post-deploy sanity checks)
+- Run regression tests (full suite re-run after fixes)
+- Run mutation tests (Stryker, mutmut - test quality verification)
 - Run performance/load tests
 - Achieve target code coverage
 - Run accessibility tests
@@ -1777,26 +1625,37 @@ For each transition, the following data flows between phases:
     a. Unit tests for all services, utilities, and models
     b. Integration tests for API endpoints against test database
     c. E2E tests for critical user flows (login, CRUD, checkout, etc.)
+    d. UI component tests (Storybook visual tests, Testing Library interaction tests)
  3. Set up test infrastructure:
     a. Test database with seed data
     b. Mock external services
     c. Test environment variables
+    d. Storybook environment for component testing
  4. Execute test suites (parallel where possible):
     a. Unit tests (fastest, run first)
-    b. Integration tests (medium speed)
-    c. E2E tests (slowest, run last)
- 5. Performance Agent runs load tests:
+    b. UI component tests (Testing Library, Storybook)
+    c. Integration tests (medium speed)
+    d. E2E tests (slowest, run last)
+ 5. Run smoke tests:
+    a. Post-build sanity checks (app starts, routes resolve)
+    b. Post-deploy verification (health endpoints, critical paths)
+ 6. Performance Agent runs load tests:
     a. Ramp-up test (gradual traffic increase)
     b. Stress test (peak load simulation)
     c. Endurance test (sustained load)
- 6. Accessibility Agent runs automated tests:
+ 7. Accessibility Agent runs automated tests:
     a. axe-core scan on all pages
     b. Keyboard navigation check
     c. Screen reader compatibility check
- 7. Collect all results and compute coverage
- 8. Classify failures by severity and root cause
- 9. [GATE G9] Test results collected (auto-pass to Debug phase)
- 10. Checkpoint saved, transition to Debug & Fix
+ 8. Run mutation tests (test quality verification):
+    a. Stryker (JavaScript/TypeScript) or mutmut (Python)
+    b. Identify tests that don't catch code mutations
+    c. Flag weak test coverage areas
+ 9. Collect all results and compute coverage
+ 10. Run regression tests (full suite re-run to verify stability)
+ 11. Classify failures by severity and root cause
+ 12. [GATE G7] Test results collected (auto-pass to Debug phase)
+ 13. Checkpoint saved, transition to Debug & Stabilization
 ```
 
 **State Machine:**
@@ -1817,10 +1676,16 @@ For each transition, the following data flows between phases:
  [RUN_UNIT_TESTS]
       |
       v
+ [RUN_UI_COMPONENT_TESTS]    (Testing Library, Storybook - parallel with unit)
+      |
+      v
  [RUN_INTEGRATION_TESTS]     (can run in parallel with unit tests)
       |
       v
  [RUN_E2E_TESTS]
+      |
+      v
+ [RUN_SMOKE_TESTS]           (post-build sanity checks)
       |
       v
  [RUN_PERF_TESTS]            (parallel with E2E)
@@ -1829,7 +1694,13 @@ For each transition, the following data flows between phases:
  [RUN_A11Y_TESTS]            (parallel with E2E)
       |
       v
+ [RUN_MUTATION_TESTS]        (Stryker/mutmut - test quality verification)
+      |
+      v
  [COLLECT_RESULTS]
+      |
+      v
+ [RUN_REGRESSION_TESTS]      (full suite re-run after all results)
       |
       v
  [COMPUTE_COVERAGE]
@@ -1842,7 +1713,7 @@ For each transition, the following data flows between phases:
  [CLASSIFY_FAILURES]
       |
       v
- [GATE G9: AUTO]
+ [GATE G7: AUTO]
 ```
 
 **Error Handling:**
@@ -1854,7 +1725,7 @@ For each transition, the following data flows between phases:
 
 ---
 
-### 3.9 Debug & Fix Loop
+### 3.8 Debug & Fix Loop
 
 **Description:** The Debugger Agent analyzes test failures, identifies root causes, generates fixes, creates targeted regression tests, and iterates until all tests pass or the maximum iteration count is reached.
 
@@ -1885,7 +1756,7 @@ For each transition, the following data flows between phases:
     f. Apply fix to codebase
     g. Run targeted test to verify fix
     h. Run full test suite to check for regressions
- 4. If all tests pass: proceed to Deployment
+ 4. If all tests pass: proceed to Documentation & Knowledge
  5. If new regressions introduced:
     a. Add regressions to failure queue
     b. Increment iteration counter
@@ -2011,9 +1882,133 @@ For each transition, the following data flows between phases:
 
 ---
 
-### 3.10 Deployment Phase
+### 3.9 Documentation & Knowledge Phase
 
-**Description:** The DevOps Agent and Infrastructure Engineer collaborate to create CI/CD pipelines, generate Infrastructure-as-Code, and deploy the application to the selected cloud provider or self-hosted environment.
+**Description:** The Documentation Writer generates all project documentation, and the Skill/Hook/Tool Creators produce reusable knowledge artifacts. This phase runs AFTER debug stabilization and BEFORE deployment, ensuring all documentation reflects the final stable codebase.
+
+**Goals:**
+- Generate complete project documentation
+- Create Architecture Decision Records (ADRs)
+- Generate API documentation from OpenAPI spec
+- Produce deployment and development guides
+- Create reusable skills, hooks, and tools for the knowledge base
+
+**Agent(s) Involved:** Documentation Writer, Skill Creator, Hooks Creator, Tools Creator, Orchestrator
+
+**Input:**
+```json
+{
+  "codebase": { },
+  "architecture": { },
+  "api_spec": { },
+  "test_results": { },
+  "all_phase_outputs": { }
+}
+```
+
+**Output:**
+```json
+{
+  "documentation": {
+    "readme": "README.md",
+    "api_docs": "docs/api/",
+    "architecture_decision_records": "docs/adr/",
+    "deployment_guide": "docs/deployment.md",
+    "development_guide": "docs/development.md",
+    "changelog": "CHANGELOG.md",
+    "contributing": "CONTRIBUTING.md"
+  },
+  "knowledge_artifacts": {
+    "skills_created": [],
+    "hooks_created": [],
+    "tools_created": [],
+    "patterns_documented": []
+  }
+}
+```
+
+**Step-by-Step Workflow:**
+
+```
+ 1. Documentation Writer generates documentation (parallel):
+    a. README.md with project overview, setup, and usage
+    b. API documentation from OpenAPI spec
+    c. Architecture Decision Records (ADRs)
+    d. Deployment guide with step-by-step instructions
+    e. Development guide (local setup, testing, contributing)
+    f. CHANGELOG.md with version history
+ 2. All documentation committed to repository
+ 3. Skill Creator analyzes codebase for reusable patterns:
+    a. Extract common patterns as reusable skills
+    b. Document skill interfaces and usage
+ 4. Hooks Creator generates lifecycle hooks:
+    a. Pre/post build hooks
+    b. Pre/post deploy hooks
+    c. Pre/post test hooks
+ 5. Tools Creator generates custom tools:
+    a. Project-specific CLI tools
+    b. Integration utilities
+ 6. [GATE G9] Documentation completeness validation
+ 7. Checkpoint saved, transition to Deployment & Delivery
+```
+
+**Sequence Diagram:**
+
+```
+ Orchestrator      Doc Writer     Skill Creator   Hooks Creator   Tools Creator
+     |                 |               |               |               |
+     | Generate docs   |               |               |               |
+     |---------------->|               |               |               |
+     |                 | README        |               |               |
+     |                 |---+           |               |               |
+     |                 |<--+           |               |               |
+     |                 | API docs      |               |               |
+     |                 |---+           |               |               |
+     |                 |<--+           |               |               |
+     |                 | ADRs         |               |               |
+     |                 |---+           |               |               |
+     |                 |<--+           |               |               |
+     |                 |               |               |               |
+     | Create skills   |               |               |               |
+     |------------------------------>|               |               |
+     |                 |               |---+           |               |
+     |                 |               |<--+           |               |
+     |                 |               |               |               |
+     | Create hooks    |               |               |               |
+     |-------------------------------------------->|               |
+     |                 |               |               |---+           |
+     |                 |               |               |<--+           |
+     |                 |               |               |               |
+     | Create tools    |               |               |               |
+     |---------------------------------------------------------->|
+     |                 |               |               |               |---+
+     |                 |               |               |               |<--+
+     |                 |               |               |               |
+     | All artifacts   |               |               |               |
+     |<----------------|               |               |               |
+     |<-------------------------------|               |               |
+     |<--------------------------------------------|               |
+     |<------------------------------------------------------------|
+     |                 |               |               |               |
+     | [GATE G9]       |               |               |               |
+```
+
+**Error Handling:**
+- Documentation generation fails: produce minimal docs, flag incomplete sections
+- Skill extraction fails: skip, document patterns manually
+- Hook generation fails: provide template hooks for manual customization
+
+**Quality Gate G9: Documentation Completeness**
+- README.md exists and covers setup instructions
+- API documentation generated for all endpoints
+- At least one ADR documenting key architectural decisions
+- Deployment guide covers all target environments
+
+---
+
+### 3.10 Deployment & Delivery Phase
+
+**Description:** The DevOps Agent, Infrastructure Engineer, and GitHub Agent collaborate to create CI/CD pipelines, generate Infrastructure-as-Code, deploy the application, create a release with artifacts, and produce a comprehensive handoff report for the user. This is the LAST stage of the pipeline.
 
 **Goals:**
 - Create CI/CD pipeline (GitHub Actions by default)
@@ -2021,8 +2016,11 @@ For each transition, the following data flows between phases:
 - Configure deployment environments (staging, production)
 - Deploy application with health checks
 - Set up monitoring and alerting
+- Create GitHub release with all artifacts
+- Produce handoff report for the user
+- Archive project state for future reference
 
-**Agent(s) Involved:** DevOps Agent, Infrastructure Engineer, GitHub Agent
+**Agent(s) Involved:** DevOps Agent, Infrastructure Engineer, GitHub Agent, Project Manager
 
 **Input:**
 ```json
@@ -2099,11 +2097,28 @@ For each transition, the following data flows between phases:
     d. Run smoke tests against staging
     e. Run health checks
  6. If staging healthy:
-    a. [GATE G11] Optional: user approval for production
+    a. [GATE G10] Optional: user approval for production
     b. Deploy to production
     c. Run production health checks
     d. Configure monitoring and alerting
- 7. Checkpoint saved, transition to Delivery
+ 7. GitHub Agent creates release:
+    a. Create git tag (v1.0.0)
+    b. Build release artifacts
+    c. Create GitHub Release with changelog
+    d. Attach artifacts to release
+ 8. Orchestrator generates handoff report:
+    a. Project summary and feature list
+    b. Known limitations and technical debt
+    c. Recommended next steps
+    d. Cost and timeline summary
+    e. All agent execution logs
+ 9. Deliver to user:
+    a. Repository URL with all code
+    b. Deployment URL (staging + production)
+    c. Documentation URL
+    d. Handoff report
+ 10. Final checkpoint saved
+ 11. Session archived
 ```
 
 **Sequence Diagram:**
@@ -2149,7 +2164,7 @@ For each transition, the following data flows between phases:
      | Staging OK    |            |              |              |
      |<--------------|            |              |              |
      |               |            |              |              |
-     | [GATE G11]    |            |              |              |
+     | [GATE G10]    |            |              |              |
      | (optional)    |            |              |              |
      |               |            |              |              |
      |               | Deploy to production       |              |
@@ -2170,7 +2185,7 @@ For each transition, the following data flows between phases:
 - Secret not configured: prompt user for secrets, pause deployment
 - Cost estimate exceeds budget: suggest cheaper alternatives, await approval
 
-**Quality Gate G10/G11: Deployment Validation**
+**Quality Gate G10: Deployment & Delivery Validation**
 - Application responds to health check endpoint
 - All smoke tests pass against staging
 - No error spikes in monitoring
@@ -2179,171 +2194,23 @@ For each transition, the following data flows between phases:
 
 ---
 
-### 3.11 Delivery Phase
-
-**Description:** The Documentation Writer generates all project documentation, the GitHub Agent creates a release with artifacts, and a comprehensive handoff report is generated for the user.
-
-**Goals:**
-- Generate complete project documentation
-- Create GitHub release with all artifacts
-- Produce handoff report for the user
-- Archive project state for future reference
-
-**Agent(s) Involved:** Documentation Writer, GitHub Agent, Orchestrator
-
-**Input:**
-```json
-{
-  "codebase": { },
-  "architecture": { },
-  "api_spec": { },
-  "test_results": { },
-  "deployment": { },
-  "all_phase_outputs": { }
-}
-```
-
-**Output:**
-```json
-{
-  "documentation": {
-    "readme": "README.md",
-    "api_docs": "docs/api/",
-    "architecture_decision_records": "docs/adr/",
-    "deployment_guide": "docs/deployment.md",
-    "development_guide": "docs/development.md",
-    "changelog": "CHANGELOG.md",
-    "contributing": "CONTRIBUTING.md"
-  },
-  "release": {
-    "version": "1.0.0",
-    "tag": "v1.0.0",
-    "github_release_url": "https://github.com/...",
-    "artifacts": [
-      "source-code.tar.gz",
-      "docker-image:latest",
-      "api-docs.zip"
-    ]
-  },
-  "handoff_report": {
-    "project_summary": "...",
-    "features_implemented": [ ],
-    "known_limitations": [ ],
-    "recommended_next_steps": [ ],
-    "cost_summary": {
-      "total_tokens_used": 2450000,
-      "total_cost_usd": 45.67,
-      "cost_by_phase": { }
-    },
-    "timeline_summary": {
-      "total_duration_minutes": 32,
-      "duration_by_phase": { }
-    }
-  }
-}
-```
-
-**Step-by-Step Workflow:**
-
-```
- 1. Documentation Writer generates documentation (parallel):
-    a. README.md with project overview, setup, and usage
-    b. API documentation from OpenAPI spec
-    c. Architecture Decision Records (ADRs)
-    d. Deployment guide with step-by-step instructions
-    e. Development guide (local setup, testing, contributing)
-    f. CHANGELOG.md with version history
- 2. All documentation committed to repository
- 3. GitHub Agent creates release:
-    a. Create git tag (v1.0.0)
-    b. Build release artifacts
-    c. Create GitHub Release with changelog
-    d. Attach artifacts to release
- 4. Orchestrator generates handoff report:
-    a. Project summary and feature list
-    b. Known limitations and technical debt
-    c. Recommended next steps
-    d. Cost and timeline summary
-    e. All agent execution logs
- 5. Deliver to user:
-    a. Repository URL with all code
-    b. Deployment URL (staging + production)
-    c. Documentation URL
-    d. Handoff report
- 6. Final checkpoint saved
- 7. Session archived
-```
-
-**Sequence Diagram:**
-
-```
- Orchestrator      Doc Writer       GitHub Agent      Git           User
-     |                 |                 |              |              |
-     | Generate docs   |                 |              |              |
-     |---------------->|                 |              |              |
-     |                 | README          |              |              |
-     |                 |---+             |              |              |
-     |                 |<--+             |              |              |
-     |                 | API docs        |              |              |
-     |                 |---+             |              |              |
-     |                 |<--+             |              |              |
-     |                 | ADRs            |              |              |
-     |                 |---+             |              |              |
-     |                 |<--+             |              |              |
-     |                 | Deploy guide    |              |              |
-     |                 |---+             |              |              |
-     |                 |<--+             |              |              |
-     |                 |                 |              |              |
-     |                 | Commit docs     |              |              |
-     |                 |------------------------------------>|         |
-     |                 |                 |              |              |
-     | Docs ready      |                 |              |              |
-     |<----------------|                 |              |              |
-     |                 |                 |              |              |
-     | Create release  |                 |              |              |
-     |---------------------------------->|              |              |
-     |                 |                 | Tag + release|              |
-     |                 |                 |------------->|              |
-     |                 |                 |              |              |
-     | Release URL     |                 |              |              |
-     |<----------------------------------|              |              |
-     |                 |                 |              |              |
-     | Generate handoff|                 |              |              |
-     |---+             |                 |              |              |
-     |<--+             |                 |              |              |
-     |                 |                 |              |              |
-     | Deliver to user |                 |              |              |
-     |---------------------------------------------------------------->|
-     |                 |                 |              |              |
-     | Archive session |                 |              |              |
-     |---+             |                 |              |              |
-     |<--+             |                 |              |              |
-```
-
-**Error Handling:**
-- Documentation generation fails: produce minimal docs, flag incomplete sections
-- GitHub release creation fails: retry, fall back to manual instructions
-- Artifact build fails: deliver source code without pre-built artifacts
-- User unreachable for handoff: email notification with all links and report
-
----
-
-### 3.12 Failure Mode Analysis per Phase
+### 3.11 Failure Mode Analysis per Phase
 
 Each pipeline phase has characteristic failure modes. The following table documents common failures, how they are detected, and the recovery strategy applied.
 
-| Phase | Common Failures | Detection | Recovery |
-|---|---|---|---|
-| Brainstorming | User abandonment, infinite loop | Session timeout (60min), repetition detection | Auto-finalize with current state |
-| Planning | Over-decomposition, missing dependencies | Task count threshold, dependency cycle detection | Simplify plan, merge tasks |
-| Research | Outdated info, hallucinated references | Source verification, cross-reference check | Flag unverified, fallback to cached knowledge |
-| Architecture | Over-engineering, inconsistent design | Complexity metrics, schema validation | Simplify, apply reference architecture |
-| Implementation | Compilation errors, type mismatches | Build verification after each agent | Route to Debugger, retry with context |
-| Review | False positives, scanner crashes | Result validation, scanner health check | Re-run with different config, manual review flag |
-| Testing | Flaky tests, environment issues | Test stability tracking, retry detection | Quarantine flaky tests, environment reset |
-| Debug/Fix | Infinite fix loop, regression introduction | Iteration counter (max 5), regression detection | Escalate to human after 3 iterations |
-| Deployment | Health check failure, resource exhaustion | Health endpoint monitoring, resource metrics | Auto-rollback, scale resources |
-| Delivery | Missing artifacts, incomplete docs | Completeness checklist validation | Re-generate missing items |
+| Stage | Phase | Common Failures | Detection | Recovery |
+|---|---|---|---|---|
+| S0 | Initialization | Repo creation failure, permission issues | Git/GitHub API errors | Retry, prompt for credentials |
+| S1 | Brainstorming | User abandonment, infinite loop | Session timeout (60min), repetition detection | Auto-finalize with current state |
+| S2 | Research | Outdated info, hallucinated references | Source verification, cross-reference check | Flag unverified, fallback to cached knowledge |
+| S3 | Architecture & Design | Over-engineering, inconsistent design | Complexity metrics, schema validation | Simplify, apply reference architecture |
+| S4 | Planning & Configuration | Over-decomposition, missing dependencies, tech stack conflicts | Task count threshold, dependency cycle detection, compatibility validation | Simplify plan, merge tasks, resolve conflicts |
+| S5 | Implementation | Compilation errors, type mismatches | Build verification after each agent | Route to Debugger, retry with context |
+| S6 | Quality Assurance | False positives, scanner crashes | Result validation, scanner health check | Re-run with different config, manual review flag |
+| S7 | Testing | Flaky tests, environment issues | Test stability tracking, retry detection | Quarantine flaky tests, environment reset |
+| S8 | Debug & Stabilization | Infinite fix loop, regression introduction | Iteration counter (max 5), regression detection | Escalate to human after 3 iterations |
+| S9 | Documentation & Knowledge | Missing artifacts, incomplete docs | Completeness checklist validation | Re-generate missing items |
+| S10 | Deployment & Delivery | Health check failure, resource exhaustion | Health endpoint monitoring, resource metrics | Auto-rollback, scale resources |
 
 ---
 
@@ -2394,12 +2261,12 @@ CodeBot agents interact through five primary patterns. These patterns govern how
 | Agent | Can Read | Can Write |
 |-------|----------|-----------|
 | Brainstorming Agent | project_meta | requirements |
-| Planner | requirements | plan |
-| Researcher | plan, requirements | research |
-| Architect | plan, research, requirements | architecture |
+| Researcher | requirements | research |
+| Architect | research, requirements | architecture |
 | Designer | architecture, requirements | design |
-| Database Agent | architecture, plan | architecture.database |
-| API Gateway Agent | architecture, plan | architecture.api |
+| Database Agent | architecture, research | architecture.database |
+| API Gateway Agent | architecture, research | architecture.api |
+| Planner | architecture, research, requirements | plan |
 | TechStack Builder | architecture, research | tech_stack |
 | Template Agent | tech_stack, design | scaffold |
 | Frontend Developer | architecture, design, api_spec | implementation.frontend |
@@ -2424,11 +2291,13 @@ Every write to the state store creates a new version. Agents always read the lat
 
 ```
  state_store/
-   v001/ <- Brainstorming output
-   v002/ <- Planning output
+   v001/ <- Initialization output
+   v002/ <- Brainstorming output
    v003/ <- Research output
+   v004/ <- Architecture & Design output
+   v005/ <- Planning & Configuration output
    ...
-   latest -> v012/
+   latest -> v011/
 ```
 
 ---
@@ -2889,40 +2758,37 @@ CodeBot supports three project types, each with a different pipeline configurati
  [User Input]
       |
       v
- [Brainstorming]     <-- Full idea exploration
+ [S0: Initialization]     <-- Project setup, repo creation
       |
       v
- [Planning]           <-- Complete task decomposition
+ [S1: Brainstorming]      <-- Full idea exploration
       |
       v
- [Research]           <-- Full technology evaluation
+ [S2: Research]            <-- Full technology evaluation
       |
       v
- [Architecture]       <-- Design from scratch
+ [S3: Architecture]        <-- Design from scratch
       |
       v
- [Tech Stack]         <-- Select all technologies
+ [S4: Planning & Config]   <-- Task decomposition + tech stack + scaffold
       |
       v
- [Template]           <-- Generate full scaffold
+ [S5: Implementation]      <-- Build everything
       |
       v
- [Implementation]     <-- Build everything
+ [S6: Quality Assurance]   <-- Full review suite
       |
       v
- [Review]             <-- Full review suite
+ [S7: Testing]             <-- Comprehensive test generation
       |
       v
- [Testing]            <-- Comprehensive test generation
+ [S8: Debug/Fix]           <-- Fix all issues
       |
       v
- [Debug/Fix]          <-- Fix all issues
+ [S9: Documentation]       <-- Complete documentation
       |
       v
- [Deployment]         <-- Full deployment setup
-      |
-      v
- [Delivery]           <-- Complete documentation
+ [S10: Deploy & Deliver]   <-- Full deployment + handoff
 ```
 
 **Key Characteristics:**
@@ -2935,33 +2801,38 @@ CodeBot supports three project types, each with a different pipeline configurati
 
 **Agent Activation Matrix for Greenfield:**
 
-| Agent | Active | Phase |
-|-------|--------|-------|
-| Orchestrator | Always | All |
-| Brainstorming Agent | Yes | Brainstorming |
-| Planner | Yes | Planning |
-| Researcher | Yes | Research |
-| Architect | Yes | Architecture |
-| Designer | Yes | Architecture |
-| Database Agent | Yes | Architecture |
-| API Gateway Agent | Yes | Architecture |
-| TechStack Builder | Yes | Tech Stack |
-| Template Agent | Yes | Tech Stack |
-| Frontend Developer | Yes | Implementation |
-| Backend Developer | Yes | Implementation |
-| Middleware Developer | Conditional | Implementation |
-| Mobile Developer | Conditional | Implementation |
-| Infrastructure Engineer | Yes | Implementation |
-| Code Reviewer | Yes | Review |
-| Security Auditor | Yes | Review |
-| Accessibility Agent | Yes | Review |
-| Performance Agent | Yes | Review + Testing |
-| Tester | Yes | Testing |
-| Debugger | Conditional | Debug/Fix |
-| DevOps Agent | Yes | Deployment |
-| GitHub Agent | Yes | Deployment + Delivery |
-| Documentation Writer | Yes | Delivery |
-| Project Manager | Yes | Cross-cutting (All) |
+| Agent | Active | Stage | Phase |
+|-------|--------|-------|-------|
+| Orchestrator | Always | S0-S10 | All |
+| Brainstorming Agent | Yes | S1 | Brainstorming |
+| Researcher | Yes | S2 | Research |
+| Architect | Yes | S3 | Architecture & Design |
+| Designer | Yes | S3 | Architecture & Design |
+| Database Agent | Yes | S3 | Architecture & Design |
+| API Gateway Agent | Yes | S3 | Architecture & Design |
+| Planner | Yes | S4 | Planning & Configuration |
+| TechStack Builder | Yes | S4 | Planning & Configuration |
+| Template Agent | Yes | S4 | Planning & Configuration |
+| Frontend Developer | Yes | S5 | Implementation |
+| Backend Developer | Yes | S5 | Implementation |
+| Middleware Developer | Conditional | S5 | Implementation |
+| Mobile Developer | Conditional | S5 | Implementation |
+| Infrastructure Engineer | Yes | S5 | Implementation |
+| Integrations Agent | Conditional | S5 | Implementation |
+| Code Reviewer | Yes | S6 | Quality Assurance |
+| Security Auditor | Yes | S6 | Quality Assurance |
+| Accessibility Agent | Yes | S6 | Quality Assurance |
+| i18n/L10n Agent | Conditional | S6 | Quality Assurance |
+| Performance Agent | Yes | S6 + S7 | Quality Assurance + Testing |
+| Tester | Yes | S7 | Testing |
+| Debugger | Conditional | S8 | Debug & Stabilization |
+| Documentation Writer | Yes | S9 | Documentation & Knowledge |
+| Skill Creator | Conditional | S9 | Documentation & Knowledge |
+| Hooks Creator | Conditional | S9 | Documentation & Knowledge |
+| Tools Creator | Conditional | S9 | Documentation & Knowledge |
+| DevOps Agent | Yes | S10 | Deployment & Delivery |
+| GitHub Agent | Yes | S0 + S10 | Initialization + Deployment & Delivery |
+| Project Manager | Yes | S0-S10 | Cross-cutting (All) |
 
 ---
 
@@ -2975,7 +2846,7 @@ CodeBot supports three project types, each with a different pipeline configurati
  [User Input + Existing Repo URL]
       |
       v
- [Codebase Analysis]       <-- NEW: Analyze existing code
+ [Codebase Analysis]       <-- PRE-PIPELINE: Analyze existing code
       |
       +-- Clone repository
       +-- Detect tech stack
@@ -2984,7 +2855,7 @@ CodeBot supports three project types, each with a different pipeline configurati
       +-- Detect test coverage
       |
       v
- [Architecture Recovery]    <-- NEW: Reverse-engineer architecture
+ [Architecture Recovery]    <-- PRE-PIPELINE: Reverse-engineer architecture
       |
       +-- Infer C4 model from code
       +-- Extract API contracts from routes
@@ -2992,7 +2863,7 @@ CodeBot supports three project types, each with a different pipeline configurati
       +-- Map component hierarchy
       |
       v
- [Gap Analysis]             <-- NEW: What's missing?
+ [Gap Analysis]             <-- PRE-PIPELINE: What's missing?
       |
       +-- Compare requirements vs implemented features
       +-- Identify missing tests
@@ -3000,31 +2871,37 @@ CodeBot supports three project types, each with a different pipeline configurati
       +-- Detect technical debt
       |
       v
- [Brainstorming]            <-- Scoped to remaining work
+ === ENTER STANDARD PIPELINE (scoped) ===
       |
       v
- [Planning]                 <-- Plan only remaining tasks
+ [S1: Brainstorming]        <-- Scoped to remaining work
       |
       v
- [Research]                 <-- SKIP if tech stack is fixed
+ [S2: Research]              <-- SKIP if tech stack is fixed
       |
       v
- [Implementation]           <-- Build only missing pieces
-      |                          (no scaffold, work on existing code)
-      v
- [Review]                   <-- Review new + changed code only
+ [S3: Architecture]          <-- SKIP if architecture is recovered
       |
       v
- [Testing]                  <-- Generate tests for new code + increase coverage
+ [S4: Planning]              <-- Plan only remaining tasks (no scaffold)
       |
       v
- [Debug/Fix]
+ [S5: Implementation]        <-- Build only missing pieces
+      |                           (no scaffold, work on existing code)
+      v
+ [S6: Quality Assurance]     <-- Review new + changed code only
       |
       v
- [Deployment]               <-- SKIP if CI/CD already exists, else enhance
+ [S7: Testing]               <-- Generate tests for new code + increase coverage
       |
       v
- [Delivery]                 <-- Update existing docs, don't overwrite
+ [S8: Debug/Fix]
+      |
+      v
+ [S9: Documentation]         <-- Update existing docs, don't overwrite
+      |
+      v
+ [S10: Deploy & Deliver]     <-- SKIP if CI/CD already exists, else enhance
 ```
 
 **Key Differences from Greenfield:**
@@ -3123,7 +3000,7 @@ CodeBot supports three project types, each with a different pipeline configurati
  [User Input + Legacy Repo URL + Modernization Goals]
       |
       v
- [Legacy Assessment]        <-- NEW: Deep legacy analysis
+ [Legacy Assessment]        <-- PRE-PIPELINE: Deep legacy analysis
       |
       +-- Identify deprecated dependencies
       +-- Detect anti-patterns
@@ -3133,7 +3010,7 @@ CodeBot supports three project types, each with a different pipeline configurati
       +-- Estimate modernization effort
       |
       v
- [Modernization Strategy]   <-- NEW: Plan the transformation
+ [Modernization Strategy]   <-- PRE-PIPELINE: Plan the transformation
       |
       +-- Strangler Fig pattern vs Big Bang
       +-- Identify modules to modernize first
@@ -3142,7 +3019,7 @@ CodeBot supports three project types, each with a different pipeline configurati
       +-- Risk assessment
       |
       v
- [Safety Net Creation]      <-- NEW: Tests before changes
+ [Safety Net Creation]      <-- PRE-PIPELINE: Tests before changes
       |
       +-- Generate characterization tests (capture current behavior)
       +-- Generate integration tests for critical paths
@@ -3150,7 +3027,10 @@ CodeBot supports three project types, each with a different pipeline configurati
       +-- Establish baseline metrics
       |
       v
- [Incremental Modernization] <-- Iterative refactoring
+ === ENTER STANDARD PIPELINE (assessment-informed) ===
+      |
+      v
+ [Incremental Modernization] <-- S5: Iterative refactoring
       |
       +-- For each module (in dependency order):
       |     1. Add/improve tests for module
@@ -3167,19 +3047,19 @@ CodeBot supports three project types, each with a different pipeline configurati
       +-- Resolve breaking changes
       |
       v
- [Review]
+ [S6: Quality Assurance]
       |
       v
- [Testing]                   <-- Full regression suite
+ [S7: Testing]               <-- Full regression suite
       |
       v
- [Debug/Fix]
+ [S8: Debug/Fix]
       |
       v
- [Deployment]
+ [S9: Documentation]
       |
       v
- [Delivery]
+ [S10: Deploy & Deliver]
 ```
 
 **Key Differences from Greenfield:**
@@ -3441,20 +3321,20 @@ CodeBot supports three project types, each with a different pipeline configurati
 
  Example: Failure during Implementation phase
 
- [Checkpoint: phase_06_techstack.json]  <-- Last successful phase
+ [Checkpoint: phase_04_planning.json]   <-- Last successful phase
       |
       v
- [Skip: Brainstorming]     already completed
- [Skip: Planning]          already completed
- [Skip: Research]          already completed
- [Skip: Architecture]      already completed
- [Skip: Tech Stack]        already completed
+ [Skip: S0 Initialization]     already completed
+ [Skip: S1 Brainstorming]      already completed
+ [Skip: S2 Research]            already completed
+ [Skip: S3 Architecture]       already completed
+ [Skip: S4 Planning & Config]  already completed
       |
       v
- [Resume: Implementation]  <-- Re-execute from here
+ [Resume: S5 Implementation]   <-- Re-execute from here
       |
       v
- [Continue: Review, Testing, etc.]
+ [Continue: S6 QA, S7 Testing, etc.]
 ```
 
 ### 6.3 LLM Rate Limiting Handling
@@ -3704,7 +3584,7 @@ Prevents cascading failures by tracking consecutive errors per LLM provider and 
       "notify_channels": ["dashboard", "email"],
       "auto_skip_in_mode": "autopilot"
     },
-    "G4_architecture": {
+    "G3_architecture": {
       "type": "approval",
       "mandatory": true,
       "timeout_minutes": 30,
@@ -3712,7 +3592,7 @@ Prevents cascading failures by tracking consecutive errors per LLM provider and 
       "notify_channels": ["dashboard", "email"],
       "auto_skip_in_mode": "autopilot"
     },
-    "G11_deployment": {
+    "G10_deployment": {
       "type": "approval",
       "mandatory": false,
       "timeout_minutes": 15,
@@ -3994,23 +3874,21 @@ Prevents cascading failures by tracking consecutive errors per LLM provider and 
 
  Budget Allocation (default per project):
 
- +------------------+-------------+
- | Phase            | Budget %    |
- +------------------+-------------+
- | Brainstorming    | 3%          |
- | Planning         | 5%          |
- | Research         | 5%          |
- | Architecture     | 10%         |
- | Design           | 5%          |
- | Tech Stack       | 2%          |
- | Implementation   | 35%         |
- | Review           | 5%          |
- | Testing          | 10%         |
- | Debug & Fix      | 10%         |
- | Deployment       | 3%          |
- | Documentation    | 4%          |
- | Delivery         | 3%          |
- +------------------+-------------+
+ +------+----------------------------+-------------+
+ | Stage| Phase                      | Budget %    |
+ +------+----------------------------+-------------+
+ | S0   | Initialization             | 1%          |
+ | S1   | Brainstorming              | 3%          |
+ | S2   | Research                   | 5%          |
+ | S3   | Architecture & Design      | 12%         |
+ | S4   | Planning & Configuration   | 7%          |
+ | S5   | Implementation             | 35%         |
+ | S6   | Quality Assurance          | 7%          |
+ | S7   | Testing                    | 10%         |
+ | S8   | Debug & Stabilization      | 10%         |
+ | S9   | Documentation & Knowledge  | 5%          |
+ | S10  | Deployment & Delivery      | 5%          |
+ +------+----------------------------+-------------+
 ```
 
 ### 8.3 Self-Hosted LLM Routing
@@ -4113,50 +3991,50 @@ Prevents cascading failures by tracking consecutive errors per LLM provider and 
 ### 9.1 Complete Pipeline Execution
 
 ```
- User        Orch       Brain    Plan    Research   Arch     Design    DB      API GW
-  |            |           |       |        |         |        |        |        |
-  | Idea       |           |       |        |         |        |        |        |
-  |----------->|           |       |        |         |        |        |        |
-  |            | Start     |       |        |         |        |        |        |
-  |            |---------->|       |        |         |        |        |        |
-  |            |           |       |        |         |        |        |        |
-  | Q&A loop   |           |       |        |         |        |        |        |
-  |<---------->|<--------->|       |        |         |        |        |        |
-  |            |           |       |        |         |        |        |        |
-  | Confirm    |           |       |        |         |        |        |        |
-  |----------->| G1 OK     |       |        |         |        |        |        |
-  |            |           |       |        |         |        |        |        |
-  |            | Start     |       |        |         |        |        |        |
-  |            |------------------>|        |         |        |        |        |
-  |            |           | Tasks |        |         |        |        |        |
-  |            |<------------------|        |         |        |        |        |
-  |            |           |       |        |         |        |        |        |
-  | Plan       |           |       |        |         |        |        |        |
-  |<-----------|           |       |        |         |        |        |        |
-  | Approve    |           |       |        |         |        |        |        |
-  |----------->| G2 OK     |       |        |         |        |        |        |
-  |            |           |       |        |         |        |        |        |
-  |            | Start     |       |        |         |        |        |        |
-  |            |-------------------------->|         |        |        |        |
-  |            |           |       | Report |         |        |        |        |
-  |            |<--------------------------|         |        |        |        |
-  |            | G3 OK     |       |        |         |        |        |        |
-  |            |           |       |        |         |        |        |        |
-  |            | Fan-out (parallel)         |         |        |        |        |
+ User        Orch       Brain    Research   Arch     Design    DB      API GW   Plan
+  |            |           |        |         |        |        |        |        |
+  | Idea       |           |        |         |        |        |        |        |
+  |----------->|           |        |         |        |        |        |        |
+  |            | S1: Start |        |         |        |        |        |        |
+  |            |---------->|        |         |        |        |        |        |
+  |            |           |        |         |        |        |        |        |
+  | Q&A loop   |           |        |         |        |        |        |        |
+  |<---------->|<--------->|        |         |        |        |        |        |
+  |            |           |        |         |        |        |        |        |
+  | Confirm    |           |        |         |        |        |        |        |
+  |----------->| G1 OK     |        |         |        |        |        |        |
+  |            |           |        |         |        |        |        |        |
+  |            | S2: Start |        |         |        |        |        |        |
+  |            |------------------>|         |        |        |        |        |
+  |            |           | Report |         |        |        |        |        |
+  |            |<------------------|         |        |        |        |        |
+  |            | G2 OK     |        |         |        |        |        |        |
+  |            |           |        |         |        |        |        |        |
+  |            | S3: Fan-out (parallel)       |        |        |        |        |
+  |            |------------------------------>|        |        |        |        |
   |            |-------------------------------------->|        |        |        |
   |            |--------------------------------------------->|        |        |
-  |            |---------------------------------------------------->|        |
-  |            |--------------------------------------------------------->|
-  |            |           |       |        |  Docs   | Wireframes| Schema| Spec|
+  |            |--------------------------------------------------->|        |
+  |            |           |        |  Docs   | Wireframes| Schema| Spec|        |
+  |            |<------------------------------|        |        |        |        |
   |            |<--------------------------------------|        |        |        |
-  |            |<---------------------------------------------|        |        |
-  |            |<----------------------------------------------------|        |
-  |            |<---------------------------------------------------------|
-  |            | G4 OK     |       |        |         |        |        |        |
-  |            |           |       |        |         |        |        |        |
-  | Approve    |           |       |        |         |        |        |        |
-  |<-----------|           |       |        |         |        |        |        |
-  |----------->|           |       |        |         |        |        |        |
+  |            |<----------------------------------------------|        |        |
+  |            |<------------------------------------------------------|        |
+  |            | G3 OK     |        |         |        |        |        |        |
+  |            |           |        |         |        |        |        |        |
+  | Approve    |           |        |         |        |        |        |        |
+  | arch       |           |        |         |        |        |        |        |
+  |<-----------|           |        |         |        |        |        |        |
+  |----------->|           |        |         |        |        |        |        |
+  |            |           |        |         |        |        |        |        |
+  |            | S4: Plan  |        |         |        |        |        |        |
+  |            |---------------------------------------------------------------->|
+  |            |           |        |  Tasks  |        |        |        |        |
+  |            |<----------------------------------------------------------------|
+  | Approve    |           |        |         |        |        |        |        |
+  | plan+stack |           |        |         |        |        |        |        |
+  |<-----------|           |        |         |        |        |        |        |
+  |----------->| G4 OK     |        |         |        |        |        |        |
 ```
 
 ```
@@ -4184,12 +4062,12 @@ Prevents cascading failures by tracking consecutive errors per LLM provider and 
   |      |<---------------------------------------|       |       |       |       |
   |      |<----------------------------------------------|       |       |       |
   |      |<----------------------------------------------------|       |       |
-  |      | Merge + G7     |       |      |       |       |       |       |       |
+  |      | Merge + G5     |       |      |       |       |       |       |       |
   |      |        |        |       |      |       |       |       |       |       |
   |      | Review (parallel)      |      |       |       |       |       |       |
   |      |---------------------------------------------------------------->|     |
   |      |<----------------------------------------------------------------|     |
-  |      | G8 OK  |        |       |      |       |       |       |       |       |
+  |      | G6 OK  |        |       |      |       |       |       |       |       |
   |      |        |        |       |      |       |       |       |       |       |
   |      | Test   |        |       |      |       |       |       |       |       |
   |      |------------------------------------------------------------------------>|
@@ -4439,7 +4317,7 @@ Prevents cascading failures by tracking consecutive errors per LLM provider and 
      | Staging OK    |            |            |            |            |
      |<--------------|            |            |            |            |
      |               |            |            |            |            |
-     | [G11: Approve production?]  |            |            |            |
+     | [G10: Approve production?]  |            |            |            |
      |               |            |            |            |            |
      |               | Deploy production       |            |            |
      |               |---------------------------------------->|        |
@@ -4463,20 +4341,19 @@ Prevents cascading failures by tracking consecutive errors per LLM provider and 
 
 Each agent loads context in three tiers to optimize token usage:
 
-| Phase | L0 (Always Loaded) | L1 (On-Demand) | L2 (Deep Retrieval) |
-|-------|-------------------|-----------------|---------------------|
-| Brainstorming | Project meta, user input | Similar past projects | Domain knowledge base |
-| Planning | Requirements, agent role | PRD full text | Similar past project plans |
-| Research | Task + tech constraints | Plan summary | Web search results |
-| Architecture | Plan + research summary | Full plan, research detail | Reference architectures |
-| Design | Architecture summary | Full architecture, API spec | Design system examples |
-| Tech Stack | Architecture + research | Full research evaluations | Template registry |
-| Implementation | Task assignment, file spec | Architecture, design tokens, related code | Full codebase search |
-| Review | File under review | Architecture doc, style guide | Security rule database |
-| Testing | Code under test | API spec, test patterns | Coverage data |
-| Debug & Fix | Error + stack trace | Failing test, source file | Related code, similar fixes |
-| Deployment | Tech stack, architecture | Build config, CI/CD templates | Cloud provider docs |
-| Delivery | Project summary | All phase outputs | Code comments, README patterns |
+| Stage | Phase | L0 (Always Loaded) | L1 (On-Demand) | L2 (Deep Retrieval) |
+|-------|-------|-------------------|-----------------|---------------------|
+| S0 | Initialization | Project meta, user input | GitHub config | Repository templates |
+| S1 | Brainstorming | Project meta, user input | Similar past projects | Domain knowledge base |
+| S2 | Research | Requirements + tech constraints | Brainstorming output | Web search results |
+| S3 | Architecture & Design | Research + requirements summary | Full research detail | Reference architectures, design system examples |
+| S4 | Planning & Configuration | Architecture + research summary | Full architecture, API spec | Template registry, similar plans |
+| S5 | Implementation | Task assignment, file spec | Architecture, design tokens, related code | Full codebase search |
+| S6 | Quality Assurance | File under review | Architecture doc, style guide | Security rule database |
+| S7 | Testing | Code under test | API spec, test patterns | Coverage data |
+| S8 | Debug & Stabilization | Error + stack trace | Failing test, source file | Related code, similar fixes |
+| S9 | Documentation & Knowledge | Project summary | All phase outputs | Code comments, README patterns |
+| S10 | Deployment & Delivery | Tech stack, architecture | Build config, CI/CD templates | Cloud provider docs |
 
 ### A.2 Observability and Monitoring
 
@@ -4514,23 +4391,23 @@ Each agent loads context in three tiers to optimize token usage:
 ## Appendix B: Complete Pipeline Timing Estimate
 
 ```
- Phase                          Estimated Time    Parallelism     Agents Active
+ Stage  Phase                       Estimated Time    Parallelism     Agents Active
  ---------------------------------------------------------------------------------
- 1.  Brainstorming              2-5 min           Sequential      1 (Brainstorm)
- 2.  Planning                   2-5 min           Sequential      2 (Orch + Plan)
- 3.  Research                   3-5 min           Internal //     1 (Researcher)
- 4.  Architecture & Design      3-5 min           Fan-out //      4 (Arch+Design+DB+API)
- 5.  Tech Stack & Template      2-3 min           Sequential      2 (TechStack+Template)
- 6.  Implementation             5-15 min          Full //         5 (FE+BE+MW+Mobile+Infra)
-     - Merge                    1-2 min           Sequential      1 (Git Manager)
- 7.  Review                     2-3 min           Full //         4 (CR+Sec+A11y+Perf)
- 8.  Testing                    3-5 min           Internal //     3 (Test+Perf+A11y)
- 9.  Debug & Fix                2-10 min          Sequential      2 (Debug+Test)
- 10. Deployment                 3-5 min           Sequential      3 (DevOps+Infra+GitHub)
- 11. Delivery                   2-3 min           Internal //     2 (DocWriter+GitHub)
+ S0.  Initialization              0-1 min           Sequential      2 (Orch + GitHub)
+ S1.  Brainstorming               2-5 min           Sequential      1 (Brainstorm)
+ S2.  Research                    3-5 min           Internal //     1 (Researcher)
+ S3.  Architecture & Design       3-5 min           Fan-out //      4 (Arch+Design+DB+API)
+ S4.  Planning & Configuration    2-5 min           Sequential      3 (Plan+TechStack+Template)
+ S5.  Implementation              5-15 min          Full //         6 (FE+BE+MW+Mobile+Infra+Integ)
+      - Merge                     1-2 min           Sequential      1 (Git Manager)
+ S6.  Quality Assurance           2-3 min           Full //         5 (CR+Sec+A11y+i18n+Perf)
+ S7.  Testing                     3-5 min           Internal //     3 (Test+Perf+A11y)
+ S8.  Debug & Stabilization       2-10 min          Sequential      2 (Debug+Test)
+ S9.  Documentation & Knowledge   2-3 min           Internal //     4 (DocWriter+Skill+Hook+Tool)
+ S10. Deployment & Delivery       3-5 min           Sequential      4 (DevOps+Infra+GitHub+PM)
  ---------------------------------------------------------------------------------
- TOTAL (simple app)             ~30-66 min
- TOTAL (target)                 <30 min for simple apps
+ TOTAL (simple app)               ~28-64 min
+ TOTAL (target)                   <30 min for simple apps
 
  Pipeline Acceleration Opportunities:
  - Template selection reduces Implementation by ~30%
@@ -4545,38 +4422,38 @@ Each agent loads context in three tiers to optimize token usage:
 
 Complete list of all agents in the CodeBot system with their roles and capabilities.
 
-| # | Agent | Role | Primary Phase | LLM Tier |
-|---|-------|------|---------------|----------|
-| 1 | Orchestrator | Master coordinator, task decomposition, agent assignment | All | Sonnet |
-| 2 | Brainstorming Agent | Ideation, alternative exploration, requirement refinement | Brainstorming | Opus |
-| 3 | Planner | Project planning, task scheduling, dependency graphs | Planning | Sonnet |
-| 4 | Researcher | Technology research, reference implementation discovery | Research | Gemini Pro |
-| 5 | Architect | System architecture, C4 model, data flow | Architecture | Opus |
-| 6 | Designer | UI/UX design, component hierarchy, design systems | Architecture | Sonnet |
-| 7 | TechStack Builder | Technology selection, compatibility validation | Tech Stack | Sonnet |
-| 8 | Template Agent | Template selection, scaffolding, boilerplate | Tech Stack | Haiku |
-| 9 | Frontend Developer | UI implementation, client-side logic | Implementation | Sonnet |
-| 10 | Backend Developer | API implementation, business logic, data access | Implementation | Sonnet |
-| 11 | Middleware Developer | Integration layer, message queues, caching, auth | Implementation | Sonnet |
-| 12 | Mobile Developer | iOS/Android/React Native/Flutter development | Implementation | Sonnet |
-| 13 | Database Agent | Schema design, optimization, migrations, seeding | Architecture | Sonnet |
-| 14 | API Gateway Agent | API design, gateway config, rate limiting | Architecture | Sonnet |
-| 15 | Infrastructure Engineer | IaC, Docker, CI/CD, deployment configs | Implementation + Deploy | Sonnet |
-| 16 | DevOps Agent | CI/CD pipelines, monitoring, logging, alerting | Deployment | Sonnet |
-| 17 | Security Auditor | SAST, DAST, secret scanning, vulnerability assessment | Review | Opus |
-| 18 | Code Reviewer | Code quality, style, best practices, arch conformance | Review | Opus |
-| 19 | Tester | Test generation, execution, coverage analysis | Testing | Sonnet |
-| 20 | Performance Agent | Profiling, optimization, benchmarking | Review + Testing | Sonnet |
-| 21 | Accessibility Agent | WCAG compliance, accessibility testing | Review + Testing | Sonnet |
-| 22 | i18n/L10n Agent | Internationalization and localization | Implementation | Haiku |
-| 23 | Debugger | Root cause analysis, fix generation, regression testing | Debug/Fix | Opus |
-| 24 | Documentation Writer | API docs, README, ADRs, deployment guides | Delivery | Gemini Pro |
-| 25 | GitHub Agent | Repository management, PRs, Issues, Actions, releases | Deploy + Delivery | Haiku |
-| 26 | Skill Creator | Creates reusable skills/capabilities for other agents | On-demand | Opus |
-| 27 | Hooks Creator | Creates lifecycle hooks (pre/post build, deploy, test) | On-demand | Sonnet |
-| 28 | Tools Creator | Creates custom tools and integrations | On-demand | Sonnet |
-| 29 | Integrations Agent | Third-party service integrations | Implementation | Sonnet |
-| 30 | Project Manager | Project progress tracking, status reports, timeline management, blocker identification, notifications | Cross-cutting (All) | Sonnet |
+| # | Agent | Role | Primary Stage | Primary Phase | LLM Tier |
+|---|-------|------|---------------|---------------|----------|
+| 1 | Orchestrator | Master coordinator, task decomposition, agent assignment | S0-S10 | All | Sonnet |
+| 2 | Brainstorming Agent | Ideation, alternative exploration, requirement refinement | S1 | Brainstorming | Opus |
+| 3 | Researcher | Technology research, reference implementation discovery | S2 | Research | Gemini Pro |
+| 4 | Architect | System architecture, C4 model, data flow | S3 | Architecture & Design | Opus |
+| 5 | Designer | UI/UX design, component hierarchy, design systems | S3 | Architecture & Design | Sonnet |
+| 6 | Database Agent | Schema design, optimization, migrations, seeding | S3 | Architecture & Design | Sonnet |
+| 7 | API Gateway Agent | API design, gateway config, rate limiting | S3 | Architecture & Design | Sonnet |
+| 8 | Planner | Project planning, task scheduling, dependency graphs | S4 | Planning & Configuration | Sonnet |
+| 9 | TechStack Builder | Technology selection, compatibility validation | S4 | Planning & Configuration | Sonnet |
+| 10 | Template Agent | Template selection, scaffolding, boilerplate | S4 | Planning & Configuration | Haiku |
+| 11 | Frontend Developer | UI implementation, client-side logic | S5 | Implementation | Sonnet |
+| 12 | Backend Developer | API implementation, business logic, data access | S5 | Implementation | Sonnet |
+| 13 | Middleware Developer | Integration layer, message queues, caching, auth | S5 | Implementation | Sonnet |
+| 14 | Mobile Developer | iOS/Android/React Native/Flutter development | S5 | Implementation | Sonnet |
+| 15 | Infrastructure Engineer | IaC, Docker, CI/CD, deployment configs | S5 + S10 | Implementation + Deployment | Sonnet |
+| 16 | Integrations Agent | Third-party service integrations | S5 | Implementation | Sonnet |
+| 17 | Code Reviewer | Code quality, style, best practices, arch conformance | S6 | Quality Assurance | Opus |
+| 18 | Security Auditor | SAST, DAST, secret scanning, vulnerability assessment | S6 | Quality Assurance | Opus |
+| 19 | Accessibility Agent | WCAG compliance, accessibility testing | S6 + S7 | Quality Assurance + Testing | Sonnet |
+| 20 | i18n/L10n Agent | Internationalization and localization | S6 | Quality Assurance | Haiku |
+| 21 | Performance Agent | Profiling, optimization, benchmarking | S6 + S7 | Quality Assurance + Testing | Sonnet |
+| 22 | Tester | Test generation, execution, coverage analysis | S7 | Testing | Sonnet |
+| 23 | Debugger | Root cause analysis, fix generation, regression testing | S8 | Debug & Stabilization | Opus |
+| 24 | Documentation Writer | API docs, README, ADRs, deployment guides | S9 | Documentation & Knowledge | Gemini Pro |
+| 25 | Skill Creator | Creates reusable skills/capabilities for other agents | S9 | Documentation & Knowledge | Opus |
+| 26 | Hooks Creator | Creates lifecycle hooks (pre/post build, deploy, test) | S9 | Documentation & Knowledge | Sonnet |
+| 27 | Tools Creator | Creates custom tools and integrations | S9 | Documentation & Knowledge | Sonnet |
+| 28 | DevOps Agent | CI/CD pipelines, monitoring, logging, alerting | S10 | Deployment & Delivery | Sonnet |
+| 29 | GitHub Agent | Repository management, PRs, Issues, Actions, releases | S0 + S10 | Initialization + Deployment & Delivery | Haiku |
+| 30 | Project Manager | Project progress tracking, status reports, timeline management, blocker identification, notifications | S0-S10 | Cross-cutting (All) | Sonnet |
 
 ---
 

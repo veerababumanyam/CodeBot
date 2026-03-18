@@ -1,6 +1,6 @@
 # CodeBot — Research Summary
 
-**Version:** 2.1
+**Version:** 2.3
 **Date:** 2026-03-18
 
 ---
@@ -101,17 +101,24 @@ MASFactory provides the foundational architecture for CodeBot's multi-agent orch
 
 ## 4. Context & Memory Systems
 
-### 4.1 OpenViking
+### 4.1 OpenViking — Hierarchical Context Patterns
 
 **Source:** [GitHub](https://github.com/volcengine/OpenViking)
 **Stars:** 15.2K
+**Role:** Research inspiration for CodeBot's built-in hierarchical context system
 
-**Key Takeaways:**
-- Filesystem paradigm for context organization (vs. flat vector storage) — CodeBot adopts hierarchical context organization
-- Three-tier loading (L0/L1/L2) reduces token consumption — CodeBot implements identical tier strategy
-- Directory recursive retrieval combines positioning + semantic search — CodeBot uses Tree-sitter + vector search
-- Visualized retrieval trajectory for debugging — CodeBot logs context retrieval paths
-- Automatic session compression for long-term memory — CodeBot compresses conversations per agent
+**Key Patterns Adopted by CodeBot:**
+- Filesystem paradigm for context organization (vs. flat vector storage) — CodeBot builds a native hierarchical context store using this pattern
+- Three-tier loading (L0/L1/L2) reduces token consumption — CodeBot implements identical tier strategy natively
+- Directory recursive retrieval combines positioning + semantic search — CodeBot combines Tree-sitter + vector search in its own retrieval layer
+- Visualized retrieval trajectory for debugging — CodeBot builds observable retrieval trajectories into its Agent Visibility dashboard
+- Automatic session compression for long-term memory — CodeBot implements native compression in its context store
+- Unified memory/resource/skill store — CodeBot eliminates fragmentation by building a single context store per project
+
+**What CodeBot Builds (Not Integrates):**
+- Native hierarchical context store backed by SQLite + file tree (not an OpenViking deployment)
+- Custom L0/L1/L2 loader integrated with the agent lifecycle
+- Observable retrieval dashboard built into the web UI
 
 ### 4.2 Letta/MemGPT
 
@@ -133,20 +140,62 @@ MASFactory provides the foundational architecture for CodeBot's multi-agent orch
 - Multiple recall + fused re-ranking — CodeBot implements hybrid retrieval (vector + keyword)
 - MCP integration for tool access — CodeBot uses MCP for all tool integrations
 
-### 4.4 Other Context Systems
+### 4.4 claude-mem — Episodic Memory Patterns
+
+**Source:** [GitHub](https://github.com/thedotmack/claude-mem)
+**Role:** Research inspiration for CodeBot's built-in episodic memory system
+
+**Key Patterns Adopted by CodeBot:**
+- Automatic observation capture via lifecycle hooks — CodeBot builds native hooks into agent lifecycle events (task start, tool completion, decision point, task end)
+- Semantic compression generates AI-compressed summaries — CodeBot implements native compression to reduce token overhead while preserving critical context
+- Progressive disclosure retrieval: compact index → timeline context → full observation details — CodeBot builds this as a native three-layer retrieval strategy (~10x token savings)
+- Semantic + keyword hybrid search via vector DB + relational store — CodeBot implements using Chroma + SQLite
+- Cross-project learning — CodeBot enables agents to search past project observations for reusable patterns
+
+**What CodeBot Builds (Not Integrates):**
+- Native episodic memory subsystem with lifecycle hooks built into the agent framework
+- Custom observation store backed by Chroma (vectors) + SQLite (metadata)
+- Progressive disclosure API integrated with the context system
+- Decision audit trail built into the agent execution engine
+
+### 4.5 Other Context Systems
 
 | System | Key Feature for CodeBot |
 |---|---|
 | **Cognee** | Knowledge graph-based memory for architectural decision tracking |
 | **LangMem** | LangChain-native memory for chain composition |
-| **Chroma** | Lightweight vector store for development environments |
+| **Chroma** | Lightweight vector store — also used as claude-mem's embedding backend |
 | **Weaviate** | Production vector + graph store for large codebases |
 
 ---
 
-## 5. Security & Quality Tools
+## 5. Sandbox & Execution Environments
 
-### 5.1 Shannon
+### 5.1 OpenSandbox — Sandbox Execution Patterns
+
+**Source:** [GitHub](https://github.com/alibaba/OpenSandbox)
+**Role:** Research inspiration for CodeBot's built-in sandbox execution and live preview system
+
+**Key Patterns Adopted by CodeBot:**
+- Containerized execution environments per agent — CodeBot builds native sandbox management using Docker as the container runtime
+- Multi-language support — CodeBot's sandbox system pre-configures containers with the project's selected tech stack (Python, Node.js, Go, Java, C#, Dart)
+- Security isolation via gVisor/Kata Containers — CodeBot implements container-level isolation for running untrusted generated code safely
+- Browser automation for live preview (Chrome, Playwright) — CodeBot builds live preview into the dashboard with hot-reload
+- VNC access for desktop environments — CodeBot enables preview of desktop and Electron applications
+- Per-sandbox network egress policies — CodeBot implements network controls to prevent unauthorized outbound calls
+- Filesystem operations and command execution per sandbox — each coding agent gets its own isolated workspace
+
+**What CodeBot Builds (Not Integrates):**
+- Native sandbox manager that provisions Docker containers per agent using the project's tech stack
+- Built-in live preview server that proxies sandbox web servers to the dashboard
+- Hot-reload watcher that triggers application restart on code changes inside the sandbox
+- Sandbox lifecycle management (create, start, stop, destroy) integrated with the pipeline stages
+
+---
+
+## 6. Security & Quality Tools
+
+### 6.1 Shannon
 
 **Source:** [GitHub](https://github.com/KeygraphHQ/shannon)
 **License:** AGPL-3.0 (Lite)
@@ -157,7 +206,7 @@ MASFactory provides the foundational architecture for CodeBot's multi-agent orch
 - Workspace & resume support via git checkpoints — CodeBot uses similar checkpoint pattern
 - Only reports exploitable findings (reduces false positives) — CodeBot's security gate uses validated findings
 
-### 5.2 Security Tool Matrix
+### 6.2 Security Tool Matrix
 
 | Tool | Type | Integration in CodeBot |
 |---|---|---|
@@ -173,7 +222,7 @@ MASFactory provides the foundational architecture for CodeBot's multi-agent orch
 | **KICS** | IaC Security | Terraform/Docker/K8s config scanning |
 | **CodeQL** | SAST | GitHub-native deep code analysis |
 
-### 5.3 Observability Tools for CodeBot Platform
+### 6.3 Observability Tools for CodeBot Platform
 
 | Tool | Type | Integration in CodeBot |
 |---|---|---|
@@ -183,7 +232,7 @@ MASFactory provides the foundational architecture for CodeBot's multi-agent orch
 | **Jaeger** | Trace storage/UI | Trace visualization and analysis |
 | **Alertmanager** | Alert routing | Budget exhaustion, agent failures, pipeline stalls |
 
-### 5.4 Authentication Technologies Evaluated
+### 6.4 Authentication Technologies Evaluated
 
 | Technology | Decision | Rationale |
 |---|---|---|
@@ -195,47 +244,62 @@ MASFactory provides the foundational architecture for CodeBot's multi-agent orch
 
 ---
 
-## 6. Technology Evaluation Summary
+## 7. Technology Evaluation Summary
 
-### 6.1 What CodeBot Should Build (Custom)
+### 7.1 Mandatory External Integrations
 
-| Component | Rationale |
-|---|---|
-| Agent orchestration layer | Custom SDLC pipeline logic, not generic |
-| Multi-LLM router | No existing solution handles 3-provider routing with CLI agents |
-| Pipeline execution engine | MASFactory graph engine extended with SDLC phases |
-| Web dashboard | Custom UI for project management + agent monitoring |
-| CLI tool | Custom CLI for headless operation |
-| Security pipeline orchestrator | Orchestration of multiple tools with unified reporting |
-| Debug/fix loop | Novel iterative agent loop with test-driven fixing |
-| Authentication & authorization system | JWT + API key auth with optional MFA, role-based access |
-| Platform observability layer | Metrics, tracing, alerting for agent and pipeline monitoring |
-| Data retention management | Configurable retention policies for logs, traces, and artifacts |
-| Dead letter queue | Capture and replay failed agent tasks and messages |
-| Project Manager agent | Autonomous project planning, task breakdown, and progress tracking |
-
-### 6.2 What CodeBot Should Integrate (Third-Party)
+These are external tools that CodeBot **must** integrate — they are not replaceable by built-in code because they are the actual execution engines or industry-standard tools:
 
 | Component | Technology | Rationale |
 |---|---|---|
-| Graph engine | MASFactory | Production-tested, graph-centric, Python-native |
-| LLM abstraction | LiteLLM + custom router | Unified interface for 100+ models |
-| Vector store | Chroma (dev) / Weaviate (prod) | Industry standard, good Python support |
-| Code indexing | Tree-sitter | Language-agnostic AST parsing |
-| Security scanning | Semgrep, Trivy, Gitleaks | Best-in-class open-source tools |
-| Test frameworks | pytest, Vitest, Playwright | Industry standard per language |
+| **CLI Coding Agents** | Claude Code, OpenAI Codex, Google Gemini CLI | Core code generation engines — CodeBot orchestrates these, does not replace them |
+| Graph engine | MASFactory | Production-tested graph-centric execution engine for agent orchestration |
+| LLM abstraction | LiteLLM + custom router | Unified interface for 100+ models across providers |
+| Code indexing | Tree-sitter | Language-agnostic AST parsing, no practical alternative |
+| Security scanning | Semgrep, Trivy, Gitleaks, Shannon, ScanCode | Best-in-class open-source security tools |
+| Test frameworks | pytest, Vitest, Playwright, Storybook | Industry standard per language/platform |
+| Containerization | Docker | Standard isolation runtime for sandboxes and deployment |
+| Git operations | GitPython | Programmatic git access for worktree management |
+| Observability | Prometheus + Grafana + OpenTelemetry | Industry standard metrics/tracing ecosystem |
+
+### 7.2 Built-In Features (Developed Natively)
+
+These capabilities are **built into CodeBot** as first-class features. Research projects are listed as inspiration/reference, but CodeBot implements these natively:
+
+| Feature | Description | Research Inspiration |
+|---|---|---|
+| Agent orchestration layer | Custom SDLC pipeline logic with 10-stage model | MASFactory patterns |
+| Multi-LLM router | Route tasks to optimal LLM based on type, complexity, cost | Custom design |
+| **Hierarchical context system** | L0/L1/L2 tiered loading, filesystem-paradigm context store, directory-based retrieval, observable retrieval trajectories | OpenViking patterns |
+| **Episodic memory** | Cross-session observation capture, semantic compression, progressive disclosure, cross-project learning | claude-mem patterns |
+| **Sandbox execution & live preview** | Containerized per-agent execution environments with live browser preview, hot-reload, VNC, device emulation | OpenSandbox patterns |
+| Web dashboard | Custom UI for project management + agent monitoring + live preview | Custom design |
+| CLI tool | Custom CLI for headless operation | Custom design |
+| Security pipeline orchestrator | Orchestration of scanning tools with unified reporting | Shannon's pipeline model |
+| Debug/fix loop | Novel iterative agent loop with test-driven fixing | Custom design |
+| Auth & authorization | JWT + API key auth with optional MFA, RBAC | Custom design |
+| Platform observability layer | Metrics, tracing, alerting for agent and pipeline monitoring | Custom design |
+| Data retention management | Configurable retention policies for logs, traces, and artifacts | Custom design |
+| Dead letter queue | Capture and replay failed agent tasks and messages | Custom design |
+| Project Manager agent | Autonomous planning, task breakdown, progress tracking | Custom design |
+| **Agent memory hierarchy** | Project-scoped memory blocks, stateful agents with checkpoints | Letta/MemGPT patterns |
+| **Document understanding** | Deep document parsing for PRDs, API specs, templates | RAGFlow patterns |
+
+### 7.3 Platform Stack (Third-Party Libraries)
+
+| Component | Technology | Rationale |
+|---|---|---|
 | Frontend | React + Vite + TailwindCSS | Fast development, modern tooling |
 | Backend | FastAPI | Async Python, auto-generated docs |
 | Database | SQLite (dev) / PostgreSQL (prod) | Simple dev, scalable prod |
+| Vector store | Chroma (dev) / Weaviate (prod) | Embedding storage for episodic memory and code search |
 | Cache/Pubsub | Redis | Fast, reliable, well-supported |
-| Containerization | Docker | Standard isolation and deployment |
-| Git operations | GitPython | Programmatic git access |
-| Observability | Prometheus + Grafana + OpenTelemetry | Industry standard, mature ecosystem |
+| CRDT | Yjs / Automerge | Real-time collaboration |
 | Auth | PyJWT + python-jose | Lightweight, well-maintained |
 
 ---
 
-## 7. Competitive Landscape
+## 8. Competitive Landscape
 
 | Product | Approach | Differentiator | CodeBot Advantage |
 |---|---|---|---|

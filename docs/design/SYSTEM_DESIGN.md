@@ -1,9 +1,9 @@
 # CodeBot System Design Document
 
-> **Version:** 2.1
+> **Version:** 2.3
 > **Date:** 2026-03-18
 > **Status:** Draft
-> **Related:** PRD v2.1
+> **Related:** PRD v2.3
 > **Architecture:** Graph-Centric Multi-Agent System (inspired by MASFactory, arXiv:2603.06007)
 
 ---
@@ -11,7 +11,7 @@
 ## Table of Contents
 
 1. [Agent Graph Engine Design](#1-agent-graph-engine-design)
-2. [Agent Design (15 Agent Types)](#2-agent-design)
+2. [Agent Design (16 Agent Types)](#2-agent-design)
 3. [Multi-LLM Abstraction Layer Design](#3-multi-llm-abstraction-layer-design)
 4. [CLI Agent Integration Design](#4-cli-agent-integration-design)
 5. [Context Management System Design](#5-context-management-system-design)
@@ -120,7 +120,7 @@ class NodeType(Enum):
     +--------+ +--------+ +------+ +--------+ +---------+
 ```
 
-**AgentNode** wraps one of the 14 agent types. It holds the agent's system prompt,
+**AgentNode** wraps one of the 16 agent types. It holds the agent's system prompt,
 tool bindings, model preference, and retry policy.
 
 **SubGraphNode** embeds a complete `DirectedGraph` instance, enabling hierarchical
@@ -320,159 +320,173 @@ def build_sdlc_pipeline() -> DirectedGraph:
     """
     Models the complete Software Development Lifecycle as a directed graph.
 
-    Execution order (layers after topological sort):
-      Layer 0: [orchestrator]
-      Layer 1: [planner]
-      Layer 2: [researcher]
-      Layer 3: [architect]
-      Layer 4: [designer]
-      Layer 5: [frontend_dev, backend_dev, middleware_dev]  # parallel
-      Layer 6: [code_reviewer]
-      Layer 7: [security_auditor, tester]                   # parallel
-      Layer 8: [debugger]                                    # loop
-      Layer 9: [infra_engineer]
-      Layer 10: [doc_writer]
-      Layer 11: [project_manager]
-      Layer 12: [human_approval]
+    Corrected 10-stage pipeline (v2.2):
+      S0  - Project Initialization:  [orchestrator]
+      S1  - Discovery & Brainstorm:  [brainstorm]
+      S2  - Research & Analysis:     [researcher]            # AFTER brainstorm
+      S3  - Architecture & Design:   [architect, designer]   # AFTER research, parallel agents
+      S4  - Planning & Config:       [planner]               # AFTER architecture
+      S5  - Implementation:          [frontend_dev, backend_dev, middleware_dev]  # full parallel
+      S6  - Quality Assurance:       [code_reviewer, security_auditor]           # full parallel
+      S7  - Testing & Validation:    [tester]                # parallel test suites (unit, integration,
+                                                             #   e2e, UI, smoke, regression, mutation)
+      S8  - Debug & Stabilization:   [debugger]              # loop
+      S9  - Documentation & Knowledge: [doc_writer]
+      S10 - Deployment & Delivery:   [infra_engineer, project_manager, human_approval]
     """
-    g = DirectedGraph(name="sdlc-pipeline", version="2.1")
+    g = DirectedGraph(name="sdlc-pipeline", version="2.2")
 
     # --- Nodes ---
     orchestrator   = AgentNode("orchestrator",   agent=OrchestratorAgent)
-    planner        = AgentNode("planner",        agent=PlannerAgent)
-    researcher     = AgentNode("researcher",     agent=ResearcherAgent)
-    architect      = AgentNode("architect",      agent=ArchitectAgent)
+    brainstorm     = AgentNode("brainstorm",     agent=BrainstormAgent)
+    researcher     = AgentNode("researcher",     agent=ResearcherAgent)      # AFTER brainstorm
+    architect      = AgentNode("architect",      agent=ArchitectAgent)       # AFTER researcher
     designer       = AgentNode("designer",       agent=DesignerAgent)
+    planner        = AgentNode("planner",        agent=PlannerAgent)         # AFTER architect (NOT before!)
     frontend_dev   = AgentNode("frontend_dev",   agent=FrontendDevAgent)
     backend_dev    = AgentNode("backend_dev",    agent=BackendDevAgent)
     middleware_dev = AgentNode("middleware_dev",  agent=MiddlewareDevAgent)
-    infra_eng      = AgentNode("infra_eng",      agent=InfraEngineerAgent)
-    security       = AgentNode("security",       agent=SecurityAuditorAgent)
     reviewer       = AgentNode("reviewer",       agent=CodeReviewerAgent)
+    security       = AgentNode("security",       agent=SecurityAuditorAgent)
     tester         = AgentNode("tester",         agent=TesterAgent)
     debugger       = LoopNode("debugger",        agent=DebuggerAgent,
                               condition=lambda s: s["all_tests_pass"],
                               max_iterations=5)
     doc_writer     = AgentNode("doc_writer",     agent=DocWriterAgent)
+    infra_eng      = AgentNode("infra_eng",      agent=InfraEngineerAgent)
     project_mgr    = AgentNode("project_mgr",   agent=ProjectManagerAgent)
     human_gate     = HumanInLoopNode("human_approval",
                                      prompt="Review deliverables and approve?")
 
-    for node in [orchestrator, planner, researcher, architect, designer,
-                 frontend_dev, backend_dev, middleware_dev, infra_eng,
-                 security, reviewer, tester, debugger, doc_writer,
-                 project_mgr, human_gate]:
+    for node in [orchestrator, brainstorm, researcher, architect, designer,
+                 planner, frontend_dev, backend_dev, middleware_dev,
+                 reviewer, security, tester, debugger, doc_writer,
+                 infra_eng, project_mgr, human_gate]:
         g.add_node(node)
 
-    # --- Edges (sequential flow) ---
-    g.add_edge(Edge("orchestrator",   "planner",        EdgeType.STATE_FLOW))
-    g.add_edge(Edge("planner",        "researcher",     EdgeType.STATE_FLOW))
+    # --- S0 -> S1: Initialization to Discovery ---
+    g.add_edge(Edge("orchestrator",   "brainstorm",     EdgeType.STATE_FLOW))
+
+    # --- S1 -> S2: Brainstorm to Research ---
+    g.add_edge(Edge("brainstorm",     "researcher",     EdgeType.STATE_FLOW))
+
+    # --- S2 -> S3: Research to Architecture & Design (parallel) ---
     g.add_edge(Edge("researcher",     "architect",      EdgeType.STATE_FLOW))
     g.add_edge(Edge("architect",      "designer",       EdgeType.STATE_FLOW))
 
-    # --- Edges (parallel coding phase) ---
-    g.add_edge(Edge("designer",       "frontend_dev",   EdgeType.STATE_FLOW))
-    g.add_edge(Edge("designer",       "backend_dev",    EdgeType.STATE_FLOW))
-    g.add_edge(Edge("designer",       "middleware_dev",  EdgeType.STATE_FLOW))
+    # --- S3 -> S4: Architecture to Planning ---
+    g.add_edge(Edge("architect",      "planner",        EdgeType.STATE_FLOW))
+    g.add_edge(Edge("designer",       "planner",        EdgeType.STATE_FLOW))
 
-    # --- Edges (review after coding) ---
+    # --- S4 -> S5: Planning to Implementation (full parallel) ---
+    g.add_edge(Edge("planner",        "frontend_dev",   EdgeType.STATE_FLOW))
+    g.add_edge(Edge("planner",        "backend_dev",    EdgeType.STATE_FLOW))
+    g.add_edge(Edge("planner",        "middleware_dev",  EdgeType.STATE_FLOW))
+
+    # --- S5 -> S6: Implementation to Quality Assurance (full parallel) ---
     g.add_edge(Edge("frontend_dev",   "reviewer",       EdgeType.STATE_FLOW))
     g.add_edge(Edge("backend_dev",    "reviewer",       EdgeType.STATE_FLOW))
     g.add_edge(Edge("middleware_dev",  "reviewer",       EdgeType.STATE_FLOW))
+    g.add_edge(Edge("frontend_dev",   "security",       EdgeType.STATE_FLOW))
+    g.add_edge(Edge("backend_dev",    "security",       EdgeType.STATE_FLOW))
+    g.add_edge(Edge("middleware_dev",  "security",       EdgeType.STATE_FLOW))
 
-    # --- Edges (parallel testing + security) ---
+    # --- S6 -> S7: QA to Testing & Validation (parallel test suites) ---
     g.add_edge(Edge("reviewer",       "tester",         EdgeType.STATE_FLOW))
-    g.add_edge(Edge("reviewer",       "security",       EdgeType.STATE_FLOW))
+    g.add_edge(Edge("security",       "tester",         EdgeType.MESSAGE_FLOW))
 
-    # --- Edges (debug loop) ---
+    # --- S7 -> S8: Testing to Debug & Stabilization (loop) ---
     g.add_edge(Edge("tester",         "debugger",       EdgeType.STATE_FLOW))
-    g.add_edge(Edge("security",       "debugger",       EdgeType.MESSAGE_FLOW))
 
-    # --- Edges (finalization) ---
-    g.add_edge(Edge("debugger",       "infra_eng",      EdgeType.STATE_FLOW))
-    g.add_edge(Edge("infra_eng",      "doc_writer",     EdgeType.STATE_FLOW))
-    g.add_edge(Edge("doc_writer",     "project_mgr",   EdgeType.STATE_FLOW))
-    g.add_edge(Edge("project_mgr",   "human_approval", EdgeType.STATE_FLOW))
-    g.add_edge(Edge("orchestrator",  "project_mgr",    EdgeType.STATE_FLOW))
+    # --- S8 -> S9: Debug to Documentation & Knowledge ---
+    g.add_edge(Edge("debugger",       "doc_writer",     EdgeType.STATE_FLOW))
+
+    # --- S9 -> S10: Documentation to Deployment & Delivery ---
+    g.add_edge(Edge("doc_writer",     "infra_eng",      EdgeType.STATE_FLOW))
+    g.add_edge(Edge("infra_eng",      "project_mgr",    EdgeType.STATE_FLOW))
+    g.add_edge(Edge("project_mgr",    "human_approval",  EdgeType.STATE_FLOW))
+
+    # --- Cross-cutting: Orchestrator monitors Project Manager ---
+    g.add_edge(Edge("orchestrator",   "project_mgr",    EdgeType.STATE_FLOW))
 
     return g
 ```
 
-**Visual Graph Representation:**
+**Visual Graph Representation (v2.2 -- corrected 10-stage pipeline):**
 
 ```
-                        +----------------+
-                        |  Orchestrator  |
-                        +-------+--------+
-                                |
-                                v
-                        +-------+--------+
-                        |    Planner     |
-                        +-------+--------+
-                                |
-                                v
-                        +-------+--------+
-                        |   Researcher   |
-                        +-------+--------+
-                                |
-                                v
-                        +-------+--------+
-                        |   Architect    |
-                        +-------+--------+
-                                |
-                                v
-                        +-------+--------+
-                        |    Designer    |
-                        +---+---+---+----+
-                            |   |   |
-              +-------------+   |   +--------------+
-              |                 |                  |
-              v                 v                  v
-      +-------+------+ +-------+------+ +---------+--------+
-      | Frontend Dev | | Backend Dev  | | Middleware Dev    |
-      +-------+------+ +-------+------+ +---------+--------+
-              |                 |                  |
-              +--------+-------+------------------+
-                       |
-                       v
-               +-------+--------+
-               | Code Reviewer  |
-               +---+--------+---+
-                   |        |
-              +----+        +----+
-              |                  |
-              v                  v
-      +-------+------+  +-------+---------+
-      |    Tester    |  | Security Auditor|
-      +-------+------+  +-------+---------+
-              |                  |
-              +--------+---------+
-                       |
-                       v
-               +-------+--------+
-               |    Debugger    |<---+
-               |   (Loop Node) |    | (fix iteration)
-               +-------+-------+----+
-                       |
-                       v
-               +-------+--------+
-               | Infra Engineer |
-               +-------+--------+
-                       |
-                       v
-               +-------+--------+
-               |   Doc Writer   |
-               +-------+--------+
-                       |
-                       v
-               +-------+---------+
-               | Project Manager |
-               +-------+---------+
-                       |
-                       v
-               +-------+--------+
-               | Human Approval |
-               +----------------+
+  S0              +----------------+
+                  |  Orchestrator  |  (Project Initialization)
+                  +-------+--------+
+                          |
+  S1              +-------+--------+
+                  |  Brainstormer  |  (Discovery & Brainstorming)
+                  +-------+--------+
+                          |
+  S2              +-------+--------+
+                  |   Researcher   |  (Research & Analysis)
+                  +-------+--------+
+                          |
+  S3              +-------+--------+
+                  |   Architect    |  (Architecture & Design)
+                  +---+--------+---+
+                      |        |
+                      v        v
+              +-------+----+ +-+----------+
+              |  Designer  | |  (feeds)   |
+              +-------+----+ +--+---------+
+                      |         |
+  S4              +---+---------+--+
+                  |     Planner    |  (Planning & Configuration)
+                  +---+---+---+----+
+                      |   |   |
+        +-------------+   |   +--------------+
+        |                 |                  |
+  S5    v                 v                  v
+  +-----+--------+ +-----+--------+ +-------+----------+
+  | Frontend Dev | | Backend Dev  | | Middleware Dev    |  (Implementation)
+  +-----+--------+ +-----+--------+ +-------+----------+
+        |                 |                  |
+        +--------+--------+------------------+
+                 |
+  S6    +--------+-------+--------+
+        |                         |
+        v                         v
+  +-----+--------+  +-------------+-----+
+  | Code Reviewer|  | Security Auditor  |  (Quality Assurance)
+  +-----+--------+  +-------------+-----+
+        |                         |
+        +--------+-------+--------+
+                 |
+  S7    +--------+---------+
+        |      Tester      |  (Testing & Validation)
+        | [unit, integration, e2e,    |
+        |  UI, smoke, regression,     |
+        |  mutation testing]          |
+        +--------+---------+
+                 |
+  S8    +--------+---------+
+        |     Debugger     |<---+
+        |   (Loop Node)    |    | (fix iteration)
+        +--------+------+--+----+
+                 |
+  S9    +--------+---------+
+        |    Doc Writer    |  (Documentation & Knowledge)
+        +--------+---------+
+                 |
+  S10   +--------+---------+
+        |  Infra Engineer  |  (Deployment & Delivery)
+        +--------+---------+
+                 |
+                 v
+        +--------+---------+
+        | Project Manager  |
+        +--------+---------+
+                 |
+                 v
+        +--------+---------+
+        |  Human Approval  |
+        +------------------+
 ```
 
 ---
@@ -481,7 +495,7 @@ def build_sdlc_pipeline() -> DirectedGraph:
 
 ### 2.0 Agent Base Architecture
 
-All 15 agents inherit from a common `BaseAgent` class that standardizes lifecycle
+All 16 agents inherit from a common `BaseAgent` class that standardizes lifecycle
 management, context injection, tool invocation, and observability.
 
 ```
@@ -546,16 +560,56 @@ management, context injection, tool invocation, and observability.
 - Instruct on when to escalate vs. autonomously decide
 
 **Interaction Patterns:**
-- Sends `ProjectPlan` to Planner via STATE_FLOW
+- Sends `ProjectInit` to Brainstormer via STATE_FLOW (S0 -> S1)
 - Receives `AgentFailed` events from any agent and decides retry/escalate
 - Can dynamically re-route the graph (e.g., skip Designer for CLI-only projects)
+- Monitors Project Manager via STATE_FLOW for overall pipeline status
 
 ---
 
-### 2.2 Planner Agent
+### 2.1b Brainstormer Agent (S1: Discovery & Brainstorming)
 
 **Role and Responsibilities:**
-- Receives the high-level project plan from Orchestrator
+- Receives project initialization data from the Orchestrator
+- Conducts creative exploration of requirements, constraints, and possibilities
+- Generates ideas for features, approaches, and technical solutions
+- Identifies edge cases, risks, and open questions early in the lifecycle
+- Produces structured brainstorm output that feeds Research (S2)
+
+**Input/Output Contract:**
+
+| Direction | Data | Type |
+|-----------|------|------|
+| Input | Project initialization data | `ProjectInit` |
+| Input | User requirements (natural language) | `str` |
+| Output | Brainstorm output (ideas, questions, risks) | `BrainstormOutput` |
+| Output | Research questions for Researcher | `List[ResearchQuestion]` |
+
+**Tools Available:**
+- `idea_generator` -- generates creative feature/approach ideas
+- `requirement_expander` -- expands vague requirements into specifics
+- `risk_identifier` -- identifies risks and edge cases
+- `constraint_analyzer` -- analyzes constraints and trade-offs
+
+**LLM Model Preferences:**
+- Primary: `claude-opus-4` (best for creative, divergent thinking)
+- Fallback: `gpt-4o` (good alternative for brainstorming)
+
+**System Prompt Design Principles:**
+- Encourage creative, divergent thinking before convergence
+- Instruct on structuring output for downstream research consumption
+- Include templates for idea categorization and prioritization
+
+**Interaction Patterns:**
+- Receives `ProjectInit` from Orchestrator (STATE_FLOW) -- S0 -> S1
+- Sends `BrainstormOutput` to Researcher (STATE_FLOW) -- S1 -> S2
+
+---
+
+### 2.2 Planner Agent (S4: Planning & Configuration)
+
+**Role and Responsibilities:**
+- Receives architecture and design output from Architect and Designer (S3)
 - Creates detailed, actionable task breakdowns with acceptance criteria
 - Estimates effort and assigns priorities
 - Identifies dependencies between tasks
@@ -565,7 +619,8 @@ management, context injection, tool invocation, and observability.
 
 | Direction | Data | Type |
 |-----------|------|------|
-| Input | Project plan | `ProjectPlan` |
+| Input | Architecture document (from Architect) | `ArchitectureDoc` |
+| Input | Design specifications (from Designer) | `DesignSpecs` |
 | Input | Technology constraints | `TechConstraints` |
 | Output | Task DAG with dependencies | `TaskGraph` |
 | Output | Effort estimates | `Dict[str, Estimate]` |
@@ -587,8 +642,8 @@ management, context injection, tool invocation, and observability.
 - Emphasize dependency identification
 
 **Interaction Patterns:**
-- Receives `ProjectPlan` from Orchestrator (STATE_FLOW)
-- Sends `TaskGraph` to Researcher (STATE_FLOW)
+- Receives `ArchitectureDoc` from Architect and `DesignSpecs` from Designer (STATE_FLOW)
+- Sends `TaskGraph` to Implementation agents: Frontend Dev, Backend Dev, Middleware Dev (STATE_FLOW)
 - May send clarification requests back to Orchestrator (MESSAGE_FLOW)
 
 ---
@@ -628,8 +683,8 @@ management, context injection, tool invocation, and observability.
 - Focus on production-readiness and community support
 
 **Interaction Patterns:**
-- Receives `TaskGraph` from Planner (STATE_FLOW)
-- Sends `ResearchReport` to Architect (STATE_FLOW)
+- Receives `BrainstormOutput` from Brainstormer (STATE_FLOW) -- S1 -> S2
+- Sends `ResearchReport` to Architect (STATE_FLOW) -- S2 -> S3
 
 ---
 
@@ -670,9 +725,9 @@ management, context injection, tool invocation, and observability.
 - Instruct on creating clear interface boundaries
 
 **Interaction Patterns:**
-- Receives `ResearchReport` from Researcher (STATE_FLOW)
-- Sends `ArchitectureDoc` to Designer (STATE_FLOW)
-- Sends `APIContract` to Backend Dev and Middleware Dev (STATE_FLOW)
+- Receives `ResearchReport` from Researcher (STATE_FLOW) -- S2 -> S3
+- Sends `ArchitectureDoc` to Designer (STATE_FLOW) -- within S3
+- Sends `ArchitectureDoc` to Planner (STATE_FLOW) -- S3 -> S4
 
 ---
 
@@ -712,9 +767,8 @@ management, context injection, tool invocation, and observability.
 - Provide responsive breakpoint standards
 
 **Interaction Patterns:**
-- Receives `ArchitectureDoc` from Architect (STATE_FLOW)
-- Sends `ComponentTree` and `DesignTokens` to Frontend Dev (STATE_FLOW)
-- Sends interaction specs to all Dev agents (STATE_FLOW)
+- Receives `ArchitectureDoc` from Architect (STATE_FLOW) -- within S3
+- Sends `DesignSpecs` to Planner (STATE_FLOW) -- S3 -> S4
 
 ---
 
@@ -756,8 +810,8 @@ management, context injection, tool invocation, and observability.
 - Instruct on proper TypeScript typing
 
 **Interaction Patterns:**
-- Receives design specs from Designer (STATE_FLOW)
-- Sends code artifacts to Code Reviewer (STATE_FLOW)
+- Receives `TaskGraph` and design specs from Planner (STATE_FLOW) -- S4 -> S5
+- Sends code artifacts to Code Reviewer and Security Auditor (STATE_FLOW) -- S5 -> S6
 - Runs in parallel with Backend Dev and Middleware Dev
 
 ---
@@ -1156,24 +1210,29 @@ management, context injection, tool invocation, and observability.
 ### 2.16 Agent Interaction Matrix
 
 ```
-                  Orch Plan Res  Arch Des  FDev BDev MDev Infra Sec  Rev  Test Dbg  Doc  PM
-Orchestrator       --   SF   .    .    .    .    .    .    .    .    .    .    .    .    SF
-Planner            .    --   SF   .    .    .    .    .    .    .    .    .    .    .    .
-Researcher         .    .    --   SF   .    .    .    .    .    .    .    .    .    .    .
-Architect          .    .    .    --   SF   .    SF   .    .    .    .    .    .    .    .
-Designer           .    .    .    .    --   SF   SF   SF   .    .    .    .    .    .    .
-Frontend Dev       .    .    .    .    .    --   .    .    .    .    SF   .    .    .    .
-Backend Dev        .    .    .    .    .    .    --   .    .    .    SF   .    .    .    .
-Middleware Dev     .    .    .    .    .    .    .    --   .    .    SF   .    .    .    .
-Infra Engineer     .    .    .    .    .    .    .    .    --   .    .    .    .    SF   .
-Security Auditor   .    .    .    .    .    .    .    .    .    --   .    .    MF   .    .
-Code Reviewer      .    .    .    .    .    MF   MF   MF   .    SF   --   SF   .    .    .
-Tester             .    .    .    .    .    .    .    .    .    .    .    --   SF   .    .
-Debugger           .    .    .    .    .    .    .    .    SF   .    .    .    --   .    .
-Doc Writer         .    .    .    .    .    .    .    .    .    .    .    .    .    --   .
-Project Manager    SF   .    .    .    .    .    .    .    .    .    .    .    .    .    --
+                  Orch Brn  Res  Arch Des  Plan FDev BDev MDev Rev  Sec  Test Dbg  Doc  Infra PM
+Orchestrator       --   SF   .    .    .    .    .    .    .    .    .    .    .    .    .    SF
+Brainstormer       .    --   SF   .    .    .    .    .    .    .    .    .    .    .    .    .
+Researcher         .    .    --   SF   .    .    .    .    .    .    .    .    .    .    .    .
+Architect          .    .    .    --   SF   SF   .    .    .    .    .    .    .    .    .    .
+Designer           .    .    .    .    --   SF   .    .    .    .    .    .    .    .    .    .
+Planner            .    .    .    .    .    --   SF   SF   SF   .    .    .    .    .    .    .
+Frontend Dev       .    .    .    .    .    .    --   .    .    SF   SF   .    .    .    .    .
+Backend Dev        .    .    .    .    .    .    .    --   .    SF   SF   .    .    .    .    .
+Middleware Dev     .    .    .    .    .    .    .    .    --   SF   SF   .    .    .    .    .
+Code Reviewer      .    .    .    .    .    .    MF   MF   MF   --   .    SF   .    .    .    .
+Security Auditor   .    .    .    .    .    .    .    .    .    .    --   MF   .    .    .    .
+Tester             .    .    .    .    .    .    .    .    .    .    .    --   SF   .    .    .
+Debugger           .    .    .    .    .    .    .    .    .    .    .    .    --   SF   .    .
+Doc Writer         .    .    .    .    .    .    .    .    .    .    .    .    .    --   SF   .
+Infra Engineer     .    .    .    .    .    .    .    .    .    .    .    .    .    .    --   SF
+Project Manager    SF   .    .    .    .    .    .    .    .    .    .    .    .    .    .    --
 
 Legend: SF = StateFlow, MF = MessageFlow, CF = ControlFlow, . = no direct edge
+
+Corrected flow (v2.2):
+  Orchestrator -> Brainstormer -> Researcher -> Architect -> Planner -> Implementation
+  (Brainstorming feeds Research; Research feeds Architecture; Architecture feeds Planning)
 ```
 
 ---
@@ -1191,7 +1250,7 @@ cost tracking, and rate limiting -- all transparently to the agent layer above i
 ```
 +------------------------------------------------------------------+
 |                        Agent Layer                                |
-|                  (14 Agent Types + BaseAgent)                     |
+|                  (16 Agent Types + BaseAgent)                     |
 +---------------------------+--------------------------------------+
                             |
                             v
@@ -1990,10 +2049,23 @@ class HealthChecker:
 
 ### 5.1 Overview
 
-The Context Management System implements MASFactory's Context Adapter pattern. It ensures
-each agent receives precisely the context it needs -- no more, no less. This is critical
-for managing token budgets and ensuring agents have relevant information without
-overwhelming their context windows.
+The Context Management System implements MASFactory's Context Adapter pattern as a
+**built-in feature** of CodeBot. It ensures each agent receives precisely the context it
+needs -- no more, no less. This is critical for managing token budgets and ensuring agents
+have relevant information without overwhelming their context windows.
+
+**Key built-in capabilities:**
+
+- **L0/L1/L2 hierarchical context** (inspired by OpenViking patterns): a built-in
+  three-tier loading system that provides always-available project summaries (L0),
+  on-demand code/doc retrieval (L1), and RAG-based semantic search (L2). Context sources
+  are backed by **SQLite + file tree** (context store).
+- **Episodic memory** (inspired by claude-mem patterns): a built-in persistent memory
+  system with lifecycle hooks (on_task_start, on_task_complete, on_pipeline_end), semantic
+  compression of stale memories, and progressive disclosure (summary -> full -> linked).
+  Episodic memory is backed by **Chroma + SQLite**.
+- **CLI agent integrations** (Claude Code, Codex CLI, Gemini CLI) remain mandatory
+  external integrations for code generation and development tasks.
 
 ### 5.2 Architecture
 
@@ -2169,7 +2241,11 @@ class ThreeTierLoader:
 ```python
 class MemoryManager:
     """
-    Persistent memory using OpenViking-style filesystem paradigm.
+    CodeBot's built-in episodic memory system (inspired by claude-mem patterns).
+
+    Provides persistent, semantically-searchable memory with lifecycle hooks,
+    semantic compression, and progressive disclosure. Memory is backed by
+    Chroma + SQLite for fast hybrid retrieval (recency + semantic similarity).
 
     Memory is organized hierarchically:
       .codebot/memory/
@@ -2181,18 +2257,61 @@ class MemoryManager:
           /shared/
             /project_knowledge.jsonl
             /code_patterns.jsonl
+
+    Lifecycle hooks:
+      - on_task_start: preload relevant memories for the agent's role
+      - on_task_complete: auto-extract learnings and decisions
+      - on_pipeline_end: run semantic compression on accumulated memories
+
+    Semantic compression periodically consolidates redundant or low-value
+    memories into summary entries, keeping the memory store lean.
+
+    Progressive disclosure surfaces memories at increasing detail levels:
+      - L0: one-line summary (always shown)
+      - L1: full entry with context (loaded on demand)
+      - L2: linked related memories and source artifacts (deep retrieval)
     """
 
-    def __init__(self, base_path: str):
+    def __init__(self, base_path: str, db_path: str = ".codebot/memory.db"):
         self.base_path = base_path
+        self.db = sqlite3.connect(db_path)
+        self._init_schema()
+
+    def _init_schema(self):
+        """Initialize SQLite schema for memory metadata and fast lookups."""
+        self.db.executescript("""
+            CREATE TABLE IF NOT EXISTS memories (
+                id TEXT PRIMARY KEY,
+                agent_role TEXT NOT NULL,
+                category TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                content TEXT NOT NULL,
+                project_id TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                access_count INTEGER DEFAULT 0,
+                compressed INTEGER DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS idx_memories_role ON memories(agent_role);
+            CREATE INDEX IF NOT EXISTS idx_memories_project ON memories(project_id);
+        """)
 
     async def remember(self, entry: MemoryEntry):
-        """Store a new memory entry."""
+        """Store a new memory entry in SQLite + vector store."""
+        # Persist to SQLite for fast structured queries
+        self.db.execute(
+            "INSERT OR REPLACE INTO memories VALUES (?,?,?,?,?,?,?,0,0)",
+            (entry.id, entry.agent_role, entry.category,
+             entry.summary, entry.content, entry.project_id,
+             entry.timestamp.isoformat()),
+        )
+        self.db.commit()
+
+        # Also persist to hierarchical file store
         path = self._get_path(entry.agent_role, entry.category)
         async with aiofiles.open(path, 'a') as f:
             await f.write(json.dumps(entry.to_dict()) + '\n')
 
-        # Also index in vector store for semantic retrieval
+        # Index in vector store (Chroma) for semantic retrieval
         await self.vector_store.upsert(
             id=entry.id,
             content=entry.content,
@@ -2210,9 +2329,10 @@ class MemoryManager:
         task_type: str,
         limit: int = 10,
     ) -> List[MemoryEntry]:
-        """Retrieve relevant memories for an agent's task."""
-        # Combine recency-based and semantic retrieval
+        """Retrieve relevant memories using hybrid retrieval (recency + semantic)."""
+        # Recency-based from SQLite
         recent = await self._get_recent(agent_role, limit=5)
+        # Semantic from Chroma vector store
         semantic = await self.vector_store.query(
             query=task_type,
             filter={"agent_role": agent_role},
@@ -2221,6 +2341,26 @@ class MemoryManager:
         # Deduplicate and rank
         combined = self._merge_and_rank(recent, semantic)
         return combined[:limit]
+
+    async def compress(self, project_id: str):
+        """Semantic compression: consolidate redundant memories into summaries."""
+        stale = self.db.execute(
+            "SELECT id, content FROM memories WHERE project_id=? AND compressed=0 "
+            "ORDER BY created_at ASC LIMIT 50",
+            (project_id,),
+        ).fetchall()
+        if len(stale) < 10:
+            return  # not enough to compress
+        # Group similar memories and produce summary entries
+        clusters = await self._cluster_memories(stale)
+        for cluster in clusters:
+            summary = await self._summarize_cluster(cluster)
+            await self.remember(summary)
+            for mem_id in cluster.member_ids:
+                self.db.execute(
+                    "UPDATE memories SET compressed=1 WHERE id=?", (mem_id,)
+                )
+        self.db.commit()
 ```
 
 ### 5.6 VectorStore
@@ -2513,36 +2653,63 @@ pipeline:
     timeout_minutes: 120
 
   phases:
-    - name: "plan"
-      agents: ["orchestrator", "planner"]
+    # S0: Project Initialization
+    - name: "initialize"
+      agents: ["orchestrator"]
       sequential: true
       human_gate: false
 
+    # S1: Discovery & Brainstorming
+    - name: "brainstorm"
+      agents: ["brainstorm"]
+      sequential: true
+      human_gate: false
+
+    # S2: Research & Analysis (AFTER brainstorming)
     - name: "research"
       agents: ["researcher"]
       human_gate: false
 
+    # S3: Architecture & Design (AFTER research, parallel agents)
     - name: "design"
       agents: ["architect", "designer"]
       sequential: true
       human_gate: true
       gate_prompt: "Review architecture and design. Approve to proceed?"
 
+    # S4: Planning & Configuration (AFTER architecture)
+    - name: "plan"
+      agents: ["planner"]
+      sequential: true
+      human_gate: false
+
+    # S5: Implementation (full parallel)
     - name: "implement"
       agents: ["frontend_dev", "backend_dev", "middleware_dev"]
       sequential: false  # parallel execution
       human_gate: false
 
-    - name: "review"
-      agents: ["code_reviewer"]
+    # S6: Quality Assurance (full parallel)
+    - name: "qa"
+      agents: ["code_reviewer", "security_auditor"]
+      sequential: false  # parallel
       human_gate: false
       on_failure: "reroute_to_implement"
 
-    - name: "validate"
-      agents: ["tester", "security_auditor"]
-      sequential: false  # parallel
+    # S7: Testing & Validation (parallel test suites)
+    - name: "test"
+      agents: ["tester"]
+      test_suites:
+        - "unit"
+        - "integration"
+        - "e2e"
+        - "ui_component"
+        - "smoke"
+        - "regression"
+        - "mutation"
       human_gate: false
 
+    # S8: Debug & Stabilization
     - name: "fix"
       agents: ["debugger"]
       loop:
@@ -2550,8 +2717,15 @@ pipeline:
         max_iterations: 5
       on_max_iterations: "escalate_to_human"
 
+    # S9: Documentation & Knowledge
+    - name: "document"
+      agents: ["doc_writer"]
+      sequential: true
+      human_gate: false
+
+    # S10: Deployment & Delivery (LAST)
     - name: "deliver"
-      agents: ["infra_engineer", "doc_writer"]
+      agents: ["infra_engineer", "project_manager"]
       sequential: true
       human_gate: true
       gate_prompt: "Review final deliverables. Approve for delivery?"
@@ -2799,7 +2973,7 @@ class ErrorEscalation:
             return await HumanEscalationStrategy().execute(agent_id, context, error)
 ```
 
-### 6.7 Pipeline Execution Sequence
+### 6.7 Pipeline Execution Sequence (v2.2 -- 10-stage)
 
 ```
   User                Pipeline        PhaseExecutor     Agents         HumanGate
@@ -2807,32 +2981,66 @@ class ErrorEscalation:
    |-- start(req) ------>|                 |               |               |
    |                     |-- execute() --->|               |               |
    |                     |                 |               |               |
-   |                     |    Phase: Plan  |               |               |
+   |                     | S0: Initialize  |               |               |
    |                     |                 |-- run ------->| Orchestrator  |
-   |                     |                 |<-- result ----|               |
-   |                     |                 |-- run ------->| Planner       |
    |                     |                 |<-- result ----|               |
    |                     |                 |-- checkpoint  |               |
    |                     |                 |               |               |
-   |                     |    Phase: Design|               |               |
+   |                     | S1: Brainstorm  |               |               |
+   |                     |                 |-- run ------->| Brainstormer  |
+   |                     |                 |<-- result ----|               |
+   |                     |                 |-- checkpoint  |               |
+   |                     |                 |               |               |
+   |                     | S2: Research    |               |               |
+   |                     |                 |-- run ------->| Researcher    |
+   |                     |                 |<-- result ----|               |
+   |                     |                 |-- checkpoint  |               |
+   |                     |                 |               |               |
+   |                     | S3: Design      |               |               |
    |                     |                 |-- run ------->| Architect     |
    |                     |                 |<-- result ----|               |
    |                     |                 |-- run ------->| Designer      |
    |                     |                 |<-- result ----|               |
-   |                     |                 |               |               |
    |                     |                 |-- gate -------|-------------->|
    |<--- approval req ---|-----------------|---------------|---------------|
    |--- approve -------->|-----------------|---------------|-------------->|
    |                     |                 |<-- approved --|---------------|
    |                     |                 |               |               |
-   |                     |   Phase: Code   |               |               |
+   |                     | S4: Plan        |               |               |
+   |                     |                 |-- run ------->| Planner       |
+   |                     |                 |<-- result ----|               |
+   |                     |                 |-- checkpoint  |               |
+   |                     |                 |               |               |
+   |                     | S5: Implement   |               |               |
    |                     |                 |== parallel ==>| FE, BE, MW   |
    |                     |                 |<== results ===|               |
    |                     |                 |               |               |
-   |                     |   Phase: Fix    |               |               |
+   |                     | S6: QA          |               |               |
+   |                     |                 |== parallel ==>| Reviewer, Sec|
+   |                     |                 |<== results ===|               |
+   |                     |                 |               |               |
+   |                     | S7: Test        |               |               |
+   |                     |                 |-- run ------->| Tester        |
+   |                     |                 |<-- result ----|  (all suites) |
+   |                     |                 |               |               |
+   |                     | S8: Debug       |               |               |
    |                     |                 |-- loop ------>| Debugger      |
    |                     |                 |   (iterate)   |   |           |
    |                     |                 |<-- fixed -----|<--+           |
+   |                     |                 |               |               |
+   |                     | S9: Docs        |               |               |
+   |                     |                 |-- run ------->| Doc Writer    |
+   |                     |                 |<-- result ----|               |
+   |                     |                 |               |               |
+   |                     | S10: Deploy     |               |               |
+   |                     |                 |-- run ------->| Infra Eng     |
+   |                     |                 |<-- result ----|               |
+   |                     |                 |-- run ------->| Project Mgr   |
+   |                     |                 |<-- result ----|               |
+   |                     |                 |-- gate -------|-------------->|
+   |<--- approval req ---|-----------------|---------------|---------------|
+   |--- approve -------->|-----------------|---------------|-------------->|
+   |                     |                 |<-- approved --|---------------|
    |                     |                 |               |               |
    |<-- result ----------|<-- done --------|               |               |
    |                     |                 |               |               |
@@ -3775,6 +3983,30 @@ class TestGenerator:
                 "Use Playwright for browser automation. "
                 "Test complete user workflows. "
                 "Include visual regression checks where appropriate."
+            ),
+            TestType.UI_COMPONENT: (
+                "You are a test engineer writing UI component tests. "
+                "Use React Testing Library or similar for component rendering. "
+                "Test visual states, user interactions, accessibility, and responsive behavior. "
+                "Verify props, events, and conditional rendering."
+            ),
+            TestType.SMOKE: (
+                "You are a test engineer writing smoke tests. "
+                "Focus on critical path verification only. "
+                "Test that the most essential features are operational. "
+                "Keep tests fast and lightweight for quick validation."
+            ),
+            TestType.REGRESSION: (
+                "You are a test engineer writing regression tests. "
+                "Target previously broken functionality. "
+                "Each test should specifically guard against a known past bug. "
+                "Include the bug context in test comments."
+            ),
+            TestType.MUTATION: (
+                "You are a test engineer evaluating test quality via mutation testing. "
+                "Generate mutants by modifying source code (flip operators, remove statements). "
+                "Verify that existing tests detect (kill) each mutation. "
+                "Report mutation score and surviving mutants."
             ),
         }
         return prompts.get(test_type, prompts[TestType.UNIT])
@@ -5311,6 +5543,9 @@ class TestType(Enum):
     REGRESSION = "regression"
     PERFORMANCE = "performance"
     SECURITY = "security"
+    UI_COMPONENT = "ui_component"    # UI Component Testing (visual + interaction)
+    SMOKE = "smoke"                  # Smoke Testing (critical path verification)
+    MUTATION = "mutation"            # Mutation Testing (test quality validation)
 
 
 class TestCaseStatus(Enum):
@@ -5797,6 +6032,14 @@ Auto-purge jobs run daily at 02:00 UTC. Cascade delete removes checkpoints when 
 
 ### 18.1 Sandboxing
 
+CodeBot includes a **built-in sandbox execution system** for agent isolation:
+
+- **Docker containers per agent**: each agent execution runs in an isolated Docker
+  container with a dedicated filesystem, ensuring no cross-contamination between agents
+- **gVisor / Kata isolation**: production deployments use gVisor (default) or Kata
+  Containers for defense-in-depth kernel-level isolation beyond standard container boundaries
+- **Live preview with hot-reload**: sandbox containers expose a preview port for
+  front-end agents, enabling real-time hot-reload of UI changes during development
 - **Skill Creator**, **Hook Creator**, and **Tool Creator** agents execute in sandboxed environments
 - Sandboxed agents have no access to host filesystem, network (except allowlisted endpoints), or other agent memory
 
@@ -5859,7 +6102,10 @@ CodeBot supports dual authentication mechanisms:
 | Core Language | Python 3.12+ | Async support, AI ecosystem |
 | Graph Engine | Custom (NetworkX-inspired) | Tailored for agent workflows |
 | LLM Providers | OpenAI, Anthropic, Google APIs | Multi-model strategy |
-| CLI Agents | Claude Code, Codex CLI, Gemini CLI | Best-in-class coding agents |
+| CLI Agents (integration) | Claude Code, Codex CLI, Gemini CLI | Mandatory external integrations for coding tasks |
+| Context Store (built-in) | SQLite + file tree | L0/L1/L2 hierarchical context (inspired by OpenViking patterns) |
+| Episodic Memory (built-in) | Chroma + SQLite | Persistent memory with lifecycle hooks, semantic compression, progressive disclosure (inspired by claude-mem patterns) |
+| Sandbox Execution (built-in) | Docker + gVisor/Kata | Per-agent container isolation with live preview and hot-reload |
 | Vector Store | Chroma (default), Weaviate (scale) | Embedding retrieval |
 | Code Parsing | Tree-sitter | Multi-language AST parsing |
 | Git Integration | GitPython + subprocess | Worktree management |
@@ -5888,7 +6134,8 @@ CodeBot supports dual authentication mechanisms:
 | Gate | A checkpoint requiring pass/fail evaluation or human approval |
 | Graph | The core data structure modeling agent workflows |
 | Human-in-the-Loop | Pipeline pause requiring human decision before proceeding |
-| L0/L1/L2 | Three tiers of context loading (always/on-demand/RAG) |
+| Episodic Memory | Built-in persistent memory system with lifecycle hooks, semantic compression, and progressive disclosure (inspired by claude-mem patterns) |
+| L0/L1/L2 | Three tiers of built-in hierarchical context loading (always/on-demand/RAG), inspired by OpenViking patterns |
 | MASFactory | Multi-Agent System Factory (arXiv:2603.06007) |
 | MCP | Model Context Protocol for tool and resource injection |
 | Node | A computational unit in the agent graph |
@@ -5902,4 +6149,4 @@ CodeBot supports dual authentication mechanisms:
 
 ---
 
-*Document generated for CodeBot v2.1 -- Last updated: 2026-03-18*
+*Document generated for CodeBot v2.3 -- Last updated: 2026-03-18*

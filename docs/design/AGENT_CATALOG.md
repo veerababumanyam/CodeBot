@@ -1,6 +1,6 @@
 # CodeBot — Enhanced Agent Catalog
 
-**Version:** 2.0
+**Version:** 2.3
 **Date:** 2026-03-18
 **Status:** Draft
 **Architecture:** Graph-Centric Multi-Agent System (inspired by MASFactory, arXiv:2603.06007)

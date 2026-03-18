@@ -1,6 +1,6 @@
 # CodeBot — Data Models & Configuration Design
 
-**Version:** 2.1
+**Version:** 2.3
 **Date:** 2026-03-18
 
 ---

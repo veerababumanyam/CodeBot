@@ -1,10 +1,10 @@
 # CodeBot — Product Requirements Document (PRD)
 
-**Version:** 2.1
+**Version:** 2.4
 **Date:** 2026-03-18
 **Status:** Review
 **Author:** Architecture Team
-**Supersedes:** PRD v2.0 (2026-03-18)
+**Supersedes:** PRD v2.3 (2026-03-18)
 
 ---
 
@@ -100,22 +100,9 @@ The system is inspired by the MASFactory framework (arXiv:2603.06007), which mod
 | Visual Brainstorming | Generate concept sketches, mind maps, and flow diagrams during brainstorming to visualize ideas |
 | Session Persistence | Save and resume brainstorming sessions, preserving all explored ideas and decisions for future reference |
 
-### 4.3 Planning Phase
+### 4.3 Research Phase (Stage 2 — AFTER Brainstorming, BEFORE Architecture)
 
-| Feature | Description |
-|---|---|
-| Project Planning | Decompose requirements into epics, stories, tasks, and sub-tasks with dependency graphs |
-| Technology Selection | AI-driven tech stack recommendation based on requirements, constraints, team expertise, and current best practices |
-| Architecture Planning | Generate system architecture (monolith, microservices, serverless, hybrid) with component diagrams |
-| Task Scheduling | Topological ordering of tasks with critical path identification and parallel execution planning |
-| Estimation | Complexity estimation for each task to optimize agent assignment and provide time-to-completion estimates |
-| Platform Planning | Plan parallel development tracks for web, iOS, Android, and backend with shared component identification |
-| Multi-repo Planning | Plan repository structure (monorepo, polyrepo, or hybrid) with cross-repo dependency mapping and build ordering |
-| Deployment Planning | Plan deployment strategy including target environments, rollout approach, rollback procedures, and monitoring |
-| Risk Assessment | Identify technical risks, dependency risks, and integration risks with mitigation strategies |
-| Resource Allocation | Assign agents to tasks based on complexity, priority, and agent specialization |
-
-### 4.4 Research Phase
+Research runs immediately after brainstorming to gather the technical knowledge needed for informed architecture decisions. The Researcher agent cannot produce useful results without understanding what the user wants (from brainstorming), and the Architect cannot make sound decisions without knowing what is technically feasible (from research).
 
 | Feature | Description |
 |---|---|
@@ -128,11 +115,13 @@ The system is inspired by the MASFactory framework (arXiv:2603.06007), which mod
 | Cloud Provider Research | Compare cloud provider offerings, pricing, and capabilities for the project's deployment needs |
 | Security Research | Research security best practices, common vulnerabilities, and compliance requirements (GDPR, HIPAA, SOC2, PCI-DSS) relevant to the project |
 
-### 4.5 Architecture & Design Phase
+### 4.4 Architecture & Design Phase (Stage 3 — AFTER Research, BEFORE Planning)
+
+Architecture runs after research because the Architect needs technology evaluations, library comparisons, and API capability assessments to design the system properly. Four agents work in parallel during this stage.
 
 | Feature | Description |
 |---|---|
-| System Architecture | Generate C4-model architecture diagrams (Context, Container, Component, Code) |
+| System Architecture | Generate C4-model architecture diagrams (Context, Container, Component, Code) based on research findings |
 | Database Design | Schema design with ERD generation, migration scripts, seed data, and database optimization recommendations |
 | API Design | OpenAPI/GraphQL/gRPC schema generation with endpoint specifications, versioning strategy, and rate limiting configuration |
 | UI/UX Design | Component hierarchy, wireframe generation, design system specification, responsive layouts, and dark/light mode support |
@@ -143,6 +132,23 @@ The system is inspired by the MASFactory framework (arXiv:2603.06007), which mod
 | Deployment Architecture | Multi-environment deployment architecture (dev, staging, production) with blue-green, canary, or rolling update strategies |
 | Security Architecture | Authentication/authorization architecture (OAuth2, OIDC, JWT, RBAC, ABAC), encryption strategy, and network security design |
 | Monitoring Architecture | Observability architecture with logging (ELK, CloudWatch), metrics (Prometheus, Grafana, Datadog), tracing (Jaeger, OpenTelemetry), and alerting |
+
+### 4.5 Planning & Configuration Phase (Stage 4 — AFTER Architecture, BEFORE Implementation)
+
+Planning runs after architecture because you need the system blueprint, database schema, API surface, and component hierarchy to decompose work into actionable tasks, build dependency graphs, and assign agents. Planning without architecture produces meaningless task lists.
+
+| Feature | Description |
+|---|---|
+| Project Planning | Decompose requirements into epics, stories, tasks, and sub-tasks with dependency graphs based on the architecture |
+| Task Scheduling | Topological ordering of tasks with critical path identification and parallel execution planning |
+| Technology Selection | AI-driven tech stack recommendation (or confirmation) based on architecture decisions and research findings |
+| Estimation | Complexity estimation for each task to optimize agent assignment and resource allocation |
+| Platform Planning | Plan parallel development tracks for web, iOS, Android, and backend with shared component identification |
+| Multi-repo Planning | Plan repository structure (monorepo, polyrepo, or hybrid) with cross-repo dependency mapping and build ordering |
+| Deployment Planning | Plan deployment strategy including target environments, rollout approach, rollback procedures, and monitoring |
+| Risk Assessment | Identify technical risks, dependency risks, and integration risks with mitigation strategies |
+| Resource Allocation | Assign agents to tasks based on complexity, priority, and agent specialization |
+| Template & Scaffold Generation | Apply selected UI/UX templates and generate project scaffold based on confirmed tech stack |
 
 ### 4.6 Implementation Phase
 
@@ -162,6 +168,9 @@ The system is inspired by the MASFactory framework (arXiv:2603.06007), which mod
 | Database Implementation | Generate database schemas, migrations, seeders, ORM models, and query optimizations |
 | API Implementation | Generate API endpoints, middleware, validation, serialization, and documentation from API design specs |
 | Integration Implementation | Implement third-party service integrations with proper error handling, retry logic, and circuit breakers |
+| **Sandbox Execution** | All generated code runs in isolated containerized sandbox environments — each agent gets its own container with the project's runtime pre-configured, gVisor/Kata isolation for security, multi-language support (Python, Node.js, Go, Java, C#, Dart), and per-sandbox network egress policies |
+| **Live Preview** | Real-time browser-based preview of the running application as it is being built — supports hot-reload on code changes, mobile device viewport emulation, VNC access for desktop/Electron apps, and embedded browser for web applications. Users can interact with the app mid-pipeline |
+| **Sandbox Dev Environments** | Ephemeral development environments per agent with filesystem access, command execution, and code interpretation — sandboxes are pre-configured with the selected tech stack, dependencies installed, and database seeded |
 
 ### 4.7 Review Phase
 
@@ -183,17 +192,21 @@ The system is inspired by the MASFactory framework (arXiv:2603.06007), which mod
 | Feature | Description |
 |---|---|
 | Unit Test Generation | Automatic unit test creation for all generated code across all platforms |
-| Integration Testing | API and service integration test generation and execution |
-| E2E Testing | Browser-based end-to-end testing via Playwright/Cypress for web, XCTest/Espresso for mobile |
-| Performance Testing | Load testing (k6, Artillery, JMeter), stress testing, and performance benchmarking with threshold enforcement |
-| Test Coverage | Coverage analysis with minimum threshold enforcement (line, branch, function coverage) |
+| Integration Testing | API and service integration test generation and execution with Testcontainers |
+| E2E Testing | Browser-based end-to-end testing via Playwright/Cypress for web, XCTest/Espresso/Detox for mobile |
+| UI Component Testing | Component-level rendering and interaction testing via Storybook and Testing Library |
+| Visual Regression Testing | Screenshot comparison testing to detect unintended UI changes (Playwright screenshots, Percy) |
+| Smoke Testing | Post-build and post-deployment basic sanity verification of critical paths and health endpoints |
+| Regression Testing | Full test suite re-execution after any code changes to detect regressions, tracked across fix cycles |
+| Performance Testing | Load testing (k6, Artillery), stress testing, Core Web Vitals (Lighthouse), and benchmarking with threshold enforcement |
+| Security Testing | Penetration testing (OWASP ZAP), OWASP Top 10 verification, authentication/authorization testing, dependency vulnerability scanning |
+| Accessibility Testing | Automated WCAG 2.1 AA/AAA testing with axe-core, Lighthouse, pa11y, and platform-specific accessibility scanners |
+| API Contract Testing | Consumer-driven contract testing (Pact, Dredd) for microservices and cross-service API validation |
+| Cross-browser Testing | Automated testing across Chrome, Firefox, Safari, Edge via Playwright multi-browser support |
 | Mobile Testing | Device-specific testing, responsive layout testing, gesture testing, offline mode testing, deep link testing |
-| Accessibility Testing | Automated accessibility testing with axe-core, Lighthouse, and platform-specific accessibility scanners |
-| Visual Regression Testing | Screenshot comparison testing to detect unintended UI changes |
-| Security Testing | Penetration testing, OWASP Top 10 verification, authentication/authorization testing |
-| Cross-browser Testing | Automated testing across Chrome, Firefox, Safari, Edge |
-| API Contract Testing | Consumer-driven contract testing (Pact) for microservices |
-| Chaos Testing | Optional resilience testing for distributed systems |
+| Mutation Testing | Test suite quality verification via Stryker (JS/TS) and mutmut (Python) — ensures tests actually catch bugs |
+| Test Coverage | Coverage analysis with minimum threshold enforcement: line >= 80%, branch >= 70%, function >= 85% |
+| Chaos Testing | Optional resilience testing for distributed systems using Chaos Monkey/Litmus |
 
 ### 4.9 Debug & Fix Cycle
 
@@ -306,44 +319,189 @@ The system implements intelligent model routing:
 
 ---
 
-## 6. Agent Architecture (Graph-Centric)
+## 6. Agent Architecture (Stage-Grouped, Graph-Centric)
 
-### 6.1 Core Agent Types
+### 6.1 Pipeline Stages and Agent Groups
 
-Based on the MASFactory framework, agents are organized as nodes in a directed computation graph. CodeBot employs 30 specialized agents:
+Based on the MASFactory framework, agents are organized as nodes in a directed computation graph and **grouped into 10 execution stages**. Each stage represents a logical phase of the SDLC with clear entry/exit gates, parallel execution opportunities, and user interaction points.
 
-| # | Agent Role | Responsibility | Upstream Dependencies | Downstream Consumers |
+#### Stage Overview
+
+| Stage | Name | Agents | Parallelism | User Interaction |
 |---|---|---|---|---|
-| 1 | **Orchestrator** | Master coordinator, task decomposition, agent assignment, phase management | User input | All agents |
-| 2 | **Brainstorming Agent** | Facilitate brainstorming sessions, explore ideas, alternatives, trade-offs, refine requirements | Orchestrator | Planner, TechStack Builder |
-| 3 | **Planner** | Project planning, task scheduling, dependency analysis, sprint planning | Brainstorming Agent, Orchestrator | Researcher, Architect, TechStack Builder |
-| 4 | **TechStack Builder Agent** | Recommend and configure technology stacks based on requirements, constraints, and best practices | Brainstorming Agent, Planner | Architect, Template Agent, All Developers |
-| 5 | **Researcher** | Technology research, reference implementation discovery, competitive analysis | Planner | Architect, Designer |
-| 6 | **Architect** | System architecture, API design, database schema, deployment architecture | Researcher, Planner, TechStack Builder | Designer, All Developers, API Gateway Agent |
-| 7 | **Designer** | UI/UX design, component hierarchy, design system, wireframes | Architect, Template Agent | Frontend Developer, Mobile Agent |
-| 8 | **Template Agent** | Manage UI/UX templates, boilerplate code, project scaffolding, design system components | TechStack Builder | Designer, All Developers |
-| 9 | **Frontend Developer** | Web UI implementation, component coding, client-side logic, SPA/SSR/SSG | Designer, Architect | Reviewer, Tester |
-| 10 | **Backend Developer** | API implementation, business logic, data access, server-side rendering | Architect | Reviewer, Tester |
-| 11 | **Middleware Developer** | Integration layer, message queues, caching, authentication/authorization middleware | Architect | Reviewer, Tester |
-| 12 | **Mobile Agent** | Native iOS (Swift/SwiftUI) and Android (Kotlin/Compose) development, React Native, Flutter | Designer, Architect | Reviewer, Tester |
-| 13 | **Database Agent** | Database design, schema optimization, migration generation, seed data, query optimization, indexing | Architect | Backend Developer, Reviewer |
-| 14 | **API Gateway Agent** | API gateway configuration, route management, rate limiting, request transformation, API versioning | Architect | Backend Developer, Infrastructure Engineer |
-| 15 | **Infrastructure Engineer** | IaC, Docker, CI/CD, Kubernetes, cloud resource provisioning | Architect | DevOps Agent, Reviewer |
-| 16 | **DevOps Agent** | CI/CD pipeline management, monitoring setup, logging, alerting, SLA enforcement | Infrastructure Engineer | Deployment, Reviewer |
-| 17 | **Security Auditor** | SAST, DAST, secret scanning, vulnerability assessment, compliance verification | All Developers | Debugger |
-| 18 | **Code Reviewer** | Code quality, style, best practices, architecture conformance | All Developers | Debugger |
-| 19 | **Accessibility Agent** | WCAG compliance, accessibility testing, screen reader support, keyboard navigation, color contrast | Frontend Developer, Mobile Agent | Debugger |
-| 20 | **i18n/L10n Agent** | Internationalization, localization, string extraction, locale management, RTL support, pluralization | Frontend Developer, Mobile Agent, Backend Developer | Reviewer |
-| 21 | **Performance Agent** | Performance profiling, optimization, benchmarking, bundle analysis, query optimization, caching strategy | All Developers | Debugger |
-| 22 | **Tester** | Test generation, execution, coverage analysis across all platforms | All Developers | Debugger |
-| 23 | **Debugger** | Root cause analysis, fix generation, regression testing | Reviewer, Tester, Security, Performance | All Developers |
-| 24 | **GitHub Agent** | GitHub operations: repo management, issue tracking, PR management, Actions, releases, project boards, branch protection | Orchestrator | All agents |
-| 25 | **Integrations Agent** | Third-party service integrations: APIs, databases, auth providers, payment gateways, analytics, notifications | Architect, Backend Developer | Reviewer, Tester |
-| 26 | **Skill Creator Agent** | Create reusable skills and capabilities for other agents, codify best practices into executable skills | All agents | All agents |
-| 27 | **Hooks Creator Agent** | Create lifecycle hooks (pre/post build, deploy, test, commit, review) for pipeline customization | Orchestrator, DevOps Agent | All agents |
-| 28 | **Tools Creator Agent** | Create custom tools and MCP integrations for the agent ecosystem | All agents | All agents |
-| 29 | **Documentation Writer** | API docs, README, ADRs, deployment guides, runbooks, onboarding guides, changelog | All agents | Delivery |
-| 30 | **Project Manager Agent** | Track project progress, generate status reports, manage timelines, identify blockers, send notifications | Orchestrator | All agents |
+| S0 | **Project Initialization** | Orchestrator, GitHub Agent | Sequential | Project type selection, codebase import |
+| S1 | **Discovery & Brainstorming** | Brainstorming Agent | Sequential (interactive) | Real-time ideation, requirement refinement |
+| S2 | **Research & Analysis** | Researcher | Internal parallel | Review research findings (optional) |
+| S3 | **Architecture & Design** | Architect, Designer, Database Agent, API Gateway Agent | Full parallel (fan-out) | Approve architecture, review wireframes |
+| S4 | **Planning & Configuration** | Planner, TechStack Builder, Template Agent | Sequential + parallel | Approve plan, select tech stack, choose templates |
+| S5 | **Implementation** | Frontend Dev, Backend Dev, Middleware Dev, Mobile Agent, Infrastructure Engineer, Integrations Agent | Full parallel (isolated worktrees) | Real-time code visibility, live editing |
+| S6 | **Quality Assurance** | Code Reviewer, Security Auditor, Accessibility Agent, i18n Agent, Performance Agent | Full parallel | Review findings, approve exceptions |
+| S7 | **Testing & Validation** | Tester | Internal parallel (test suites) | Review test results, approve coverage |
+| S8 | **Debug & Stabilization** | Debugger | Sequential per issue | Escalation if stuck, manual fix input |
+| S9 | **Documentation & Knowledge** | Documentation Writer, Skill Creator, Hooks Creator, Tools Creator | Internal parallel | Review generated docs |
+| S10 | **Deployment & Delivery** | DevOps Agent, Infrastructure Engineer, Project Manager | Sequential (pipeline) | Approve deployment, verify health |
+
+**Cross-Cutting Agents** (active across all stages):
+- **Orchestrator** (#1) — Master coordinator, always active
+- **Project Manager Agent** (#30) — Progress tracking, status reports, blocker identification
+- **GitHub Agent** (#24) — Repository operations throughout the pipeline
+
+#### 6.1.1 Stage 0: Project Initialization
+
+| # | Agent Role | Responsibility |
+|---|---|---|
+| 1 | **Orchestrator** | Receive input, classify project type (greenfield/inflight/brownfield), initialize pipeline graph, assign agents |
+| 24 | **GitHub Agent** | Repository creation/import, branch protection, CI/CD scaffold, project board setup |
+
+**Project type routing:**
+- **Greenfield** → Full pipeline S1-S10
+- **Inflight** → Codebase Analysis → Architecture Recovery → Gap Analysis → S1 (scoped) → S4-S10
+- **Brownfield** → Legacy Assessment → Modernization Strategy → Safety Net → S3-S10 (incremental)
+
+#### 6.1.2 Stage 1: Discovery & Brainstorming (Interactive)
+
+| # | Agent Role | Responsibility |
+|---|---|---|
+| 2 | **Brainstorming Agent** | Facilitate ideation sessions, explore alternatives, trade-off analysis, feature prioritization, scope definition, visual brainstorming |
+
+**User interaction:** Real-time interactive session. User and agent explore ideas together. No downstream work begins until user confirms requirements.
+
+#### 6.1.3 Stage 2: Research & Analysis
+
+| # | Agent Role | Responsibility |
+|---|---|---|
+| 5 | **Researcher** | Technology research, framework evaluation, API discovery, reference implementations, competitive analysis, security best practices, mobile SDK research |
+
+**Why Research comes BEFORE Architecture:** The Architect needs research results (technology capabilities, library evaluations, API options, competitive patterns) to make informed architecture decisions. Researching after planning would mean planning without knowing what's technically feasible.
+
+#### 6.1.4 Stage 3: Architecture & Design (Parallel)
+
+| # | Agent Role | Responsibility |
+|---|---|---|
+| 6 | **Architect** | System architecture (C4 model), API design, deployment architecture, security architecture, event architecture |
+| 7 | **Designer** | UI/UX design, component hierarchy, wireframes, design system, responsive layouts, dark/light mode |
+| 13 | **Database Agent** | Database schema design, ERD generation, migration scripts, seed data, optimization recommendations |
+| 14 | **API Gateway Agent** | API gateway architecture, routing rules, rate limiting, request transformation, versioning strategy |
+
+All four agents work in parallel using research results. Architect produces the system blueprint; Designer handles UI/UX; Database Agent designs the data layer; API Gateway Agent designs the API surface.
+
+**User interaction:** Approve system architecture, review wireframes, confirm database design.
+
+#### 6.1.5 Stage 4: Planning & Configuration
+
+| # | Agent Role | Responsibility |
+|---|---|---|
+| 3 | **Planner** | Task decomposition into epics/stories/tasks, dependency graphs, topological ordering, critical path analysis, sprint planning, resource allocation |
+| 4 | **TechStack Builder Agent** | Technology stack recommendation, compatibility checking, version pinning, license compliance (parallel with Planner) |
+| 8 | **Template Agent** | Template selection, scaffold generation, design system components, boilerplate code (after TechStack Builder) |
+
+**Why Planning comes AFTER Architecture:** You cannot decompose work into tasks, estimate complexity, assign agents, or build dependency graphs without knowing the system architecture, database schema, API surface, and component hierarchy. Planning without architecture produces meaningless task lists.
+
+**User interaction:** Approve project plan, select/confirm tech stack, choose UI templates.
+
+#### 6.1.6 Stage 5: Implementation (Full Parallel)
+
+| # | Agent Role | Responsibility |
+|---|---|---|
+| 9 | **Frontend Developer** | Web UI implementation, component coding, client-side logic, SPA/SSR/SSG |
+| 10 | **Backend Developer** | API implementation, business logic, data access, server-side rendering |
+| 11 | **Middleware Developer** | Integration layer, message queues, caching, auth middleware |
+| 12 | **Mobile Agent** | Native iOS (Swift/SwiftUI), Android (Kotlin/Compose), React Native, Flutter |
+| 15 | **Infrastructure Engineer** | IaC templates, Docker configs, Kubernetes manifests, cloud provisioning |
+| 25 | **Integrations Agent** | Third-party service integrations: payment gateways, auth providers, analytics, notifications |
+
+All agents work in **isolated git worktrees** on separate branches, merged in dependency order after completion.
+
+**User interaction:** Real-time visibility into each agent's progress. Users can edit code simultaneously via CRDT-based collaboration. Agents respond to inline comments.
+
+#### 6.1.7 Stage 6: Quality Assurance (Full Parallel)
+
+| # | Agent Role | Responsibility |
+|---|---|---|
+| 18 | **Code Reviewer** | Code quality, style, best practices, architecture conformance, DRY/SOLID violations |
+| 17 | **Security Auditor** | SAST (Semgrep, SonarQube), DAST (ZAP), secret scanning (Gitleaks), SCA, compliance verification |
+| 19 | **Accessibility Agent** | WCAG 2.1 AA/AAA compliance, screen reader support, keyboard navigation, color contrast |
+| 20 | **i18n/L10n Agent** | String externalization, locale management, RTL support, date/number formatting, pluralization |
+| 21 | **Performance Agent** | Bundle analysis, render performance, memory leak detection, N+1 queries, caching strategy |
+
+All five quality agents run **simultaneously** against the merged codebase. Findings are categorized as critical/high/medium/low with automated fix suggestions.
+
+**User interaction:** Review flagged findings, approve security exceptions, override false positives.
+
+#### 6.1.8 Stage 7: Testing & Validation (Parallel Test Suites)
+
+| # | Agent Role | Responsibility |
+|---|---|---|
+| 22 | **Tester** | Test generation, execution, coverage analysis across all platforms and test types |
+
+The Tester agent generates and runs **all test types in parallel where possible**:
+
+| Test Type | Tools | Parallelism | Description |
+|---|---|---|---|
+| Unit Tests | Jest, pytest, JUnit, XCTest | Parallel | Individual function/component testing |
+| Integration Tests | Supertest, pytest, Testcontainers | Parallel | API and service integration verification |
+| E2E Tests | Playwright, Cypress, Detox | Parallel | Critical user flow validation |
+| UI Component Tests | Storybook, Testing Library | Parallel | Component rendering and interaction |
+| Visual Regression Tests | Playwright screenshots, Percy | Parallel | Screenshot comparison for UI changes |
+| Smoke Tests | Custom health checks | Sequential | Post-build basic sanity verification |
+| Performance Tests | k6, Artillery, Lighthouse | Parallel | Load testing, Core Web Vitals, benchmarks |
+| Security Tests | OWASP ZAP, custom pen tests | Parallel | Penetration testing, auth/authz verification |
+| Accessibility Tests | axe-core, Lighthouse, pa11y | Parallel | WCAG automated compliance |
+| API Contract Tests | Pact, Dredd | Parallel | Consumer-driven contract verification |
+| Cross-browser Tests | Playwright (Chrome, Firefox, Safari, Edge) | Parallel | Multi-browser compatibility |
+| Mobile Device Tests | XCTest, Espresso, Detox | Parallel | Device-specific, gesture, offline mode, deep link testing |
+| Mutation Tests | Stryker, mutmut | Sequential | Test suite quality verification |
+| Chaos Tests | Chaos Monkey, Litmus | Optional | Resilience testing for distributed systems |
+
+**Coverage targets:** Line >= 80%, Branch >= 70%, Function >= 85%. All critical paths must have E2E coverage.
+
+**User interaction:** Review test results dashboard, approve coverage levels, decide on failing test disposition.
+
+#### 6.1.9 Stage 8: Debug & Stabilization
+
+| # | Agent Role | Responsibility |
+|---|---|---|
+| 23 | **Debugger** | Root cause analysis, fix generation, regression testing, cross-platform fix propagation |
+
+Iterative loop: Debugger analyzes failures → generates fixes → Tester re-runs affected tests → repeat until all pass or escalate after 3 iterations.
+
+**User interaction:** Escalation point if Debugger cannot resolve after 3 iterations. User can provide manual fixes, hints, or override failing tests.
+
+#### 6.1.10 Stage 9: Documentation & Knowledge
+
+| # | Agent Role | Responsibility |
+|---|---|---|
+| 29 | **Documentation Writer** | API docs, README, ADRs, deployment guides, runbooks, onboarding guides, changelog, architecture diagrams |
+| 26 | **Skill Creator Agent** | Codify successful patterns into reusable skills for future projects |
+| 27 | **Hooks Creator Agent** | Create lifecycle hooks for pipeline customization |
+| 28 | **Tools Creator Agent** | Build custom MCP tools and integrations |
+
+Documentation is generated from code, architecture decisions, and pipeline artifacts. Meta-agents (Skill/Hook/Tool Creators) run in parallel to capture reusable patterns.
+
+**User interaction:** Review generated documentation, approve skills/hooks/tools before activation.
+
+#### 6.1.11 Stage 10: Deployment & Delivery (Final Stage)
+
+| # | Agent Role | Responsibility |
+|---|---|---|
+| 16 | **DevOps Agent** | CI/CD pipeline generation, monitoring setup, logging, alerting, SLA enforcement |
+| 15 | **Infrastructure Engineer** | Cloud resource provisioning, IaC deployment, SSL/TLS, DNS configuration |
+| 30 | **Project Manager Agent** | Final status report, handoff documentation, timeline summary, lessons learned |
+
+Deployment is the **last stage** — it only executes after all code is written, reviewed, tested, debugged, and documented. Deployment follows a strict sequential pipeline:
+
+1. Build & Package (web bundles, Docker images, iOS IPA, Android AAB)
+2. Deploy to staging environment
+3. Run smoke tests against staging
+4. **User approval gate** for production deployment
+5. Deploy to production (blue-green / canary / rolling)
+6. Health check verification
+7. Monitoring and alerting setup
+8. Rollback automation (if health checks fail)
+9. Handoff report generation
+10. Cost estimation and optimization recommendations
+
+**User interaction:** Approve production deployment, verify health checks, review cost estimates.
 
 ### 6.2 Graph Execution Model
 
@@ -351,92 +509,168 @@ Based on the MASFactory framework, agents are organized as nodes in a directed c
 User Input (Idea / PRD / Existing Codebase)
     |
     v
-+------------------+
-|   Orchestrator    | --- Receives input, determines project type, initiates pipeline
-+--------+---------+
-         |
-         v
-+------------------+
-| Brainstorming    | --- Explores ideas, alternatives, trade-offs with user
-|     Agent        |
-+--------+---------+
-         |
-         +------------------------+
-         v                        v
-+------------------+    +------------------+
-| TechStack Builder|    |    Planner       | --- Can run in parallel
-|     Agent        |    |                  |
-+--------+---------+    +--------+---------+
-         |                        |
-         +------------+-----------+
-                      |
-         +------------+------------+
-         v                         v
-+------------------+    +------------------+
-|   Researcher     |    |   Architect      | --- Can run in parallel
-+--------+---------+    +--------+---------+
-         |                        |
-         +------------+-----------+
-                      |
-    +-----------+-----+------+-----------+
-    v           v            v           v
-+---------+ +---------+ +---------+ +---------+
-|Template | |Database | |API Gate-| |GitHub   |
-| Agent   | | Agent   | |way Agent| | Agent   |
-+---------+ +---------+ +---------+ +---------+
-    |           |            |           |
-    v           |            |           |
-+---------+    |            |           |
-|Designer |    |            |           |
-+---------+    |            |           |
-    |          |            |           |
-    +----+-----+-----+------+-----------+
-         |           |
-  +------+------+----+-----+----------+---------+
-  v      v      v          v          v         v
-Front  Back   Middle    Mobile   Infra     Integra-
-end    end    ware      Agent    Engineer  tions
-Dev    Dev    Dev                           Agent
-  |      |      |          |          |         |
-  +------+------+----------+----------+---------+
-         |
-  +------+------+------+------+------+
-  v      v      v      v      v      v
-Review Security A11y  i18n  Perf   Tester
-Agent  Auditor  Agent Agent Agent
-  |      |      |      |      |      |
-  +------+------+------+------+------+
-         |
-         v
-    +---------+
-    | Debugger | <--- Loop back to Developers if fixes needed
-    +----+----+
-         |
-         +------------------------------------------+
-         |                    |                      |
-         v                    v                      v
-  +-------------+    +---------------+    +-----------------+
-  | Skill       |    | Hooks Creator |    | Tools Creator   |
-  | Creator     |    |    Agent      |    |    Agent        |
-  +------+------+    +-------+-------+    +--------+--------+
-         |                    |                      |
-         +--------------------+----------------------+
-                              |
-                              v
-                    +------------------+
-                    |  Doc Writer      |
-                    +--------+---------+
-                             |
-                             v
-                    +------------------+
-                    | DevOps Agent     |
-                    +--------+---------+
-                             |
-                             v
-                    +------------------+
-                    | Deployment &     |
-                    | Delivery         |
-                    +------------------+
++=======================================================+
+| STAGE 0: PROJECT INITIALIZATION                       |
+|  Orchestrator --> classify project type                |
+|  GitHub Agent --> repo setup                           |
+|  [USER: select project type, import codebase]         |
++=======================================================+
+    |
+    |--- Greenfield --------+
+    |--- Inflight (analysis)|--- merge into pipeline
+    |--- Brownfield (assess)|
+    |
+    v
++=======================================================+
+| STAGE 1: DISCOVERY & BRAINSTORMING                    |
+|  Brainstorming Agent <--> User (interactive session)  |
+|  [USER: explore ideas, confirm requirements]          |
+|  GATE G1: Requirements confirmed                      |
++=======================================================+
+    |
+    v
++=======================================================+
+| STAGE 2: RESEARCH & ANALYSIS                          |
+|  Researcher (parallel research queries)               |
+|  --> tech evaluation, patterns, APIs, competition     |
+|  GATE G2: Research completeness check                 |
++=======================================================+
+    |
+    v
++=======================================================+
+| STAGE 3: ARCHITECTURE & DESIGN (parallel)             |
+|  +----------+  +---------+  +-------+  +---------+   |
+|  | Architect |  | Designer|  |DB Agent| |API GW   |   |
+|  | (system)  |  | (UI/UX) |  |(schema)| |Agent    |   |
+|  +----------+  +---------+  +-------+  +---------+   |
+|  [USER: approve architecture, review wireframes]      |
+|  GATE G3: Architecture approved                       |
++=======================================================+
+    |
+    v
++=======================================================+
+| STAGE 4: PLANNING & CONFIGURATION                     |
+|  +--------+    +---------------+                      |
+|  | Planner|    |TechStack      |--> Template Agent     |
+|  | (tasks)|    |Builder (stack)|    (scaffold)         |
+|  +--------+    +---------------+                      |
+|  [USER: approve plan, select stack, choose templates]  |
+|  GATE G4: Plan + stack approved                       |
++=======================================================+
+    |
+    v
++=======================================================+
+| STAGE 5: IMPLEMENTATION (full parallel, worktrees)    |
+|  +------+ +------+ +------+ +------+ +------+ +----+ |
+|  |Front | |Back  | |Middle| |Mobile| |Infra | |Intg| |
+|  |end   | |end   | |ware  | |Agent | |Engr  | |Agent||
+|  +------+ +------+ +------+ +------+ +------+ +----+ |
+|  [USER: real-time visibility, live code editing]      |
+|  GATE G5: All agents complete, code compiles          |
++=======================================================+
+    |
+    v
++=======================================================+
+| STAGE 6: QUALITY ASSURANCE (full parallel)            |
+|  +------+ +------+ +------+ +------+ +------+        |
+|  |Code  | |Secur.| |A11y  | |i18n  | |Perf  |        |
+|  |Review| |Audit | |Agent | |Agent | |Agent |        |
+|  +------+ +------+ +------+ +------+ +------+        |
+|  [USER: review findings, approve exceptions]          |
+|  GATE G6: No critical/blocker findings                |
++=======================================================+
+    |
+    v
++=======================================================+
+| STAGE 7: TESTING & VALIDATION (parallel suites)       |
+|  Unit | Integration | E2E | UI Component | Visual     |
+|  Smoke | Performance | Security | A11y | Contract     |
+|  Cross-browser | Mobile Device | Mutation | Chaos      |
+|  [USER: review results, approve coverage]             |
+|  GATE G7: Coverage met, no critical failures          |
++=======================================================+
+    |
+    v
++=======================================================+
+| STAGE 8: DEBUG & STABILIZATION                        |
+|  Debugger <--> Tester (fix-test loop, max 3 iters)   |
+|  [USER: escalation if stuck, manual fix input]        |
+|  GATE G8: All tests pass                              |
++=======================================================+
+    |
+    v
++=======================================================+
+| STAGE 9: DOCUMENTATION & KNOWLEDGE                    |
+|  Doc Writer | Skill Creator | Hooks Creator | Tools   |
+|  [USER: review docs, approve new skills/hooks/tools]  |
+|  GATE G9: Documentation complete                      |
++=======================================================+
+    |
+    v
++=======================================================+
+| STAGE 10: DEPLOYMENT & DELIVERY (last)                |
+|  DevOps Agent --> CI/CD --> staging --> smoke test     |
+|  [USER: approve production deployment]                |
+|  Infrastructure --> deploy --> health check --> live   |
+|  Project Manager --> handoff report                   |
+|  GATE G10: Health checks pass, handoff complete       |
++=======================================================+
+    |
+    v
+  DELIVERED APPLICATION
+```
+
+### 6.2.1 Inflight Project Pipeline Variation
+
+For projects joining mid-development, the pipeline adds analysis stages before entering the standard flow:
+
+```
+Codebase Import
+    |
+    v
++-- ANALYSIS PHASE (replaces S1-S2) ---+
+|  Codebase Analysis (structure, deps)  |
+|  Architecture Recovery (reverse C4)   |
+|  Convention Detection (style, naming) |
+|  Gap Analysis (missing tests, docs)   |
++---------------------------------------+
+    |
+    v
+S1: Brainstorming (scoped to remaining work)
+    |
+    v
+S3: Architecture (validate/extend recovered architecture)
+    |
+    v
+S4-S10: Standard pipeline (remaining work only)
+```
+
+### 6.2.2 Brownfield Project Pipeline Variation
+
+For legacy modernization, the pipeline adds assessment stages and operates incrementally:
+
+```
+Legacy Codebase Import
+    |
+    v
++-- ASSESSMENT PHASE (replaces S1-S2) ----+
+|  Legacy Assessment (tech debt, patterns) |
+|  Modernization Strategy (strangler fig,  |
+|    incremental refactoring, migration)   |
+|  Safety Net (characterization tests,     |
+|    baseline metrics, integration tests)  |
+|  [USER: approve modernization strategy]  |
++------------------------------------------+
+    |
+    v
+S3: Architecture (modernized target architecture)
+    |
+    v
+S4: Planning (incremental modernization plan)
+    |
+    v
+S5-S10: Standard pipeline (one module at a time, with
+        regression testing after each module)
 ```
 
 ### 6.3 Communication Protocol
@@ -470,15 +704,97 @@ Following MASFactory's Message Adapter pattern:
 - Ordering guaranteed per source-target pair
 - Messages larger than 100KB are stored in blob storage with a reference in the message
 
-### 6.4 Agent Self-Improvement
+### 6.4 Agent Learning & Continuous Improvement
+
+CodeBot agents are not stateless workers — they learn, adapt, and improve over time through multiple feedback loops that capture lessons learned, refine behavior, and build institutional knowledge.
+
+#### 6.4.1 Lessons Learned System
+
+After every pipeline run (and at key stage boundaries), agents automatically capture lessons learned:
+
+| Lesson Type | When Captured | What's Recorded | How It's Used |
+|---|---|---|---|
+| **Fix Loop Patterns** | After Debug stage (S8) | Root cause of each bug, fix applied, number of iterations, which tests caught it | Agents pre-emptively avoid similar bugs in future projects by checking past fix patterns before generating code |
+| **Architecture Decisions** | After Architecture stage (S3) | Options considered, option chosen, rationale, outcome after implementation | Architect Agent reviews past decisions for similar project types to make better choices |
+| **Test Gap Analysis** | After Testing stage (S7) | Which tests caught real bugs vs. which areas had no test coverage for bugs found later | Tester Agent generates more targeted tests in areas that historically have defects |
+| **Performance Insights** | After QA stage (S6) | Performance bottlenecks found, optimizations applied, before/after metrics | Backend/Frontend agents apply known optimizations proactively |
+| **Security Findings** | After QA stage (S6) | Vulnerability patterns found, OWASP categories, remediation applied | Coding agents avoid generating code with known vulnerability patterns |
+| **Code Review Feedback** | After QA stage (S6) | Reviewer comments, issues found by type (style, logic, performance, security), resolution | Coding agents internalize common review feedback to reduce review cycles |
+| **Deployment Issues** | After Deployment stage (S10) | Deployment failures, configuration mistakes, environment-specific issues | Infra Agent learns environment-specific requirements across projects |
+| **User Overrides** | Any stage with user input | When the user overrides an agent's decision, what was changed and why | All agents learn user preferences and adjust defaults accordingly |
+
+#### 6.4.2 Agent Behavior Adaptation
+
+| Mechanism | Description |
+|---|---|
+| **Prompt Refinement** | Agent system prompts are dynamically augmented with relevant lessons learned from past projects — not just static templates. Before each task, agents query episodic memory for "what went wrong last time in this type of task" |
+| **Pattern Library** | Successful code patterns, architecture patterns, and configuration patterns are extracted and indexed. Agents search this library before generating new code, preferring proven patterns over novel ones |
+| **Anti-Pattern Registry** | Failed approaches, common mistakes, and rejected patterns are captured with context. Agents check this registry before generating code to avoid repeating mistakes |
+| **Model Routing Optimization** | Track which LLM produces the best results for each task type. If Claude excels at architecture but GPT-4 is better at unit tests for a specific language, the model router learns this and optimizes routing over time |
+| **Quality Score Tracking** | Each agent's output is scored on dimensions (correctness, test pass rate, review approval rate, security scan results). Scores are tracked across projects to identify degradation or improvement trends |
+| **User Preference Learning** | Track user choices on tech stack, coding style, architecture patterns, review strictness. Build a user profile that agents use to tailor their defaults and suggestions |
+
+#### 6.4.3 Skill & Knowledge Creation
 
 | Feature | Description |
 |---|---|
-| Skill Learning | Skill Creator Agent codifies successful patterns into reusable skills that all agents can invoke |
-| Hook System | Hooks Creator Agent creates lifecycle hooks that allow custom logic at any pipeline stage |
-| Tool Creation | Tools Creator Agent builds custom MCP tools and integrations that extend agent capabilities |
-| Performance Tracking | Track agent success rates, fix loop counts, and output quality to optimize model routing and prompt engineering |
-| Feedback Integration | Human feedback on agent output is used to improve future agent performance through prompt refinement and skill creation |
+| **Skill Learning** | Skill Creator Agent codifies successful patterns into reusable skills that all agents can invoke — e.g., "how to set up auth with Clerk in Next.js" becomes a skill after being done successfully twice |
+| **Hook System** | Hooks Creator Agent creates lifecycle hooks that allow custom logic at any pipeline stage — learning from failures to add pre-flight checks |
+| **Tool Creation** | Tools Creator Agent builds custom MCP tools and integrations that extend agent capabilities — e.g., after discovering a project needs a specific API, it creates a tool for that API |
+| **Knowledge Distillation** | After every 10 pipeline runs, the system consolidates episodic observations into distilled knowledge documents — removing noise, keeping insights, creating a growing knowledge base |
+| **Cross-Project Transfer** | When a new project starts, agents search the knowledge base for similar past projects and pre-load relevant lessons, patterns, skills, and anti-patterns |
+
+#### 6.4.4 Feedback Loops
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    FEEDBACK LOOP ARCHITECTURE                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Pipeline Run N                                                  │
+│  ┌──────┐  ┌────────┐  ┌──────┐  ┌──────┐  ┌──────┐           │
+│  │ Code │→│ Review │→│ Test │→│Debug │→│Deploy│           │
+│  └──┬───┘  └───┬────┘  └──┬───┘  └──┬───┘  └──┬───┘           │
+│     │          │          │          │          │                 │
+│     ▼          ▼          ▼          ▼          ▼                 │
+│  ┌──────────────────────────────────────────────────┐            │
+│  │           OBSERVATION CAPTURE                     │            │
+│  │  (what happened, what worked, what failed)        │            │
+│  └──────────────────────┬───────────────────────────┘            │
+│                         │                                        │
+│                         ▼                                        │
+│  ┌──────────────────────────────────────────────────┐            │
+│  │           LESSON EXTRACTION                       │            │
+│  │  (root causes, patterns, anti-patterns)           │            │
+│  └──────────────────────┬───────────────────────────┘            │
+│                         │                                        │
+│                         ▼                                        │
+│  ┌──────────────────────────────────────────────────┐            │
+│  │      KNOWLEDGE CONSOLIDATION (every 10 runs)     │            │
+│  │  (distill observations → knowledge documents)     │            │
+│  └──────────────────────┬───────────────────────────┘            │
+│                         │                                        │
+│                         ▼                                        │
+│  Pipeline Run N+1                                                │
+│  ┌──────────────────────────────────────────────────┐            │
+│  │  CONTEXT AUGMENTATION                             │            │
+│  │  (pre-load relevant lessons + patterns + skills)  │            │
+│  └──────────────────────────────────────────────────┘            │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### 6.4.5 Measurable Improvement Metrics
+
+| Metric | Description | Target |
+|---|---|---|
+| **Fix loop reduction** | Average number of debug iterations decreases across projects | < 3 iterations by project 10 (vs. < 5 for project 1) |
+| **First-pass review approval** | % of code that passes review without changes | > 70% by project 10 |
+| **Test coverage precision** | % of generated tests that catch actual regressions | > 60% by project 10 |
+| **Security scan pass rate** | % of generated code that passes security scanning on first attempt | > 85% by project 10 |
+| **Deployment success rate** | % of deployments succeeding without rollback | > 95% by project 10 |
+| **User override frequency** | How often users override agent decisions (should decrease) | < 10% by project 10 |
+| **Skill reuse rate** | % of tasks that leverage previously created skills | > 40% after 10 projects |
 
 ### 6.5 Agent Lifecycle Management
 
@@ -495,20 +811,33 @@ Agent States: IDLE → INITIALIZING → RUNNING → WAITING → COMPLETED/FAILED
 - **Resource Limits**: Per-agent token budget, execution timeout, memory limit
 - **Graceful Degradation**: If agent fails 3 times, orchestrator reassigns to fallback model/agent
 
-### 6.6 System-Level Error Handling
+### 6.6 Intelligent Error Recovery & Self-Healing
 
-Error Taxonomy:
+CodeBot doesn't just handle errors — it diagnoses root causes, applies intelligent fixes, and learns from failures to prevent recurrence.
+
+#### Error Taxonomy:
 
 | Category | Examples | Handling |
 |---|---|---|
-| **Transient** | LLM rate limit, network timeout, API 503 | Retry with exponential backoff (max 3) |
-| **Recoverable** | Test failure, lint error, type error | Route to Debugger agent for automated fix |
-| **Blocking** | Missing dependency, invalid config | Pause pipeline, notify user, request input |
-| **Fatal** | Credential invalid, disk full, OOM | Stop pipeline, preserve state, alert user |
-| **Quality Gate** | Security vulnerability, coverage below threshold | Block phase transition, route to fix agent |
+| **Transient** | LLM rate limit, network timeout, API 503 | Retry with exponential backoff (max 3), auto-switch to fallback LLM provider |
+| **Recoverable** | Test failure, lint error, type error | Route to Debugger agent for automated fix with root cause analysis |
+| **Blocking** | Missing dependency, invalid config | Pause pipeline, attempt auto-resolution (install dep, suggest config), notify user if unresolved |
+| **Fatal** | Credential invalid, disk full, OOM | Stop pipeline, preserve full state for resume, alert user with diagnosis |
+| **Quality Gate** | Security vulnerability, coverage below threshold | Block phase transition, route to fix agent with specific remediation guidance |
+| **Cascade** | Failure in one agent affecting downstream agents | Isolate failure, roll back affected agent's work, re-route pipeline around failed stage if possible |
 
-Dead Letter Queue: Failed messages stored for manual inspection and replay.
-Circuit Breaker: If LLM provider fails 5 consecutive requests, circuit opens and routes to fallback provider.
+#### Self-Healing Capabilities:
+
+| Feature | Description |
+|---|---|
+| **Automatic Dependency Resolution** | When a build fails due to missing dependencies, the system analyzes the error, installs the correct packages, and retries |
+| **Configuration Auto-Fix** | When configuration errors are detected (wrong ports, missing env vars, invalid paths), the system attempts to fix them using project context |
+| **Test Flakiness Detection** | Tests that fail intermittently are flagged, isolated, and re-run with increased timeout or in a clean sandbox — persistent flakes are reported separately from real failures |
+| **LLM Fallback Chain** | If the primary LLM fails or produces low-quality output (detected by validation), the system automatically retries with an alternative model before involving the user |
+| **Pipeline Resume** | After any failure, the pipeline can resume from the exact point of failure — no re-running completed stages. Full state is checkpointed at every stage boundary |
+| **Partial Rollback** | If a stage produces broken output, the system can roll back just that stage's artifacts without affecting other completed work |
+| **Dead Letter Queue** | Failed messages stored for manual inspection and replay with full context of what was being attempted |
+| **Circuit Breaker** | If an LLM provider fails 5 consecutive requests, circuit opens and routes to fallback provider. Auto-resets after 5 minutes |
 
 ### 6.7 Prompt Engineering Standards
 
@@ -532,38 +861,65 @@ Circuit Breaker: If LLM provider fails 5 consecutive requests, circuit opens and
 
 ## 7. Context Management
 
-Inspired by OpenViking's tiered context architecture:
+CodeBot implements a unified, observable, self-evolving context system that gives every agent access to the right information at the right time — without overwhelming token budgets. The system combines hierarchical context loading, episodic memory, and real-time synchronization as first-class platform features.
 
-### 7.1 Three-Tier Context System
+> **Research foundations:** The tiered loading architecture draws from OpenViking's filesystem-paradigm context model (L0/L1/L2 hierarchy, directory-based retrieval, observable retrieval trajectories). The episodic memory subsystem applies techniques from claude-mem (lifecycle hooks, semantic compression, progressive disclosure). These are not direct dependencies — CodeBot builds these capabilities natively, informed by the patterns these projects validated.
+
+### 7.1 Hierarchical Context System
+
+CodeBot manages context in three tiers, loading progressively to minimize token consumption while ensuring agents always have what they need:
 
 | Tier | Content | Loading Strategy | Token Budget |
 |---|---|---|---|
-| **L0 (Always Loaded)** | Project summary, current task, agent role instructions, tech stack config, active template | Pre-loaded at agent init | ~2K tokens |
-| **L1 (On-Demand)** | Relevant code files, architecture docs, test results, deployment configs, cross-repo context | Loaded when agent requests or context adapter injects | ~10K tokens |
-| **L2 (Deep Retrieval)** | Full codebase search, external documentation, research results, historical decisions, multi-repo search | RAG-based retrieval with vector + keyword hybrid search | ~20K tokens |
+| **L0 (Always Loaded)** | Project summary, current task, agent role instructions, tech stack config, active template | Pre-loaded at agent initialization from the context store | ~2K tokens |
+| **L1 (On-Demand)** | Relevant code files, architecture docs, test results, deployment configs, cross-repo context | Loaded when agent requests or when the context adapter detects relevance via directory-based retrieval + semantic search | ~10K tokens |
+| **L2 (Deep Retrieval)** | Full codebase search, external documentation, research results, historical decisions, multi-repo search | RAG-based retrieval with recursive directory search + vector + keyword hybrid search | ~20K tokens |
 
-### 7.2 Context Sources
+**How it works:**
+- Each project has a **context directory tree** (filesystem-paradigm) that organizes memories, resources, skills, and artifacts in a navigable hierarchy — not a flat vector dump
+- Agents mount the project's L0 directory at init, then query L1/L2 paths on demand
+- All retrieval trajectories are **observable**: the dashboard shows exactly what context each agent loaded and why, enabling debugging of agent reasoning
+- Automatic **context compression** summarizes older context entries to keep token budgets within limits while preserving critical decisions
 
-| Source | Technology | Purpose |
-|---|---|---|
-| **Project Memory** | OpenViking / Letta | Persistent project knowledge, decisions, learnings, and brainstorming session history |
-| **Code Context** | Vector DB (Chroma/Weaviate) + Tree-sitter | Code-aware semantic search with AST understanding across all repositories |
-| **Documentation** | RAGFlow | Project docs, API specs, requirement tracing, template docs |
-| **Tool Results** | MCP Protocol | Real-time tool output injection (test results, scan reports, deployment status) |
-| **Collaboration Context** | CRDT Store (Yjs/Automerge) | Real-time edits, cursor positions, and change streams from human collaborators |
-| **Cross-repo Context** | Multi-repo Index | Shared models, API contracts, and dependency information across repositories |
-| **Template Context** | Template Registry | Selected template components, design tokens, and usage patterns |
-| **Deployment Context** | Cloud Provider APIs | Current deployment state, environment variables, resource utilization |
+### 7.2 Episodic Memory
 
-### 7.3 Context Synchronization
+CodeBot captures **cross-session and cross-project memory** — what happened, what worked, what failed, and what was decided — so agents learn from experience rather than starting fresh on every pipeline run.
 
 | Feature | Description |
 |---|---|
-| Real-time Sync | Context updates are pushed to all active agents within 500ms of any change |
+| **Automatic Observation Capture** | Lifecycle hooks at key agent events (task start, tool completion, decision point, task end) automatically record agent activity as retrievable observations |
+| **Semantic Compression** | AI-generated summaries of observations reduce token overhead (~10x savings) while preserving critical context about past decisions and outcomes |
+| **Progressive Disclosure** | Three-layer retrieval: compact index → timeline context → full observation details. Agents start with lightweight summaries and drill into details only when needed |
+| **Cross-Session Search** | Semantic + keyword hybrid search across all previous sessions for a project, enabling agents to find relevant past work without re-reading entire histories |
+| **Cross-Project Learning** | Agents can search episodic memory across projects to find reusable patterns, solutions to similar problems, and lessons learned from previous builds |
+| **Decision Audit Trail** | All agent decisions are captured with rationale, enabling retrospective analysis, debugging, and continuous improvement of agent behavior |
+| **Memory Consolidation** | Episodic observations are periodically consolidated into long-term project memory in the context store, creating a growing knowledge base per project |
+
+### 7.3 Context Sources
+
+| Source | Purpose | Backing Store |
+|---|---|---|
+| **Project Context Store** | Primary hierarchical context — project knowledge, decisions, learnings, brainstorming history, architecture artifacts | Filesystem-paradigm context DB (SQLite + file tree) |
+| **Episodic Memory** | Cross-session observations, decisions, tool usage history, compressed summaries | Vector DB (Chroma) + SQLite with semantic + keyword search |
+| **Code Context** | Code-aware semantic search with AST understanding across all repositories | Vector DB (Chroma/Weaviate) + Tree-sitter indexing |
+| **Documentation** | Project docs, API specs, requirement tracing, template docs | RAG pipeline with deep document understanding |
+| **Tool Results** | Real-time tool output injection (test results, scan reports, deployment status) | MCP Protocol event stream |
+| **Collaboration Context** | Real-time edits, cursor positions, and change streams from human collaborators | CRDT Store (Yjs/Automerge) |
+| **Cross-repo Context** | Shared models, API contracts, and dependency information across repositories | Multi-repo index with cross-reference tracking |
+| **Template Context** | Selected template components, design tokens, and usage patterns | Template registry |
+| **Deployment Context** | Current deployment state, environment variables, resource utilization | Cloud provider API adapters |
+
+### 7.4 Context Synchronization
+
+| Feature | Description |
+|---|---|
+| Real-time Sync | Context updates are pushed to all active agents within 500ms of any change via the platform event bus |
 | Conflict Resolution | CRDT-based conflict resolution for simultaneous human and agent edits |
 | Cross-repo Sync | Changes in one repository that affect shared interfaces trigger context updates in dependent repositories |
 | Context Compression | Automatic summarization of older context to keep token budgets within limits |
 | Context Versioning | All context changes are versioned, allowing agents to reason about how context evolved |
+| Observable Retrieval | Retrieval trajectories are visualized in the dashboard — developers can trace exactly what context each agent loaded and why |
+| Memory Consolidation | Episodic observations are periodically consolidated into long-term project memory, creating a growing knowledge base |
 
 ---
 
@@ -573,20 +929,33 @@ Inspired by OpenViking's tiered context architecture:
 
 | Component | Description |
 |---|---|
-| **Project Board** | Kanban-style board showing agent tasks and their status across all phases |
-| **Agent Timeline** | Real-time visualization of agent execution graph with live status updates |
-| **Code Viewer** | Syntax-highlighted code viewer with diff support, inline comments, and multi-file comparison |
+| **Pipeline Stage View** | Visual pipeline showing all 10 stages (S0-S10) with current stage highlighted, completed stages checked, and upcoming stages grayed out. Click any stage to drill into agent details |
+| **Agent Activity Panel** | Real-time view of every active agent: what it is currently doing, which files it is editing, tokens consumed, artifacts produced, and estimated progress percentage |
+| **Agent Detail View** | Deep dive into a single agent: live streaming output, current LLM conversation, tool invocations, decision log, and performance metrics |
+| **Interactive Input Panel** | Unified panel for all user interaction points: approval gates, clarification requests, tech stack selection, template selection, and manual overrides. Shows pending inputs with context |
+| **Project Board** | Kanban-style board showing tasks across stages with agent assignments, dependencies, and blockers |
+| **Code Viewer** | Syntax-highlighted code viewer with diff support, inline comments, multi-file comparison, and live agent edit indicators |
 | **Terminal** | Embedded terminal for manual intervention and direct command execution |
-| **Chat Interface** | Natural language interaction with the Orchestrator agent and individual specialized agents |
-| **Review Panel** | Code review interface with inline comments, approval workflow, and automated suggestion application |
-| **Monitoring Dashboard** | Token usage, cost tracking, agent performance metrics, and cloud cost estimates |
-| **Brainstorming Board** | Interactive brainstorming interface with mind maps, concept cards, and idea voting |
+| **Chat Interface** | Natural language interaction with the Orchestrator and individual agents. Users can ask any agent to explain its decisions or change approach |
+| **Review Panel** | Code review interface with inline comments, approval workflow, severity filtering, and automated suggestion application |
+| **Test Results Dashboard** | Comprehensive view of all test suites: unit, integration, E2E, UI component, visual regression, smoke, performance, security, accessibility, contract, cross-browser, mobile, and mutation tests with pass/fail/skip counts and coverage metrics |
+| **Monitoring Dashboard** | Token usage per agent, cost tracking per stage, LLM performance metrics, and cloud cost estimates |
+| **Brainstorming Board** | Interactive brainstorming interface with mind maps, concept cards, idea voting, and session history |
 | **Template Gallery** | Visual gallery of available UI/UX templates with live previews and one-click selection |
-| **Tech Stack Configurator** | Interactive tech stack selection interface with compatibility checking and recommendation engine |
-| **Deployment Dashboard** | Multi-environment deployment status, health checks, rollback controls, and cost monitoring |
-| **Collaboration Workspace** | Real-time collaborative editing space where human and agents work simultaneously |
+| **Tech Stack Configurator** | Interactive tech stack selection with compatibility checking, recommendation engine, and preset configurations |
+| **Live Preview Panel** | Real-time browser-based preview of the running application inside its sandbox — supports hot-reload on code changes, mobile device emulation (viewport simulation), VNC for desktop apps, and side-by-side before/after comparisons |
+| **Sandbox Manager** | View and manage all active sandbox environments — start/stop/restart sandboxes, view resource usage, access sandbox terminals, inspect running processes, and configure per-sandbox network policies |
+| **Deployment Dashboard** | Multi-environment deployment status, health checks, rollback controls, smoke test results, and cost monitoring |
+| **Collaboration Workspace** | Real-time collaborative editing space where humans and agents work simultaneously with presence indicators |
 | **Multi-repo Navigator** | Cross-repository file browser, dependency graph visualizer, and impact analysis tool |
-| **Notification Center** | Centralized notifications for approval requests, deployment status, test results, and security alerts |
+| **Notification Center** | Centralized notifications for approval requests, deployment status, test results, security alerts, and agent escalations |
+| **Project History** | Full audit trail of every decision made, every agent action taken, every user approval, with timestamps and rationale |
+| **Cost & Budget Tracker** | Real-time token usage and cloud cost tracking per agent, per stage, per LLM provider. Budget alerts, spend forecasts, and cost optimization recommendations |
+| **Project Analytics** | Post-run analytics: time per stage, agent efficiency scores, quality gate pass rates, test coverage trends, improvement over previous runs. Exportable reports |
+| **Dependency Graph** | Interactive visualization of project dependencies — packages, services, API contracts, database relationships — with vulnerability and update indicators |
+| **Architecture Visualizer** | Auto-generated architecture diagrams (C4 model) from the actual generated code — not just planned architecture. Side-by-side comparison of planned vs. actual |
+| **Git Timeline** | Visual git history showing branches, merges, agent commits, and human commits on an interactive timeline. Click any commit to see the agent's reasoning |
+| **Knowledge Base Browser** | Browse the growing knowledge base of lessons learned, patterns, anti-patterns, and skills across all projects. Search, filter, and tag entries |
 
 ### 8.2 Real-time Collaboration Features
 
@@ -675,9 +1044,119 @@ Inspired by OpenViking's tiered context architecture:
 
 ---
 
-## 10. Template & Tech Stack System
+## 10. Cost Intelligence & Budget Management
 
-### 10.1 UI/UX Template System
+CodeBot tracks and optimizes costs across all dimensions — LLM token usage, cloud infrastructure, and development time — giving users full visibility and control.
+
+### 10.1 Token Cost Tracking
+
+| Feature | Description |
+|---|---|
+| **Per-Agent Cost** | Real-time tracking of tokens consumed and cost incurred by each agent, broken down by input/output tokens and model used |
+| **Per-Stage Cost** | Aggregate cost per pipeline stage (S0-S10) with comparison to previous runs |
+| **Model Cost Comparison** | Side-by-side comparison of cost vs. quality for different LLMs on the same task, enabling informed model routing decisions |
+| **Budget Limits** | Set hard budget limits per project, per run, or per stage. Pipeline pauses and alerts the user when approaching limits |
+| **Cost Forecasting** | Based on project complexity and historical data, forecast total pipeline cost before starting. Users can approve or adjust before committing |
+| **Optimization Suggestions** | After each run, suggest cheaper model alternatives that would have produced equivalent quality for specific task types |
+
+### 10.2 Cloud Cost Estimation
+
+| Feature | Description |
+|---|---|
+| **Pre-Deployment Estimate** | Before deploying, estimate monthly cloud costs based on selected infrastructure, expected traffic, and resource requirements |
+| **Right-Sizing** | Recommend appropriate instance sizes and service tiers based on actual application requirements, not worst-case assumptions |
+| **Cost Alerts** | Monitor deployed application costs and alert when spending exceeds thresholds |
+| **Multi-Cloud Comparison** | Compare deployment costs across AWS, GCP, and Azure for the same application to identify the cheapest option |
+
+---
+
+## 11. Project Intelligence
+
+### 11.1 Project Template Generation
+
+After completing a project, CodeBot can extract and save the project's architecture, patterns, and configurations as a reusable template for future projects.
+
+| Feature | Description |
+|---|---|
+| **Auto-Template Extraction** | After a successful deployment, extract the project's architecture, tech stack, code patterns, and configurations into a reusable project template |
+| **Template Parameterization** | Automatically identify project-specific values (names, endpoints, credentials) and replace them with configurable parameters |
+| **Template Marketplace** | Share and discover project templates. Users can publish templates (with sensitive data removed) for community reuse |
+| **Template Versioning** | Templates are versioned and can be updated when new patterns or best practices are discovered |
+| **Quick Start from Template** | Start a new project from a template — skip brainstorming and architecture stages, jump directly to customization and implementation |
+
+### 11.2 Project Analytics & Insights
+
+| Feature | Description |
+|---|---|
+| **Pipeline Performance Report** | After each run: time per stage, agent efficiency scores, quality gate pass rates, token usage breakdown, cost analysis |
+| **Quality Trend Dashboard** | Track quality metrics across projects and runs: test coverage, security scan results, code review approval rates, deployment success rates |
+| **Agent Performance Leaderboard** | Which agents are most effective, which need prompt tuning, which benefit most from model upgrades |
+| **Improvement Trajectory** | Visualize how the system improves over time — fewer fix loops, higher first-pass approval, better test coverage precision |
+| **Complexity Analysis** | After implementation, analyze code complexity metrics (cyclomatic complexity, coupling, cohesion) and compare to industry benchmarks |
+| **Technical Debt Score** | Continuous technical debt scoring with trend analysis — is technical debt growing or shrinking across runs? |
+| **Time-to-Value Tracking** | Track the elapsed time from idea input to deployed application, with breakdown by wait time (user input) vs. active time (agent work) |
+
+### 11.3 Rollback & Version Recovery
+
+| Feature | Description |
+|---|---|
+| **Stage-Level Rollback** | Roll back any individual stage's output without affecting other stages — e.g., revert to a previous architecture without re-running brainstorming |
+| **Full Pipeline Rollback** | Roll back the entire pipeline to any previous checkpoint — restore the project to a known good state |
+| **Code Version Recovery** | Every code change by every agent is committed with full context. Any change can be reverted individually |
+| **Config Snapshot** | Full project configuration (tech stack, template, deployment config) is snapshotted at each stage boundary. Any config state can be restored |
+| **Deployment Rollback** | One-click rollback of deployed applications to any previous deployment version with automatic health check verification |
+| **Branching from Checkpoint** | Create a new pipeline branch from any checkpoint — explore alternative approaches without losing the original path |
+
+### 11.4 Smart Suggestions & Proactive Insights
+
+| Feature | Description |
+|---|---|
+| **Architecture Recommendations** | Based on project requirements, proactively suggest architectural patterns used successfully in similar past projects |
+| **Dependency Risk Alerts** | Proactively flag dependencies with known vulnerabilities, deprecated status, low maintenance activity, or license concerns |
+| **Performance Prediction** | Before deployment, predict performance bottlenecks based on architecture patterns and code analysis — suggest optimizations before they become problems |
+| **Scalability Assessment** | Analyze the generated architecture for scalability concerns and suggest improvements before deployment |
+| **API Design Review** | Proactively review generated API designs for RESTful best practices, consistency, versioning strategy, and documentation completeness |
+| **Database Query Analysis** | Analyze generated database queries for N+1 problems, missing indexes, and inefficient joins before they reach production |
+| **Accessibility Pre-Check** | During implementation (not just review), proactively ensure components meet WCAG standards — prevention over detection |
+
+---
+
+## 12. Extensibility & Plugin System
+
+### 12.1 Plugin Architecture
+
+| Feature | Description |
+|---|---|
+| **Agent Plugins** | Third parties can create custom agents that plug into the pipeline at any stage. Plugins define their agent's role, tools, and position in the graph |
+| **Tool Plugins** | Custom MCP tools can be installed to give agents new capabilities — access to proprietary APIs, internal tools, custom workflows |
+| **Template Plugins** | Custom UI/UX templates and design systems can be packaged as plugins and shared across teams |
+| **LLM Provider Plugins** | Add support for new LLM providers beyond the built-in ones — custom model endpoints, fine-tuned models, specialized models |
+| **Stage Plugins** | Insert custom stages into the pipeline — e.g., a compliance review stage between QA and deployment for regulated industries |
+| **Notification Plugins** | Custom notification channels — Slack, Teams, Discord, PagerDuty, custom webhooks |
+
+### 12.2 Webhook & Event System
+
+| Feature | Description |
+|---|---|
+| **Pipeline Events** | Subscribe to events at any granularity: stage start/end, agent start/end, quality gate pass/fail, deployment status change |
+| **Webhook Delivery** | Reliable webhook delivery with retry logic, signature verification, and delivery logs |
+| **Event Filtering** | Subscribe to specific event types, specific agents, or specific stages — don't get overwhelmed with events you don't care about |
+| **Custom Actions** | Trigger custom actions on events — e.g., post to Slack when deployment succeeds, create a Jira ticket when a quality gate fails |
+
+### 12.3 API-First Design
+
+| Feature | Description |
+|---|---|
+| **Full REST API** | Every feature available in the dashboard is available via the API — start pipelines, check status, approve gates, retrieve artifacts |
+| **GraphQL Endpoint** | Flexible querying of project data, agent status, and analytics — get exactly the data you need without over-fetching |
+| **SDK Libraries** | Official client libraries for Python, TypeScript, and Go — making API integration straightforward |
+| **CLI Tool** | Full-featured CLI for headless operation, CI/CD integration, and automation scripting |
+
+---
+
+## 13. Template & Tech Stack System
+
+### 13.1 UI/UX Template System
 
 | Category | Available Templates |
 |---|---|
@@ -697,7 +1176,7 @@ Inspired by OpenViking's tiered context architecture:
 | Theme Customization | Customize colors, typography, spacing, and border radius after template selection |
 | Component Catalog | Browsable catalog of all available components in the selected template |
 
-### 10.2 Tech Stack Selection System
+### 13.2 Tech Stack Selection System
 
 | Category | Options |
 |---|---|
@@ -729,9 +1208,9 @@ Inspired by OpenViking's tiered context architecture:
 
 ---
 
-## 11. Non-Functional Requirements
+## 14. Non-Functional Requirements
 
-### 11.1 Performance
+### 14.1 Performance
 
 | Metric | Target |
 |---|---|
@@ -745,7 +1224,7 @@ Inspired by OpenViking's tiered context architecture:
 | Template rendering | < 2 seconds for template preview generation |
 | Cross-repo context resolution | < 5 seconds for cross-repository dependency analysis |
 
-### 11.2 Reliability
+### 14.2 Reliability
 
 | Metric | Target |
 |---|---|
@@ -756,7 +1235,7 @@ Inspired by OpenViking's tiered context architecture:
 | Pipeline availability | 99.5% uptime for the orchestration engine |
 | Zero data loss | All generated code, decisions, and artifacts are version-controlled and persisted |
 
-### 11.3 Security
+### 14.3 Security
 
 | Requirement | Implementation |
 |---|---|
@@ -773,7 +1252,7 @@ Inspired by OpenViking's tiered context architecture:
 
 CodeBot itself implements JWT-based authentication with RS256 signing. API keys use HMAC-SHA256 with key rotation. Sessions expire after 1 hour with refresh token rotation. Multi-factor authentication (TOTP) available for admin accounts. RBAC enforces admin/user/viewer roles. All auth events are audit-logged.
 
-### 11.4 Scalability
+### 14.4 Scalability
 
 | Dimension | Approach |
 |---|---|
@@ -785,7 +1264,7 @@ CodeBot itself implements JWT-based authentication with RS256 signing. API keys 
 | Concurrent users | Support multiple concurrent users collaborating on the same project |
 | Template library | Support hundreds of templates with lazy loading and caching |
 
-### 11.5 Extensibility
+### 14.5 Extensibility
 
 | Dimension | Approach |
 |---|---|
@@ -797,7 +1276,7 @@ CodeBot itself implements JWT-based authentication with RS256 signing. API keys 
 | Custom model providers | Plugin interface for adding new LLM providers beyond built-in support |
 | Custom deployment targets | Plugin interface for adding new cloud providers and deployment platforms |
 
-### 11.6 Observability
+### 14.6 Observability
 
 | Signal | Technology | Purpose |
 |---|---|---|
@@ -808,7 +1287,7 @@ CodeBot itself implements JWT-based authentication with RS256 signing. API keys 
 | Alerts | Prometheus Alertmanager | Budget exhaustion, agent failures, pipeline stalls |
 | Dashboards | Grafana | Pipeline health, cost tracking, agent performance |
 
-### 11.7 Data Retention Policy
+### 14.7 Data Retention Policy
 
 | Data Type | Retention | Cleanup |
 |---|---|---|
@@ -822,24 +1301,24 @@ CodeBot itself implements JWT-based authentication with RS256 signing. API keys 
 
 ---
 
-## 12. Competitive Landscape
+## 15. Competitive Landscape
 
 | Product | Type | Differentiator | CodeBot Advantage |
 |---|---|---|---|
-| **Devin (Cognition)** | Autonomous AI developer | Full autonomy, browser + terminal | Open-source, multi-LLM, 29 agents, full SDLC |
+| **Devin (Cognition)** | Autonomous AI developer | Full autonomy, browser + terminal | Open-source, multi-LLM, 30 agents, full SDLC |
 | **GitHub Copilot Workspace** | AI-assisted development | GitHub-native, PR workflow | Broader lifecycle, security pipeline, deployment |
 | **Cursor** | AI-first IDE | Tight editor integration | No IDE required, autonomous end-to-end |
 | **Bolt.new / Lovable** | AI app generators | Fast prototyping, browser-based | Production-grade, testing, security, deployment |
 | **Cline / Roo Code** | VS Code AI agents | IDE extensions, local execution | Platform-agnostic, graph orchestration, multi-agent |
 | **Windsurf (Codeium)** | AI IDE | IDE with AI flows | Autonomous pipeline, not IDE-dependent |
 | **AutoGen / CrewAI** | Multi-agent frameworks | Generic agent orchestration | SDLC-specific, production pipeline, not framework |
-| **Automaker** | Kanban + Claude Agent SDK | Tight Claude integration | Multi-LLM, full pipeline, 29 agent types |
+| **Automaker** | Kanban + Claude Agent SDK | Tight Claude integration | Multi-LLM, full pipeline, 30 agent types |
 
 CodeBot's unique position: Open-source, multi-LLM, graph-centric, full-lifecycle autonomous development platform with 29 specialized agents, integrated security/quality gates, multi-platform support, and extensible agent ecosystem.
 
 ---
 
-## 13. Success Metrics
+## 16. Success Metrics
 
 | Metric | Definition | Target |
 |---|---|---|
@@ -864,11 +1343,11 @@ CodeBot's unique position: Open-source, multi-LLM, graph-centric, full-lifecycle
 
 ---
 
-## 14. Technical Constraints
+## 17. Technical Constraints
 
 1. **Python 3.12+** as the primary runtime for the orchestration layer and agent framework
 2. **Node.js 22+** for the web dashboard, CLI agent integrations, and real-time collaboration server
-3. **Docker** required for sandbox execution, infrastructure agent, and local development environments
+3. **Docker** required for sandbox execution, infrastructure agent, and local development environments (gVisor or Kata Containers recommended for production-grade isolation)
 4. **Git 2.40+** required for worktree management and multi-repo support
 5. **Minimum 16GB RAM** for running multiple agents concurrently (32GB recommended for self-hosted LLMs)
 6. **GPU (optional)** NVIDIA CUDA 12+, Apple Metal, or AMD ROCm for self-hosted LLM inference
@@ -880,10 +1359,14 @@ CodeBot's unique position: Open-source, multi-LLM, graph-centric, full-lifecycle
 12. **WebSocket support** required for real-time collaboration features
 13. **Redis 7+** or compatible (Valkey, DragonflyDB) for task queue, caching, and real-time pub/sub
 14. **PostgreSQL 16+** for persistent storage of project state, agent history, and metrics
+15. **Sandbox Runtime** for isolated code execution, live preview, and per-agent dev environments — requires Docker runtime (gVisor or Kata Containers recommended for production isolation; Kubernetes optional for distributed scheduling)
+16. **Hierarchical Context Store** with filesystem-paradigm organization, L0/L1/L2 tiered loading, directory-based retrieval, and observable retrieval trajectories — backed by SQLite + file tree
+17. **Episodic Memory Store** for cross-session observation capture, semantic compression, and progressive disclosure retrieval — backed by vector DB (ChromaDB) + SQLite
+18. **ChromaDB** embedded vector database for episodic memory, code context semantic search, and document retrieval
 
 ---
 
-## 15. Milestones
+## 18. Milestones
 
 | Milestone | Deliverable | Dependencies | Target |
 |---|---|---|---|
@@ -911,15 +1394,15 @@ CodeBot's unique position: Open-source, multi-LLM, graph-centric, full-lifecycle
 | **M22: Beta Release** | End-to-end pipeline with documentation, tutorials, and community onboarding | M1-M21 | Month 12 |
 | **M23: Production Release** | Hardened, battle-tested release with enterprise features and SLA | M22 | Month 14 |
 
-### 15.1 Delivery Tiers
+### 18.1 Delivery Tiers
 
 | Tier | Features |
 |---|---|
 | **Core (Open Source)** | Foundation engine, 14 core agents, basic pipeline, SQLite, single-LLM, CLI |
-| **Pro (Self-Hosted)** | All 29 agents, multi-LLM routing, self-hosted LLM, dashboard, deployment automation, real-time collaboration |
+| **Pro (Self-Hosted)** | All 30 agents, multi-LLM routing, self-hosted LLM, dashboard, deployment automation, real-time collaboration |
 | **Enterprise (Managed)** | SaaS offering, multi-tenant, SSO/SAML, audit logs, SLA, dedicated support, compliance certifications |
 
-### 15.2 Monetization Model
+### 18.2 Monetization Model
 
 | Revenue Stream | Description |
 |---|---|
@@ -930,7 +1413,7 @@ CodeBot's unique position: Open-source, multi-LLM, graph-centric, full-lifecycle
 | Template Marketplace | Revenue share on premium templates |
 | Support & Training | Professional services, onboarding, custom agent development |
 
-### 15.3 Team & Resource Requirements
+### 18.3 Team & Resource Requirements
 
 | Role | Count | Responsibility |
 |---|---|---|
@@ -945,7 +1428,7 @@ CodeBot's unique position: Open-source, multi-LLM, graph-centric, full-lifecycle
 
 ---
 
-## 16. Risks & Mitigations
+## 19. Risks & Mitigations
 
 | Risk | Probability | Impact | Mitigation |
 |---|---|---|---|
@@ -968,7 +1451,7 @@ CodeBot's unique position: Open-source, multi-LLM, graph-centric, full-lifecycle
 
 ---
 
-## 17. Glossary
+## 20. Glossary
 
 | Term | Definition |
 |---|---|
@@ -980,7 +1463,8 @@ CodeBot's unique position: Open-source, multi-LLM, graph-centric, full-lifecycle
 | **Circuit Breaker** | Pattern that stops calling a failing service after repeated failures |
 | **CLI Agent** | An external coding agent (Claude Code, Codex, Gemini CLI) invoked as a subprocess |
 | **CRDT** | Conflict-free Replicated Data Type — data structure enabling real-time collaboration without coordination |
-| **Context Tier** | Hierarchical context loading strategy (L0/L1/L2) |
+| **Episodic Memory** | CodeBot's built-in cross-session memory system — captures agent observations, decisions, and outcomes with semantic compression and progressive disclosure retrieval |
+| **Context Tier** | Hierarchical context loading strategy (L0/L1/L2) inspired by OpenViking patterns |
 | **Dead Letter Queue** | Storage for failed messages that could not be processed after max retries |
 | **Design Token** | Atomic design decision (color, spacing, typography) that can be imported from design tools |
 | **Fix Loop** | Iterative debug-fix-test cycle until all tests pass |
@@ -989,6 +1473,7 @@ CodeBot's unique position: Open-source, multi-LLM, graph-centric, full-lifecycle
 | **IaC** | Infrastructure as Code — managing infrastructure through declarative configuration files |
 | **Inflight** | An existing project that is mid-development and needs continuation |
 | **MCP** | Model Context Protocol — standard for tool integration with LLMs |
+| **Live Preview** | Real-time browser-based preview of the running application inside its sandbox, with hot-reload and device emulation |
 | **Model Router** | Component that selects optimal LLM for each task based on type, complexity, privacy, cost, and latency |
 | **Multi-repo** | Project architecture spanning multiple Git repositories |
 | **Project Manager Agent** | Agent responsible for progress tracking, status reports, and blocker identification |
@@ -1004,5 +1489,6 @@ CodeBot's unique position: Open-source, multi-LLM, graph-centric, full-lifecycle
 | **Vibe Graphing** | Natural language to workflow graph compilation (MASFactory concept) |
 | **WCAG** | Web Content Accessibility Guidelines — international standard for web accessibility |
 | **Worktree** | Git worktree providing isolated working directory per agent |
+| **Sandbox** | Isolated containerized execution environment for running generated code — supports multi-language runtimes, filesystem access, network policies, and live preview |
 | **i18n** | Internationalization — designing software to support multiple languages and locales |
 | **L10n** | Localization — adapting software for a specific language, region, or culture |

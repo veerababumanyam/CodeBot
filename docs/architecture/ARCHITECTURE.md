@@ -1,6 +1,6 @@
 # CodeBot -- System Architecture Document
 
-**Version:** 2.1
+**Version:** 2.3
 **Date:** 2026-03-18
 **Status:** Draft
 **Author:** Architecture Team
@@ -288,27 +288,32 @@ Vibe Graphing allows natural language workflow definition.
  2. API Gateway authenticates & validates
          |
          v
- 3. Orchestrator Agent parses requirements
+ 3. Orchestrator Agent initializes project (S0: Project Initialization)
          |
          v
- 4. Planner Agent decomposes into task graph
+ 4. Brainstorming Agent explores ideas and possibilities (S1: Discovery & Brainstorming)
          |
          v
- 5. Graph Engine builds execution DAG
+ 5. Researcher Agent investigates technologies and approaches (S2: Research & Analysis)
          |
          v
- 6. Task Scheduler computes topological order
+ 6. Architect Agent designs system structure (S3: Architecture & Design)
          |
          v
- 7. Phase Coordinator begins execution:
-    a. Research phase (parallel research tasks)
-    b. Architecture phase (system design)
-    c. Implementation phase (parallel coding in isolated worktrees)
-    d. Review phase (parallel security, quality, architecture checks)
-    e. Testing phase (test generation and execution)
-    f. Debug/Fix loop (iterative until convergence or escalation)
-    g. Documentation phase
-    h. Delivery phase (build, package, optional deploy)
+ 7. Planner Agent decomposes architecture into task graph (S4: Planning & Configuration)
+         |
+         v
+ 8. Graph Engine builds execution DAG, Task Scheduler computes topological order
+         |
+         v
+ 9. Phase Coordinator begins execution:
+    a. Implementation phase -- S5 (full parallel coding in isolated worktrees)
+    b. Quality Assurance phase -- S6 (full parallel security, quality, architecture checks)
+    c. Testing & Validation phase -- S7 (unit, integration, E2E, UI component,
+       smoke, regression, mutation testing)
+    d. Debug & Stabilization phase -- S8 (iterative fix loop until convergence or escalation)
+    e. Documentation & Knowledge phase -- S9 (API docs, architecture docs, handoff report)
+    f. Deployment & Delivery phase -- S10 (build, package, optional deploy)
          |
          v
  8. Checkpoint Manager saves state after each phase
@@ -469,27 +474,52 @@ Graph Execution Lifecycle:
 | `ReviewGate` | Fan-in with approval | [CodeReview, Security, Tester] -> Interaction(Approve) |
 | `DebugFixLoop` | Loop with exit condition | Debugger -> Developer -> Tester -> [exit if pass] |
 | `ResearchSpike` | Parallel fan-out, merge | [Researcher_1, ..., Researcher_N] -> Merge -> Architect |
-| `FullSDLC` | End-to-end pipeline | Orchestrator -> Planner -> CodingPipeline -> ReviewGate -> DebugFixLoop -> Delivery |
+| `FullSDLC` | End-to-end pipeline | Orchestrator -> Brainstormer -> Researcher -> Architect -> Planner -> CodingPipeline -> ReviewGate -> TestingGate -> DebugFixLoop -> DocWriter -> Delivery |
 
 ### 3.5 Agent Role Definitions
 
-| Agent | Node Type | LLM Preference | Tools | Context Tier |
-|---|---|---|---|---|
-| Orchestrator | AGENT | Claude Opus / o3 | Task decomposition, graph builder | L0 |
-| Planner | AGENT | Claude Opus / o3 | Scheduling, estimation, dependency analysis | L0 + L1 |
-| Researcher | AGENT | Gemini 2.5 Pro | Web search, documentation retrieval, MCP | L0 + L2 |
-| Architect | AGENT | Claude Opus / o3 | Diagram generation, schema design, MCP | L0 + L1 |
-| Designer | AGENT | Claude Sonnet / GPT-4.1 | Wireframing, component hierarchy | L0 + L1 |
-| Frontend Dev | AGENT | Claude Code / Codex CLI | File editing, terminal, browser | L0 + L1 + L2 |
-| Backend Dev | AGENT | Claude Code / Codex CLI | File editing, terminal, database | L0 + L1 + L2 |
-| Middleware Dev | AGENT | Claude Code / Codex CLI | File editing, terminal | L0 + L1 + L2 |
-| Infra Engineer | AGENT | Claude Sonnet / GPT-4.1 | Docker, Terraform, K8s | L0 + L1 |
-| Security Auditor | AGENT | Claude Sonnet | Trivy, Semgrep, Shannon, Gitleaks | L0 + L1 |
-| Code Reviewer | AGENT | Claude Opus / o3 | AST analysis, style checkers | L0 + L1 + L2 |
-| Tester | AGENT | GPT-4.1 / Sonnet | Test runners, coverage tools, Playwright | L0 + L1 |
-| Debugger | AGENT | Claude Opus / o3 | Debugger, log analysis, stack traces | L0 + L1 + L2 |
-| Doc Writer | AGENT | Gemini 2.5 Pro / Sonnet | Doc generators, diagram tools | L0 + L1 |
-| Project Manager | AGENT | Claude Sonnet / GPT-4.1 | Progress tracking, status reports, timeline management, blocker detection, notifications | L0 + L1 |
+Agents are organized by pipeline stage (S0-S10). Dependencies flow top-to-bottom:
+upstream agent outputs feed into downstream agents.
+
+| Stage | Agent | Node Type | LLM Preference | Tools | Context Tier | Upstream | Downstream |
+|---|---|---|---|---|---|---|---|
+| S0 | Orchestrator | AGENT | Claude Opus / o3 | Task decomposition, graph builder | L0 | User PRD | Brainstormer |
+| S1 | Brainstormer | AGENT | Claude Opus / o3 | Idea generation, possibility exploration, concept mapping | L0 + L1 | Orchestrator | Researcher |
+| S2 | Researcher | AGENT | Gemini 2.5 Pro | Web search, documentation retrieval, MCP | L0 + L2 | Brainstormer | Architect |
+| S3 | Architect | AGENT | Claude Opus / o3 | Diagram generation, schema design, MCP | L0 + L1 | Researcher | Planner, Designer |
+| S3 | Designer | AGENT | Claude Sonnet / GPT-4.1 | Wireframing, component hierarchy | L0 + L1 | Architect | Planner |
+| S4 | Planner | AGENT | Claude Opus / o3 | Scheduling, estimation, dependency analysis | L0 + L1 | Architect, Designer | Frontend Dev, Backend Dev, Middleware Dev, Infra Engineer |
+| S5 | Frontend Dev | AGENT | Claude Code / Codex CLI | File editing, terminal, browser | L0 + L1 + L2 | Planner | Security Auditor, Code Reviewer |
+| S5 | Backend Dev | AGENT | Claude Code / Codex CLI | File editing, terminal, database | L0 + L1 + L2 | Planner | Security Auditor, Code Reviewer |
+| S5 | Middleware Dev | AGENT | Claude Code / Codex CLI | File editing, terminal | L0 + L1 + L2 | Planner | Security Auditor, Code Reviewer |
+| S5 | Infra Engineer | AGENT | Claude Sonnet / GPT-4.1 | Docker, Terraform, K8s | L0 + L1 | Planner | Security Auditor, Code Reviewer |
+| S6 | Security Auditor | AGENT | Claude Sonnet | Trivy, Semgrep, Shannon, Gitleaks | L0 + L1 | All S5 Dev agents | Tester |
+| S6 | Code Reviewer | AGENT | Claude Opus / o3 | AST analysis, style checkers | L0 + L1 + L2 | All S5 Dev agents | Tester |
+| S7 | Tester | AGENT | GPT-4.1 / Sonnet | Test runners, coverage tools, Playwright, Storybook | L0 + L1 | Security Auditor, Code Reviewer | Debugger |
+| S8 | Debugger | AGENT | Claude Opus / o3 | Debugger, log analysis, stack traces | L0 + L1 + L2 | Tester | Doc Writer (on fix loop exit) |
+| S9 | Doc Writer | AGENT | Gemini 2.5 Pro / Sonnet | Doc generators, diagram tools | L0 + L1 | Debugger | Delivery |
+| S10 | Delivery | AGENT | Claude Sonnet / GPT-4.1 | Build tools, package managers, deploy scripts | L0 + L1 | Doc Writer | User |
+| S0-S10 | Project Manager | AGENT | Claude Sonnet / GPT-4.1 | Progress tracking, status reports, timeline management, blocker detection, notifications | L0 + L1 | All agents (observes) | Dashboard, User |
+
+**Pipeline dependency chain (critical path):**
+```
+S0: Orchestrator
+  -> S1: Brainstormer
+    -> S2: Researcher
+      -> S3: Architect -> Designer
+        -> S4: Planner
+          -> S5: [Frontend Dev | Backend Dev | Middleware Dev | Infra Engineer] (parallel)
+            -> S6: [Security Auditor | Code Reviewer] (parallel)
+              -> S7: Tester (unit, integration, E2E, UI component, smoke, regression, mutation)
+                -> S8: Debugger (loop until stable)
+                  -> S9: Doc Writer
+                    -> S10: Delivery
+```
+
+**Key ordering rationale:**
+- Brainstorming (S1) BEFORE Research (S2): brainstorm outputs define what needs to be researched
+- Research (S2) BEFORE Architecture (S3): research findings inform architectural decisions
+- Architecture (S3) BEFORE Planning (S4): you must know the system design before decomposing into tasks
 
 ---
 
@@ -730,9 +760,9 @@ Subprocess-Based CLI Agent Flow:
 
 ## 6. Context Management System
 
-Inspired by the OpenViking three-tier context architecture, the Context Management
-System ensures agents receive precisely the information they need, minimizing token
-waste while maximizing relevance.
+CodeBot's built-in hierarchical context system (inspired by OpenViking patterns) ensures
+agents receive precisely the information they need, minimizing token waste while
+maximizing relevance.
 
 ### 6.1 Three-Tier Architecture
 
@@ -783,7 +813,8 @@ waste while maximizing relevance.
 ```
 +---------------------------+     +---------------------------+
 |   Filesystem Paradigm     |     |   Vector Store            |
-|   (OpenViking-inspired)   |     |   (Chroma / Weaviate)     |
+|   (Built-in, inspired by  |
+|    OpenViking patterns)   |     |   (Chroma / Weaviate)     |
 |                           |     |                           |
 | project/                  |     | - Code embeddings         |
 |   .codebot/               |     |   (Tree-sitter + embed)   |
@@ -853,8 +884,8 @@ Context Assembly Pipeline:
 
 ### 6.4 Directory Recursive Retrieval
 
-Following OpenViking's filesystem paradigm, context retrieval supports recursive
-directory access patterns.
+CodeBot's built-in hierarchical context system (inspired by OpenViking patterns)
+supports recursive directory access patterns for context retrieval.
 
 ```
 Retrieval Modes:
@@ -882,6 +913,24 @@ to access tools and context sources at runtime.
 | Browser MCP | Web research | Researcher agent |
 | Terminal MCP | Command execution | Developer agents |
 | Documentation MCP | External API docs retrieval | Researcher, Developer agents |
+
+### 6.6 Built-in Episodic Memory
+
+CodeBot's built-in episodic memory (inspired by claude-mem patterns) provides
+persistent learning across sessions and projects. Unlike external memory
+integrations, this is a first-class built-in feature of the platform.
+
+| Capability | Description |
+|---|---|
+| **Lifecycle hooks** | Memory capture at agent start, checkpoint, and completion events |
+| **Semantic compression** | Automatic summarization of verbose agent interactions into compact memory entries |
+| **Progressive disclosure** | Memories surfaced at increasing detail levels based on relevance scores |
+| **Cross-session learning** | Agents retain learnings (error patterns, successful strategies) across project runs |
+| **Cross-project learning** | Generalizable patterns (e.g., common framework pitfalls) shared across projects |
+| **Observable retrieval** | Memory retrieval trajectories visible in the web dashboard for debugging and tuning |
+
+Episodic memory entries are stored in the relational database (PostgreSQL) with
+vector embeddings indexed in the vector store for semantic retrieval.
 
 ---
 
@@ -1214,7 +1263,9 @@ Worktree Lifecycle:
 
 ### 9.3 Sandbox Execution
 
-Generated code is executed in sandboxed Docker containers for safety.
+CodeBot's built-in sandbox execution system provides containerized per-agent
+execution environments using Docker. Each coding agent gets its own sandbox
+pre-configured with the project's tech stack.
 
 | Sandbox Property | Configuration |
 |---|---|
@@ -1226,6 +1277,20 @@ Generated code is executed in sandboxed Docker containers for safety.
 | Filesystem | Ephemeral (tmpfs), project code mounted read-write |
 | Security profile | seccomp default + AppArmor confinement |
 | Capabilities | All dropped except minimal set |
+| Isolation runtime | gVisor (runsc) or Kata Containers for enhanced isolation |
+
+#### 9.3.1 Live Preview
+
+The sandbox execution system supports live preview capabilities for generated
+applications:
+
+- **Web apps**: Hot-reload dev servers (e.g., Vite, Next.js dev) are started
+  inside the sandbox with port forwarding to the host, enabling real-time
+  preview of generated UIs in the dashboard.
+- **Desktop apps**: VNC-based preview for desktop applications, streamed to
+  the dashboard via noVNC.
+- Preview URLs are surfaced in the web dashboard for human review during
+  interactive checkpoints.
 
 ### 9.4 Resource Governance
 
@@ -1526,7 +1591,11 @@ Internal Communication:
 | **OpenAI** | GPT-4.1, o3, o4-mini | OpenAI Python SDK |
 | **Google** | Gemini 2.5 Pro, Gemini 2.5 Flash | Google GenAI Python SDK |
 
-### 12.4 CLI Agents
+### 12.4 CLI Agents (Mandatory Integrations)
+
+CLI agents are mandatory external integrations that CodeBot orchestrates for
+code generation tasks. These are third-party tools that must be installed and
+configured separately.
 
 | Agent | Integration | Sandbox |
 |---|---|---|
@@ -1534,7 +1603,20 @@ Internal Communication:
 | **OpenAI Codex CLI** | Subprocess + output parsing | Git worktree + `--full-auto` mode |
 | **Gemini CLI** | Subprocess + output parsing | Git worktree isolation |
 
-### 12.5 Security and Quality Tools
+### 12.5 Built-in Platform Features
+
+The following capabilities are built-in features of the CodeBot platform, not
+external integrations or dependencies. Some were inspired by open-source research
+projects as design references.
+
+| Feature | Description | Inspiration |
+|---|---|---|
+| **Hierarchical context management** | Three-tier (L0/L1/L2) context loading with filesystem paradigm | OpenViking patterns (research inspiration) |
+| **Episodic memory** | Cross-session and cross-project agent learning with lifecycle hooks, semantic compression, and progressive disclosure | claude-mem patterns (research inspiration) |
+| **Sandbox execution** | Containerized per-agent execution environments with gVisor/Kata isolation | Built-in |
+| **Live preview** | Hot-reload for web apps, VNC for desktop apps, streamed to dashboard | Built-in |
+
+### 12.6 Security and Quality Tools
 
 | Category | Tool | Integration |
 |---|---|---|
@@ -1552,7 +1634,7 @@ Internal Communication:
 | **Code Formatting** | Prettier, Black, Ruff | CLI subprocess |
 | **Linting** | ESLint, Ruff, Clippy | CLI subprocess |
 
-### 12.6 Context and RAG
+### 12.7 Context and RAG
 
 | Component | Technology | Purpose |
 |---|---|---|
@@ -1561,7 +1643,7 @@ Internal Communication:
 | **Embeddings** | OpenAI `text-embedding-3-large` / Cohere | Code and document embedding generation |
 | **MCP Protocol** | MCP SDK | Standardized tool interface for agents |
 
-### 12.7 Infrastructure
+### 12.8 Infrastructure
 
 | Component | Technology | Purpose |
 |---|---|---|
@@ -1573,13 +1655,17 @@ Internal Communication:
 | **Monitoring** | Prometheus + Grafana | Metrics collection and dashboards |
 | **Logging** | Structured JSON + Loki | Centralized log aggregation |
 
-### 12.8 Testing
+### 12.9 Testing
 
 | Category | Technology | Purpose |
 |---|---|---|
 | **Unit Testing** | pytest (Python), Vitest (TS) | Component-level testing |
 | **Integration Testing** | pytest + testcontainers | Service integration testing |
 | **E2E Testing** | Playwright | Browser-based end-to-end testing |
+| **UI Component Testing** | Storybook + Chromatic | Visual regression and isolated UI component testing |
+| **Smoke Testing** | Custom test suites (Playwright + pytest) | Quick post-deploy sanity checks for critical paths |
+| **Regression Testing** | pytest + Playwright (tagged suites) | Verifying previously fixed bugs remain fixed |
+| **Mutation Testing** | mutmut (Python), Stryker (TS/JS) | Evaluating test suite effectiveness by injecting faults |
 | **Load Testing** | k6 / Locust | Performance benchmarking |
 | **Coverage** | coverage.py, c8 | Code coverage measurement |
 
@@ -1864,6 +1950,71 @@ The system is designed for extensibility at multiple points.
 | Custom workflows | ComposedGraph definitions | Domain-specific SDLC pipelines |
 | Custom tools | MCP server registration | Project-specific tooling |
 | Webhook integrations | Event bus subscription | Slack notifications, Jira updates |
+
+### 13.8 Agent Visibility
+
+All agent activity is observable in real-time through the dashboard and CLI. The
+Agent Visibility system provides transparency into what each agent is doing,
+why it is doing it, and what it plans to do next.
+
+| Visibility Feature | Mechanism | Surface |
+|---|---|---|
+| **Live status** | Agent state machine events streamed via Event Bus | Dashboard timeline, CLI status |
+| **Reasoning trace** | Chain-of-thought logging (opt-in per agent) | Dashboard detail panel |
+| **Tool invocations** | MCP tool call/result events | Dashboard activity feed |
+| **Token usage** | Per-turn token counters emitted to metrics | Cost center dashboard |
+| **Progress indicators** | Stage completion percentage (S0-S10 progress) | Dashboard overview, CLI progress bar |
+| **Decision audit** | Key decisions logged with rationale | Audit trail, dashboard |
+| **Error context** | Failure context with stack traces and agent state | Dashboard alerts, CLI logs |
+
+```
+Agent Visibility Architecture:
+
+  Agent Instance
+       |
+       +-- Emits: status_change, tool_call, llm_turn, decision, error
+       |
+       v
+  Event Bus (Redis PubSub)
+       |
+       +----> WebSocket (Socket.IO) ----> Dashboard (real-time)
+       +----> CLI Subscriber -----------> Terminal (polling/streaming)
+       +----> Log Aggregator -----------> Audit Store (persistent)
+       +----> Metrics Collector --------> Prometheus -> Grafana
+```
+
+### 13.9 Interactive User Input
+
+The system supports interactive user input at configurable points in the pipeline.
+Users can provide guidance, make decisions, and steer agent behavior without
+halting the entire pipeline.
+
+| Input Type | Trigger | Timeout Behavior | Use Case |
+|---|---|---|---|
+| **Approval Gate** | Stage transition (e.g., S3->S4, S6->S7) | Auto-approve after configurable timeout | Architecture sign-off, QA gate approval |
+| **Feedback Request** | Agent requests clarification | Agent proceeds with best guess after timeout | Ambiguous requirements, design choices |
+| **Override** | User initiates via dashboard/CLI | N/A (user-initiated) | Change agent parameters, skip stages, force retry |
+| **Escalation** | Agent exhausts retries or detects blocking issue | Pipeline pauses until resolved | Unresolvable merge conflict, missing credentials |
+| **Preference Selection** | Agent presents multiple options | First option selected after timeout | Technology choice, design alternative, naming conventions |
+
+```
+Interactive Input Flow:
+
+  Agent encounters decision point
+       |
+       v
+  Interaction Node created (type: APPROVAL | INPUT | FEEDBACK | ESCALATION)
+       |
+       v
+  Notification sent to user (WebSocket + email/Slack optional)
+       |
+       +-- User responds within timeout --> Input captured, agent resumes
+       |
+       +-- Timeout expires --> Default action taken (configurable per gate)
+       |
+       v
+  Decision logged to audit trail with source (user | timeout_default)
+```
 
 ---
 
@@ -2475,8 +2626,9 @@ to a controlled merge phase. Inspired by Superset's approach.
 **Decision:** Implement L0/L1/L2 tiered context with filesystem paradigm.
 **Rationale:** Minimizes token usage while ensuring agents have sufficient context.
 L0 is always available (cheap), L1 is loaded on-demand (moderate cost), L2 is
-deferred to agent-initiated retrieval (expensive but comprehensive). Inspired by
-OpenViking's architecture.
+deferred to agent-initiated retrieval (expensive but comprehensive). CodeBot's
+built-in hierarchical context system was inspired by OpenViking patterns as
+research inspiration, not as a direct integration or dependency.
 
 ### ADR-005: Redis as Message Bus and State Cache
 
@@ -2496,6 +2648,8 @@ our message volume (hundreds/minute, not millions) is well within capacity.
 |---|---|
 | **Agent** | An autonomous LLM-powered worker with a specific role, tools, and context |
 | **Agent Graph** | Directed computation graph where nodes are agents and edges are dependencies |
+| **Agent Visibility** | Real-time observability into agent status, reasoning, tool use, and decisions |
+| **Brainstormer** | Agent that explores ideas and possibilities during the Discovery phase (S1) |
 | **CLI Agent** | Terminal-based coding agent (Claude Code, Codex CLI, Gemini CLI) |
 | **ComposedGraph** | Reusable pre-built workflow pattern that can be parameterized and embedded |
 | **Context Adapter** | Protocol layer component that assembles context payloads for agents |
@@ -2511,6 +2665,7 @@ our message volume (hundreds/minute, not millions) is well within capacity.
 | **Model Router** | Component that selects the optimal LLM for each task |
 | **Node** | Executable unit in the agent graph (agent, subgraph, loop, switch, interaction) |
 | **NodeTemplate** | Clone-able agent blueprint for instantiating agents with shared configuration |
+| **Pipeline Stage** | A numbered execution phase (S0-S10) grouping related agents; stages execute sequentially, agents within a stage may run in parallel |
 | **Project Manager** | Agent that tracks project progress, generates status reports, manages timelines, identifies blockers, and sends notifications |
 | **Quality Gate** | Automated pass/fail checkpoint based on security, quality, and coverage metrics |
 | **SAST** | Static Application Security Testing (analyzing source code without execution) |
@@ -2521,5 +2676,5 @@ our message volume (hundreds/minute, not millions) is well within capacity.
 
 ---
 
-*Document generated for CodeBot v2.1 architecture planning. Subject to revision
+*Document generated for CodeBot v2.3 architecture planning. Subject to revision
 as the system evolves through milestones M1-M8.*
