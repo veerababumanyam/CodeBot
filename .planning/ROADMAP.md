@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Graph Engine** - Directed graph runtime with all node types, parallel execution, validation, and checkpointing (completed 2026-03-18)
 - [ ] **Phase 3: Agent Framework** - BaseAgent with PRA cycle, AgentNode, state machine, YAML config, isolation, and metrics
 - [x] **Phase 3.5: Project Settings** - Typed, versioned project preferences system (8 categories, SharedState integration, L0Context, audit trail) (INSERTED, completed 2026-03-18)
-- [ ] **Phase 4: Multi-LLM Abstraction** - Provider-agnostic LLM interface with routing, fallbacks, cost tracking, and streaming
+- [x] **Phase 4: Multi-LLM Abstraction** - Provider-agnostic LLM interface with routing, fallbacks, cost tracking, and streaming (completed 2026-03-18)
 - [x] **Phase 5: Context Management** - 3-tier context system (L0/L1/L2), vector store, Tree-sitter indexing, and compression (completed 2026-03-18)
 - [ ] **Phase 6: Pipeline Orchestration** - Temporal durable workflows, pipeline lifecycle, gates, presets, and checkpoint/resume
 - [ ] **Phase 7: Vertical Slice** - 5 agents end-to-end proving the full architecture (Orchestrator, Backend Dev, Code Reviewer, Tester, Debugger)
@@ -241,7 +241,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.5 -> 4 -> 5 -> 6 -> 7 -> 8 -> 
 | 2. Graph Engine | 3/3 | Complete   | 2026-03-18 |
 | 3. Agent Framework | 2/2 | Complete | 2026-03-18 |
 | 3.5. Project Settings | 1/1 | Complete | 2026-03-18 |
-| 4. Multi-LLM Abstraction | 1/2 | In Progress | - |
+| 4. Multi-LLM Abstraction | 1/2 | Complete    | 2026-03-18 |
 | 5. Context Management | 3/3 | Complete   | 2026-03-18 |
 | 6. Pipeline Orchestration | 0/3 | Not started | - |
 | 7. Vertical Slice | 0/4 | Not started | - |
