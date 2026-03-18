@@ -12,7 +12,7 @@ CodeBot is built bottom-up following its architecture dependency tiers: foundati
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation and Scaffolding** - Monorepo, Docker dev stack, database schemas, shared types, event bus
+- [x] **Phase 1: Foundation and Scaffolding** - Monorepo, Docker dev stack, database schemas, shared types, event bus (completed 2026-03-18)
 - [ ] **Phase 2: Graph Engine and Core Infrastructure** - DAG execution engine, multi-LLM routing, context management, checkpointing
 - [ ] **Phase 3: Agent Framework and Vertical Slice** - BaseAgent, CLI agent bridge, worktree isolation, sandbox, 5 critical-path agents, first end-to-end run
 - [ ] **Phase 4: Full Pipeline and All Agents** - 11-stage SDLC pipeline, all ~30 agents, YAML presets, SAST security, documentation generation
@@ -162,7 +162,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation and Scaffolding | 2/3 | In Progress|  |
+| 1. Foundation and Scaffolding | 3/3 | Complete   | 2026-03-18 |
 | 2. Graph Engine and Core Infrastructure | 0/3 | Not started | - |
 | 3. Agent Framework and Vertical Slice | 0/3 | Not started | - |
 | 4. Full Pipeline and All Agents | 0/3 | Not started | - |

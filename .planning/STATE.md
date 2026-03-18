@@ -4,12 +4,12 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 01-foundation-and-scaffolding
 status: In Progress
-last_updated: "2026-03-18T07:17:11Z"
+last_updated: "2026-03-18T07:29:30Z"
 progress:
   total_phases: 8
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Session State
@@ -22,9 +22,9 @@ See: .planning/PROJECT.md
 
 **Milestone:** v1.0 milestone
 **Current phase:** 01-foundation-and-scaffolding
-**Current plan:** 01-03 (Plan 01-02 completed)
+**Current plan:** Phase 01 complete (Plan 01-03 completed)
 **Status:** In Progress
-**Stopped at:** Completed 01-foundation-and-scaffolding/01-02-PLAN.md
+**Stopped at:** Completed 01-foundation-and-scaffolding/01-03-PLAN.md
 
 ## Key Decisions
 
@@ -39,6 +39,10 @@ See: .planning/PROJECT.md
 - [01-02]: PostgreSQL mapped to host port 5433 (not 5432) to avoid local port conflict; config.py aligned to 5433
 - [01-02]: Function-scoped async engine in tests required by pytest-asyncio 1.3.0 — avoids cross-loop connection errors
 - [01-02]: LanceDB is embedded (no Docker service) — data dir at data/lancedb/, .lance/.idx files gitignored
+- [01-03]: StrEnum pattern (str, enum.Enum) for all domain enums — values serialize to strings in JSON without custom serializers
+- [01-03]: Cross-language enum parity verified by test parsing TypeScript enums.ts at test runtime — drift fails CI
+- [01-03]: EventEnvelope.payload is bytes — NATS consumers route on event_type before deserializing inner model
+- [01-03]: uv sync --all-packages --extra dev required for workspace-level pytest installation
 
 ## Session Log
 
@@ -46,3 +50,4 @@ See: .planning/PROJECT.md
 - 2026-03-18: Autoresearch integration analysis completed; 6 planning files updated with ExperimentLoop pattern
 - 2026-03-18: Plan 01-01 complete — Turborepo monorepo scaffold with 6 workspaces; uv sync + pnpm install + turbo build all passing
 - 2026-03-18: Plan 01-02 complete — Docker stack healthy, 16 ORM models, Alembic migration applied, 8 DB tests passing
+- 2026-03-18: Plan 01-03 complete — 17 shared enums (Python+TypeScript), Pydantic schemas, NATS JetStream EventBus, 25 tests passing
