@@ -21,6 +21,12 @@ from agent_sdk.models.enums import (
     TaskStatus,
     TestStatus,
 )
+from agent_sdk.models.agent_config import (
+    AgentConfig,
+    ContextTiersConfig,
+    RetryPolicyConfig,
+    load_agent_config,
+)
 from agent_sdk.models.events import AgentEvent, EventEnvelope, PipelineEvent, TaskEvent
 from agent_sdk.models.pipeline import PipelineCreateRequest, PipelineStatusResponse
 from agent_sdk.models.project import PipelinePhaseSchema, PipelineSchema, ProjectSchema
@@ -46,6 +52,11 @@ __all__ = [
     "Severity",
     "TaskStatus",
     "TestStatus",
+    # Config
+    "AgentConfig",
+    "ContextTiersConfig",
+    "RetryPolicyConfig",
+    "load_agent_config",
     # Schemas
     "AgentExecutionSchema",
     "AgentSchema",
