@@ -43,17 +43,17 @@ Plans:
 ### Phase 2: Graph Engine and Core Infrastructure
 **Goal**: A working DAG execution engine that can compile graphs, execute nodes in topological layers with parallel concurrency, route LLM calls across 5 providers with fallback chains, and assemble 3-tier context for agent invocations
 **Depends on**: Phase 1
-**Requirements**: REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-012, REQ-013, REQ-014
+**Requirements**: REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-012, REQ-013, REQ-014, REQ-053
 **Success Criteria** (what must be TRUE):
   1. A test graph with 3 independent nodes executes them concurrently via asyncio.TaskGroup and completes in ~1x single-node time (not 3x)
-  2. A LOOP node re-executes its subgraph until an exit condition is met (validates S8 debug cycle support)
+  2. A LOOP node re-executes its subgraph until an exit condition is met, and an EXPERIMENT_LOOP node tracks baseline metrics, creates experiment branches, and implements keep/discard decisions (validates S8 debug cycle with autoresearch-inspired experiment semantics)
   3. LLM Router sends a request to a configured provider and falls back to a secondary provider when the primary returns an error
   4. Context assembly produces an L0+L1 payload under 12K tokens for a sample project, and L2 semantic search returns relevant code chunks from the vector store
   5. After simulating a failure mid-graph, resuming from checkpoint replays only the incomplete nodes (not the entire graph)
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: Graph engine core (DirectedGraph, Node types, Edge types, topological scheduler, ExecutionEngine with asyncio.TaskGroup)
+- [ ] 02-01: Graph engine core (DirectedGraph, Node types incl. ExperimentLoopNode, Edge types, topological scheduler, ExecutionEngine with asyncio.TaskGroup, ExperimentLog data model)
 - [ ] 02-02: Multi-LLM abstraction (LiteLLM gateway, provider adapters, model router, fallback chains, cost tracking)
 - [ ] 02-03: Context management and checkpointing (L0/L1/L2 tiers, Tree-sitter indexer, vector store integration, checkpoint manager)
 
@@ -89,7 +89,7 @@ Plans:
 Plans:
 - [ ] 04-01: Pipeline manager and SDLC stages (phase coordination, gate evaluation, YAML presets, Temporal integration, S0-S4 agents)
 - [ ] 04-02: Implementation and QA agents (S5 frontend/backend/middleware/infra agents, S6 code reviewer/security auditor, parallel worktree execution)
-- [ ] 04-03: Testing, debug, documentation agents and security gates (S7 tester, S8 debugger experiment loop, S9 doc writer, Semgrep/Gitleaks integration, HITL gates)
+- [ ] 04-03: Testing, debug, documentation agents and security gates (S7 tester, S8 debugger ExperimentLoop with keep/discard experiment branches, S9 doc writer, Semgrep/Gitleaks integration, HITL gates)
 
 ### Phase 5: API Gateway and CLI
 **Goal**: Users can operate CodeBot through a REST API and TypeScript CLI -- starting pipelines, monitoring progress in real-time via WebSocket, approving human-in-the-loop gates, and viewing cost/status information
@@ -132,11 +132,12 @@ Plans:
   3. Giving CodeBot a mobile-inclusive PRD produces a React Native application alongside the web app, sharing components where possible
   4. `codebot deploy --target aws` generates IaC (Pulumi/OpenTofu), provisions infrastructure, and deploys the generated application to the target cloud provider
   5. Running CodeBot in brownfield mode against an existing codebase analyzes the code, builds context, and generates improvements without breaking existing functionality
+  6. Improve mode accepts a target metric (performance/security/coverage), time budget, and constraints, then runs ExperimentLoop producing atomic reviewable commits with measured deltas
 **Plans**: 3 plans
 
 Plans:
 - [ ] 07-01: Full security pipeline and expanded testing (DAST/SCA/license scanning, Playwright E2E, k6 performance, axe-core accessibility, Pact contract tests)
-- [ ] 07-02: React Native, deployment, and project modes (mobile generation agents, S10 deployment to 8+ providers, IaC generation, brownfield/inflight modes, template system, multi-repo support)
+- [ ] 07-02: React Native, deployment, and project modes (mobile generation agents, S10 deployment to 8+ providers, IaC generation, brownfield/inflight/improve modes with ExperimentLoop, template system, multi-repo support)
 
 ### Phase 8: Ecosystem and Polish
 **Goal**: CodeBot is extensible, learning, and integrated into developer workflows -- with a plugin system for community extensions, episodic memory for cross-project improvement, IDE integrations, multi-modal input support, and agent self-improvement capabilities
@@ -161,7 +162,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation and Scaffolding | 0/3 | Not started | - |
+| 1. Foundation and Scaffolding | 1/3 | In Progress|  |
 | 2. Graph Engine and Core Infrastructure | 0/3 | Not started | - |
 | 3. Agent Framework and Vertical Slice | 0/3 | Not started | - |
 | 4. Full Pipeline and All Agents | 0/3 | Not started | - |

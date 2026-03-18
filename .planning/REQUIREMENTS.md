@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Total v1 requirements:** 38
+**Total v1 requirements:** 39
 **Categories:** 9 (INFRA, ENGINE, AGENT, LLM, CONTEXT, PIPELINE, SECURITY, SURFACE, PLATFORM)
 **Priority levels:** P0 (must have for launch), P1 (should have, add when possible), P2 (nice to have, future)
 
@@ -23,7 +23,7 @@
 | ID | Requirement | Priority | Phase |
 |----|-------------|----------|-------|
 | REQ-006 | Graph-centric multi-agent orchestration engine (MASFactory-inspired DAG execution with topological sort, parallel layer execution) | P0 | 2 |
-| REQ-007 | Node types: AGENT, SUBGRAPH, LOOP, SWITCH, HUMAN_IN_LOOP, PARALLEL, MERGE, CHECKPOINT, TRANSFORM | P0 | 2 |
+| REQ-007 | Node types: AGENT, SUBGRAPH, LOOP, EXPERIMENT_LOOP, SWITCH, HUMAN_IN_LOOP, PARALLEL, MERGE, CHECKPOINT, TRANSFORM | P0 | 2 |
 | REQ-008 | Edge types: STATE_FLOW, MESSAGE_FLOW, CONTROL_FLOW with typed message passing | P0 | 2 |
 | REQ-009 | Checkpoint-based pipeline resume (state snapshots after each execution layer, restart from failure point) | P0 | 2 |
 
@@ -67,11 +67,11 @@
 | REQ-028 | Implementation phase (S5, parallel worktrees): frontend, backend, middleware, mobile, infrastructure, integrations | P0 | 4 |
 | REQ-029 | Quality assurance phase (S6, parallel): code review, security audit, accessibility, i18n, performance analysis | P0 | 4 |
 | REQ-030 | Testing phase (S7): unit, integration, E2E, and additional test types (performance, security, accessibility, contract, mutation) | P0 | 4 |
-| REQ-031 | Debug and fix cycle (S8): root cause analysis, automated fix generation, regression testing, experiment loop | P0 | 4 |
+| REQ-031 | Debug and fix cycle (S8): root cause analysis, automated fix generation, regression testing, ExperimentLoop with keep/discard semantics (autoresearch-inspired: hypothesis → experiment branch → measure → keep if improved, discard otherwise; experiment log tracking) | P0 | 4 |
 | REQ-032 | Documentation phase (S9): API docs, README, ADRs, deployment guides, runbooks | P0 | 4 |
 | REQ-033 | Human-in-the-loop approval gates at configurable checkpoints | P0 | 4 |
 | REQ-034 | Communication protocol: state flow, message flow, control flow, event flow, broadcast flow | P0 | 4 |
-| REQ-035 | 4 project modes: greenfield, inflight, brownfield, improve (autonomous optimization) | P1 | 7 |
+| REQ-035 | 4 project modes: greenfield, inflight, brownfield, improve (autonomous ExperimentLoop-based optimization with time/token budgets, inspired by autoresearch) | P1 | 7 |
 | REQ-036 | Self-healing: automatic dependency resolution, config auto-fix, test flakiness detection, LLM fallback chains, pipeline resume from checkpoint | P0 | 4 |
 
 ### SECURITY: Security Pipeline
@@ -104,12 +104,13 @@
 | REQ-050 | Template system: Material Design, Ant Design, Tailwind UI, Shadcn/ui, Chakra UI, Bootstrap, custom | P1 | 7 |
 | REQ-051 | Multi-modal input: text, images, diagrams, voice (transcribed), video walkthroughs, reference URLs | P1 | 8 |
 | REQ-052 | Plugin system (pluggy-based): agent plugins, LLM provider plugins, template plugins | P1 | 8 |
+| REQ-053 | ExperimentLog data model: tracks hypothesis, git branch, metrics before/after, delta, keep/discard decision, duration, token cost for every experiment in debug (S8), QA optimization (S6), and Improve mode | P0 | 2 |
 
 ## Priority Summary
 
 | Priority | Count | Description |
 |----------|-------|-------------|
-| P0 | 34 | Must have for v1 launch |
+| P0 | 35 | Must have for v1 launch |
 | P1 | 18 | Should have, add when possible |
 | P2 | 0 | Future (tracked in PROJECT.md Out of Scope) |
 
@@ -117,7 +118,7 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REQ-001 | Phase 1 | Pending |
+| REQ-001 | Phase 1 | Complete |
 | REQ-002 | Phase 1 | Pending |
 | REQ-003 | Phase 1 | Pending |
 | REQ-004 | Phase 1 | Pending |
@@ -170,7 +171,9 @@
 | REQ-051 | Phase 8 | Pending |
 | REQ-052 | Phase 8 | Pending |
 
-**Coverage:** 52/52 requirements mapped. No orphans.
+| REQ-053 | Phase 2 | Pending |
+
+**Coverage:** 53/53 requirements mapped. No orphans.
 
 ---
 *Generated: 2026-03-18*
