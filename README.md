@@ -394,6 +394,7 @@ Multi-Cloud Support
 CodeBot's 30 agents are organized into **10 functional categories**:
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'pie1': '#6366F1', 'pie2': '#F43F5E', 'pie3': '#10B981', 'pie4': '#F59E0B', 'pie5': '#8B5CF6', 'pie6': '#06B6D4', 'pie7': '#EC4899', 'pie8': '#3B82F6', 'pie9': '#EF4444', 'pie10': '#14B8A6', 'pie11': '#A855F7', 'pieOuterStrokeWidth': '0', 'pieTitleTextSize': '18px', 'pieSectionTextSize': '14px', 'pieLegendTextSize': '14px', 'pieTextColor': '#ffffff'}}}%%
 pie title Agent Distribution by Category
     "Design" : 5
     "Implementation" : 5
@@ -527,6 +528,15 @@ graph LR
     B -->|Boilerplate| F[Self-Hosted 13B]
     B -->|Sensitive Code| G[Local Ollama]
     B -->|Budget Tasks| H[Haiku / Flash]
+
+    style A fill:#6366F1,stroke:#4F46E5,color:#fff
+    style B fill:#F59E0B,stroke:#D97706,color:#fff
+    style C fill:#8B5CF6,stroke:#7C3AED,color:#fff
+    style D fill:#10B981,stroke:#059669,color:#fff
+    style E fill:#3B82F6,stroke:#2563EB,color:#fff
+    style F fill:#F43F5E,stroke:#E11D48,color:#fff
+    style G fill:#14B8A6,stroke:#0D9488,color:#fff
+    style H fill:#EC4899,stroke:#DB2777,color:#fff
 ```
 
 Routing decisions are based on **task type**, **complexity**, **privacy requirements**, **cost**, and **latency**. Fallback chains ensure zero downtime if a provider is unavailable.
@@ -601,6 +611,12 @@ graph TB
     L2 --> L3
     L3 --> L4
     L4 --> L5
+
+    style L1 fill:#6366F1,stroke:#4F46E5,color:#fff
+    style L2 fill:#F43F5E,stroke:#E11D48,color:#fff
+    style L3 fill:#F59E0B,stroke:#D97706,color:#fff
+    style L4 fill:#10B981,stroke:#059669,color:#fff
+    style L5 fill:#3B82F6,stroke:#2563EB,color:#fff
 ```
 
 ---
