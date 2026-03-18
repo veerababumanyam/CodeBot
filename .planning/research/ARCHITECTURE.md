@@ -1,542 +1,613 @@
-# Architecture Research
+# Architecture Patterns
 
-**Domain:** Autonomous multi-agent software development platform (SDLC automation)
+**Domain:** Graph-centric multi-agent autonomous SDLC platform
 **Researched:** 2026-03-18
-**Confidence:** HIGH — Extensively documented in existing project docs, cross-referenced with reference implementations (MASFactory, Automaker, Codebuff, Superset, OpenViking, OpenSandbox)
+**Overall Confidence:** HIGH
 
 ---
 
-## Standard Architecture
+## Recommended Architecture
 
-### System Overview
+CodeBot's architecture aligns with the **hierarchical orchestrator-worker** pattern — the most validated multi-agent architecture pattern in production systems as of 2026 (confirmed by Google's ADK design patterns, LangChain's architecture recommendations, and Confluent's event-driven multi-agent guidance). This is layered on a **dual-engine orchestration** model: LangGraph for graph-based agent state machines and Temporal for durable workflow coordination.
 
-The canonical architecture for autonomous multi-agent SDLC platforms follows a five-layer model. The execution substrate is a directed computation graph (DAG), with agents as nodes and data/control dependencies as edges. All major components ultimately connect to the graph engine, which governs scheduling and state flow.
+### Why This Architecture
+
+The core architectural decision — graph-centric multi-agent with hierarchical orchestration — is well-validated:
+
+1. **Graph-based agent orchestration** is the dominant 2025-2026 pattern. LangGraph's StateGraph + Send API provides dynamic branching, conditional routing, and parallel execution natively. The alternative (linear chains) cannot express the fan-out/fan-in patterns CodeBot's pipeline requires (S5 Implementation and S6 QA both fan-out to parallel agents).
+
+2. **Dual-engine (LangGraph + Temporal)** solves two distinct problems. LangGraph answers "given this state, what should the agent do next?" while Temporal answers "did this complete, and if not, what do we do about it?" Production systems that tried LangGraph alone hit state management and durability issues at scale (confirmed by Grid Dynamics case study migrating from LangGraph-only to Temporal). The Activity-StateGraph pattern — wrapping LangGraph graphs inside Temporal activities — is the proven integration approach.
+
+3. **Event-driven communication via NATS JetStream** decouples agents cleanly. Confluent's 2025 guidance identifies event-driven multi-agent as the scaling pattern for systems beyond 10 agents. NATS provides subject-based routing for fine-grained agent targeting, queue groups for workload distribution, and KV store for shared agent state — all critical for 30-agent coordination.
+
+4. **Tiered context management** is now industry standard. Google ADK, OpenDev's coding agent, and the "Codified Context" research (arXiv:2602.20478) all converge on three-tier architectures: hot memory (always loaded), domain context (per-task), and cold storage (on-demand retrieval). CodeBot's L0/L1/L2 model directly maps to this pattern.
+
+### System Architecture Diagram
 
 ```
 +=========================================================================+
-|  LAYER 5 -- INTERACTION LAYER                                           |
-|  Web Dashboard (React/Vite)  |  CLI (TypeScript)  |  IDE Extensions    |
+|  LAYER 5: INTERACTION LAYER                                             |
+|  React Dashboard (React Flow, Monaco, xterm.js, Socket.IO)             |
+|  CLI (TypeScript)  |  Chat Interface                                    |
 +=========================================================================+
-          |                           |                     |
-          v                           v                     v
+        |  WebSocket/REST          |  CLI commands
+        v                          v
 +=========================================================================+
-|  LAYER 4 -- PROTOCOL LAYER                                              |
-|  FastAPI + Socket.IO Gateway  |  WebSocket Event Bus  |  REST API       |
-|  Message Adapter              |  Context Adapter      |  NATS JetStream |
+|  LAYER 4: API & PROTOCOL LAYER                                         |
+|  FastAPI Gateway + Socket.IO Server                                     |
+|  Authentication | Rate Limiting | Request Routing                      |
+|  Message Adapter | Context Adapter | Interaction Handler                |
 +=========================================================================+
-          |                           |                     |
-          v                           v                     v
+        |
+        v
 +=========================================================================+
-|  LAYER 3 -- COMPONENT LAYER                                             |
-|  ~30 Specialized Agents  |  Composed Graphs  |  Node Templates          |
-|  Loop / Switch / Parallel / Merge / HITL / Checkpoint / Transform nodes |
+|  LAYER 3: ORCHESTRATION LAYER (Dual-Engine)                             |
+|                                                                         |
+|  +---------------------------+  +-----------------------------+         |
+|  |  Temporal Workflows       |  |  LangGraph StateGraphs      |         |
+|  |  - Pipeline lifecycle     |  |  - Agent decision logic     |         |
+|  |  - Checkpoint/resume      |  |  - Conditional routing      |         |
+|  |  - Retry/timeout          |  |  - Dynamic branching (Send) |         |
+|  |  - Cross-phase gates      |  |  - Supervisor patterns      |         |
+|  +---------------------------+  +-----------------------------+         |
+|                                                                         |
+|  Pipeline Manager | Phase Coordinator | Task Scheduler (topo sort)      |
+|  Checkpoint Manager | Agent Pool Manager | Resource Governor            |
 +=========================================================================+
-          |                           |                     |
-          v                           v                     v
+        |                           |                    |
+        v                           v                    v
 +=========================================================================+
-|  LAYER 2 -- ENGINE LAYER                                                |
-|  Agent Graph Engine (DAG)     |  Task Scheduler (topo sort)            |
-|  Pipeline Manager             |  Checkpoint Manager  |  Agent Pool Mgr |
-|  Execution Runtime (asyncio)  |  Resource Governor   |  Event Bus       |
+|  LAYER 2: AGENT & COMPONENT LAYER                                       |
+|                                                                         |
+|  30 Specialized Agents (BaseAgent + PRA cognitive cycle)                |
+|  Node Types: AGENT | SUBGRAPH | LOOP | SWITCH | HUMAN_IN_LOOP          |
+|              PARALLEL | MERGE | CHECKPOINT | TRANSFORM | GATE           |
+|  Composed Graphs: CodingPipeline | ReviewGate | DebugFixLoop            |
+|                   ExperimentLoop | FullSDLC                             |
 +=========================================================================+
-          |                           |                     |
-          v                           v                     v
+        |                           |                    |
+        v                           v                    v
 +=========================================================================+
-|  LAYER 1 -- FOUNDATION LAYER                                            |
-|  Multi-LLM Abstraction  |  CLI Agent Bridge  |  Context Mgr (L0/L1/L2) |
-|  Worktree Manager       |  Sandbox Manager   |  Security Pipeline       |
-|  PostgreSQL + Redis     |  Vector Store      |  Object Store  |  NATS   |
+|  LAYER 1: FOUNDATION LAYER                                              |
+|                                                                         |
+|  +----------------+ +----------------+ +-------------------+            |
+|  | Multi-LLM      | | CLI Agent      | | Context           |            |
+|  | Abstraction     | | Bridge         | | Management        |            |
+|  | (LiteLLM +     | | (Claude Code,  | | (L0/L1/L2 +      |            |
+|  |  RouteLLM)     | |  Codex, Gemini)| |  Vector Store +   |            |
+|  +----------------+ +----------------+ |  Tree-sitter)     |            |
+|                                        +-------------------+            |
+|  +----------------+ +----------------+ +-------------------+            |
+|  | Security       | | Worktree       | | Event Bus         |            |
+|  | Pipeline       | | Manager        | | (NATS JetStream)  |            |
+|  | (Semgrep,Trivy,| | (git worktree  | | Pub/Sub + KV      |            |
+|  |  Gitleaks)     | |  isolation)    | |                   |            |
+|  +----------------+ +----------------+ +-------------------+            |
+|                                                                         |
+|  +----------------+ +----------------+ +-------------------+            |
+|  | PostgreSQL     | | Redis          | | ChromaDB/LanceDB  |            |
+|  | (State, Config)| | (Cache, PubSub)| | (Vector Store)    |            |
+|  +----------------+ +----------------+ +-------------------+            |
 +=========================================================================+
 ```
-
-### Component Responsibilities
-
-| Component | Responsibility | Typical Implementation |
-|-----------|----------------|------------------------|
-| Agent Graph Engine | DAG execution runtime: topological sort, parallel layer execution, conditional edges, loop/switch evaluation | LangGraph (primary), custom DirectedGraph class over it |
-| Pipeline Manager | SDLC phase coordination, phase transition gates, multi-preset support (full/quick/review-only) | Python + YAML-declarative pipeline configs |
-| Task Scheduler | Kahn's algorithm for topological ordering; selects ready nodes per layer | asyncio.TaskGroup for concurrent layer execution |
-| Checkpoint Manager | State snapshots after each execution layer; enables pipeline resume on failure | PostgreSQL (checkpoint records) + Redis (live state cache) |
-| Agent Pool Manager | Lifecycle management for all running agents; enforces concurrency limits | Bounded semaphore + process pool |
-| Multi-LLM Abstraction | Provider-agnostic interface for OpenAI, Anthropic, Google, Ollama, LM Studio; routing, fallback chains, cost tracking | Custom LLMProvider Protocol; per-provider adapter classes |
-| CLI Agent Bridge | Delegates coding to Claude Code (SDK), Codex CLI, Gemini CLI; manages subprocess lifecycle and output parsing | Claude Agent SDK (direct); subprocess + structured output parse (Codex, Gemini) |
-| Context Manager | 3-tier hierarchical context assembly (L0 always-loaded, L1 on-demand, L2 deep retrieval) | Filesystem + ChromaDB + RAG pipeline |
-| Worktree Manager | Git worktree isolation per coding agent; lifecycle (provision, execute, merge, cleanup) | git worktree commands; branch-per-agent strategy |
-| Sandbox Manager | Docker container per agent for safe code execution; CPU/mem/network limits; gVisor or Kata isolation | Docker SDK (Python); seccomp + AppArmor profiles |
-| Security Pipeline | Parallel SAST, DAST, secrets, SCA, IaC, license scanning; normalized finding schema; quality gate | Semgrep, SonarQube, Shannon, Trivy, Gitleaks, ORT, KICS (CLI subprocess + REST) |
-| Web Dashboard | Real-time pipeline visualization, agent activity, code viewer, test results, cost tracker, architecture visualizer | React (Vite) + TypeScript 5.5 + Tailwind CSS + Zustand; React Flow for graph |
-| CLI Interface | All user-facing commands (init, start, status, review, deploy, config); programmatic API | TypeScript (Node.js 22 LTS or Bun) |
-| Event Bus | Asynchronous agent-to-agent messaging (TASK_HANDOFF, REVIEW_REQUEST, ESCALATION etc.); real-time dashboard streaming | NATS JetStream (at-least-once, persistent) |
-| Data Layer | Durable state: projects, pipeline runs, agent tasks, LLM usage logs, security findings, memory | PostgreSQL 16 (relational) + Redis 7 (cache/pubsub) + ChromaDB (vectors) + MinIO/S3 (objects) |
-| Knowledge Graph | Architecture decisions, code dependency graph, requirement traceability | Cognee |
 
 ---
 
-## Recommended Project Structure
+## Component Boundaries
 
-```
-codebot/                          # Turborepo monorepo root
-├── apps/
-│   ├── server/                   # FastAPI backend (Python 3.12+)
-│   │   └── src/codebot/
-│   │       ├── main.py           # FastAPI entrypoint
-│   │       ├── graph/            # Agent Graph Engine
-│   │       │   ├── engine.py     # ExecutionEngine, DAG runtime
-│   │       │   ├── nodes.py      # Node types (AGENT, LOOP, SWITCH, PARALLEL, MERGE, HITL, CHECKPOINT, TRANSFORM, GATE)
-│   │       │   ├── edges.py      # Edge types (STATE_FLOW, MESSAGE_FLOW, CONTROL_FLOW)
-│   │       │   ├── scheduler.py  # Topological sort, layer execution
-│   │       │   └── templates.py  # NodeTemplate, ComposedGraph
-│   │       ├── pipeline/         # SDLC Pipeline Manager
-│   │       │   ├── manager.py    # Phase coordination, gate evaluation
-│   │       │   ├── presets/      # full.yaml, quick.yaml, review-only.yaml
-│   │       │   └── checkpoint.py # Snapshot + resume logic
-│   │       ├── agents/           # ~30 specialized agent implementations
-│   │       │   ├── base.py       # BaseAgent (shared lifecycle, tools, context)
-│   │       │   ├── orchestrator.py
-│   │       │   ├── brainstormer.py
-│   │       │   ├── researcher.py
-│   │       │   ├── architect.py
-│   │       │   ├── designer.py
-│   │       │   ├── planner.py
-│   │       │   ├── frontend_dev.py
-│   │       │   ├── backend_dev.py
-│   │       │   ├── middleware_dev.py
-│   │       │   ├── infra_engineer.py
-│   │       │   ├── code_reviewer.py
-│   │       │   ├── security_auditor.py
-│   │       │   ├── tester.py
-│   │       │   ├── debugger.py
-│   │       │   ├── doc_writer.py
-│   │       │   ├── delivery.py
-│   │       │   └── project_manager.py
-│   │       ├── llm/              # Multi-LLM Abstraction Layer
-│   │       │   ├── router.py     # Routing rules + fallback chains
-│   │       │   ├── providers/    # Per-provider adapters (anthropic, openai, google, ollama, lmstudio)
-│   │       │   └── cost.py       # Token budget enforcement + usage tracking
-│   │       ├── cli_agents/       # CLI Agent Integration Layer
-│   │       │   ├── bridge.py     # Agent Bridge: task translate + output parse
-│   │       │   ├── claude_code.py # Claude Agent SDK integration
-│   │       │   ├── codex.py      # OpenAI Codex CLI subprocess
-│   │       │   └── gemini.py     # Gemini CLI subprocess
-│   │       ├── context/          # 3-Tier Context Management
-│   │       │   ├── adapter.py    # Context assembly pipeline
-│   │       │   ├── tiers.py      # L0/L1/L2 loaders
-│   │       │   ├── indexer.py    # Tree-sitter code indexing
-│   │       │   ├── retrieval.py  # Vector + BM25 hybrid retrieval
-│   │       │   └── memory.py     # Episodic memory (cross-session, cross-project)
-│   │       ├── worktree/         # Git Worktree Manager
-│   │       │   └── manager.py    # Provision, execute, merge, cleanup lifecycle
-│   │       ├── sandbox/          # Sandbox Execution Manager
-│   │       │   ├── manager.py    # Docker container lifecycle
-│   │       │   └── preview.py    # Live preview (hot-reload, VNC)
-│   │       ├── security/         # Security & Quality Pipeline
-│   │       │   ├── pipeline.py   # Orchestrates parallel scanner fan-out
-│   │       │   ├── scanners/     # Per-tool runner (semgrep, trivy, gitleaks, etc.)
-│   │       │   ├── aggregator.py # Normalize + deduplicate findings
-│   │       │   └── gate.py       # Quality gate evaluation
-│   │       ├── events/           # Event Bus (NATS JetStream)
-│   │       │   └── bus.py        # Publish / subscribe / streaming to dashboard
-│   │       └── api/              # FastAPI routers
-│   │           ├── projects.py
-│   │           ├── runs.py
-│   │           ├── agents.py
-│   │           └── ws.py         # WebSocket endpoint (Socket.IO)
-│   ├── dashboard/                # React (Vite) + TypeScript dashboard
-│   │   └── src/
-│   │       ├── components/       # Pipeline view, agent cards, code viewer, etc.
-│   │       ├── stores/           # Zustand state slices
-│   │       └── api/              # REST + WebSocket client
-│   └── cli/                      # TypeScript CLI (Node.js 22 LTS or Bun)
-│       └── src/
-│           └── commands/         # init, brainstorm, plan, start, status, review, deploy, config
-├── libs/
-│   ├── agent-sdk/                # Python agent base classes and tool bindings
-│   ├── graph-engine/             # Core DAG primitives (importable by server)
-│   └── shared-types/             # TypeScript types shared between dashboard and CLI
-├── sdks/
-│   ├── python/                   # Python client SDK (publish to PyPI)
-│   └── typescript/               # TypeScript client SDK (publish to npm)
-├── configs/                      # YAML-declarative pipeline + agent configs
-│   ├── pipelines/                # full.yaml, quick.yaml, review-only.yaml
-│   ├── agents/                   # Per-agent role templates
-│   └── providers/                # LLM provider routing configs
-├── docker-compose.yml            # Local dev: postgres, redis, chroma, minio, sonarqube, ragflow
-├── Makefile                      # Common commands
-├── pyproject.toml                # Python workspace root (uv)
-├── package.json                  # Node.js workspace root (pnpm)
-└── turbo.json                    # Turborepo build pipeline
-```
+### Core Components and Their Responsibilities
 
-### Structure Rationale
+| Component | Responsibility | Communicates With | Protocol |
+|-----------|---------------|-------------------|----------|
+| **FastAPI Gateway** | HTTP/WebSocket API, auth, rate limiting, request routing | Dashboard, CLI, Orchestration Layer | REST/WebSocket |
+| **Temporal Workflows** | Pipeline lifecycle, durability, retry/timeout, cross-phase gates | LangGraph (activity wrapping), PostgreSQL (state), NATS (events) | Temporal SDK (gRPC) |
+| **LangGraph StateGraphs** | Agent decision logic, conditional routing, dynamic branching, supervisor patterns | Agents (execution), SharedState (read/write), Temporal (wrapped as activities) | In-process Python calls |
+| **Pipeline Manager** | Phase sequencing, entry/exit gates, pipeline presets (full/quick/review-only) | Temporal Workflows, Phase Coordinator, Dashboard (status) | Internal Python + NATS events |
+| **Phase Coordinator** | Manages agents within a single phase, fan-out/fan-in, parallel execution | Agent Pool, Task Scheduler, NATS (agent events) | Internal Python + NATS |
+| **Task Scheduler** | Topological sort, ready-node detection, resource constraint checking | Phase Coordinator, Agent Pool Manager | Internal Python |
+| **Agent Pool Manager** | Agent lifecycle (create/destroy), concurrency limits, resource allocation | Worktree Manager, LLM Abstraction, NATS | Internal Python |
+| **Checkpoint Manager** | State snapshots after each layer/phase, resume from failure | PostgreSQL (persistence), Temporal (integration) | Internal Python + SQL |
+| **Multi-LLM Abstraction** | Provider-agnostic LLM access, intelligent routing, fallback chains, cost tracking | LLM APIs (Anthropic, OpenAI, Google, Ollama), Agents (via interface) | HTTP/SDK per provider |
+| **CLI Agent Bridge** | Subprocess management for Claude Code, Codex CLI, Gemini CLI | Local filesystem (worktrees), Agents (delegation) | Subprocess/SDK |
+| **Context Management** | 3-tier context assembly (L0/L1/L2), vector retrieval, Tree-sitter indexing, compression | Vector Store, PostgreSQL, Agent prompts | Internal Python |
+| **Security Pipeline** | SAST/DAST/secret scanning, quality gate enforcement | Semgrep, Trivy, Gitleaks, SonarQube (external tools), Pipeline Manager (gate results) | CLI subprocess + NATS events |
+| **Worktree Manager** | Git worktree creation/cleanup, branch isolation per agent | Git (local), Agent Pool Manager | Git CLI subprocess |
+| **Event Bus (NATS)** | Inter-agent messaging, event streaming, audit trail, replay | All components (pub/sub), Dashboard (live updates) | NATS protocol |
+| **React Dashboard** | Real-time pipeline visualization, agent monitoring, code editing, terminal | FastAPI (REST/WebSocket), Socket.IO (live updates) | HTTP + WebSocket |
 
-- **apps/server/src/codebot/graph/:** Core execution engine isolated from agents — graph engine can be tested and evolved independently of agent implementations
-- **apps/server/src/codebot/agents/:** One file per agent role keeps concerns isolated; all inherit BaseAgent to enforce lifecycle contract
-- **apps/server/src/codebot/llm/:** Provider adapters behind a Protocol interface — adding a new provider requires only a new adapter, no other changes
-- **apps/server/src/codebot/cli_agents/:** Separate from `llm/` because CLI agents (Claude Code, Codex) are subprocess-based coding tools, not LLM API completions
-- **libs/graph-engine/:** Extracted to a lib so it can be imported by both the server and potentially SDKs without circular imports
-- **configs/:** YAML-declarative configurations drive the pipeline at runtime — changing a pipeline preset requires no code changes
+### Component Boundary Rules
 
----
-
-## Architectural Patterns
-
-### Pattern 1: Directed Computation Graph (DAG) with Topological Layer Execution
-
-**What:** The entire SDLC pipeline is modeled as a DAG. Nodes are agents or control structures (loop, switch, parallel, merge). Edges are typed (STATE_FLOW, MESSAGE_FLOW, CONTROL_FLOW). A topological sort groups nodes into execution layers. Nodes within a layer have no dependencies on each other and execute concurrently via `asyncio.TaskGroup`. Each layer completes before the next begins.
-
-**When to use:** Any multi-agent workflow where tasks have dependencies. The graph model makes dependencies explicit, enables automatic parallelism discovery, and allows the system to resume from checkpoints.
-
-**Trade-offs:** Graph compilation adds startup latency. Loop nodes (debug-fix cycles) require explicit cycle handling (loops are explicit constructs, not graph cycles). Dynamic graph mutation at runtime is complex and should be avoided — route via SwitchNode instead.
-
-**Example:**
-```python
-# Execution layer model — all nodes in a layer run concurrently
-async def run_layer(layer: list[Node], state: SharedState) -> None:
-    async with asyncio.TaskGroup() as tg:
-        for node in layer:
-            if all_conditions_met(node, state):
-                tg.create_task(node.execute(state))
-```
-
-### Pattern 2: 3-Tier Context Management (L0/L1/L2)
-
-**What:** Agent context is assembled in three tiers before each invocation. L0 (~2K tokens) is always loaded: project summary, role instructions, current task. L1 (~10K tokens) is on-demand: relevant source files, architecture docs, upstream outputs, API specs. L2 (~20K tokens) is deep retrieval: full semantic search via vector store + keyword hybrid, external docs, ADRs. Agents pull L2 via MCP tool calls during execution.
-
-**When to use:** Any system where multiple agents share a large codebase context. Without tiering, naive full-context injection wastes tokens on irrelevant content, inflates cost, and degrades response quality.
-
-**Trade-offs:** Context assembly adds ~50-200ms per agent invocation. L1 selection requires per-role rules that must be maintained. L2 retrieval quality depends on indexing quality (Tree-sitter chunking + embedding freshness).
-
-### Pattern 3: Git Worktree Isolation Per Coding Agent
-
-**What:** Each coding agent (Frontend Dev, Backend Dev, Middleware Dev, Infra Engineer) works in a dedicated git worktree on a dedicated branch (`agent/<role>/<task-id>`). Agents cannot interfere with each other's filesystem changes. On task completion, branches are reviewed, rebased, and merged. Conflicts are auto-resolved or escalated.
-
-**When to use:** Any system with multiple concurrent coding agents writing to the same repository. Direct shared filesystem access guarantees merge conflicts.
-
-**Trade-offs:** Additional disk space proportional to active worktrees. Merge step adds latency after parallel coding completes. Conflict resolution logic is complex to implement correctly.
-
-### Pattern 4: Experiment Loop (Keep/Discard Semantics)
-
-**What:** For iterative improvement (debug-fix cycles, performance optimization, security hardening), the system runs experiments on isolated git branches. Each iteration: hypothesize → apply (branch) → measure metric → evaluate (delta vs baseline). If improved beyond threshold: merge. Otherwise: discard branch. Continues until time budget exhausted or N consecutive non-improvements. All attempts logged to `experiment_log.tsv`.
-
-**When to use:** Debug & fix cycles (S8), performance optimization (S6), security hardening (S6), test coverage improvement (S7), and standalone Improve mode. Inspired by Karpathy's autoresearch pattern.
-
-**Trade-offs:** Can be expensive in tokens and time. Requires a measurable metric function per use case. Must bound by time and iteration budgets to prevent runaway loops.
-
-### Pattern 5: Provider-Agnostic LLM Routing
-
-**What:** A Model Router selects the optimal (provider, model) tuple per agent invocation based on task type, complexity score, user overrides, provider health, and cost constraints. A fallback chain handles rate limits and provider outages. All providers implement a common `LLMProvider` Protocol.
-
-**When to use:** Any system supporting multiple LLM providers. Prevents hard coupling between agent logic and specific models — allows swapping providers without agent code changes.
-
-**Trade-offs:** Routing logic must be maintained as model capabilities change. Fallback to a weaker model may degrade output quality for complex tasks — quality gates downstream catch this.
+1. **Agents never communicate directly.** All inter-agent messages flow through NATS JetStream or SharedState propagation via graph edges. This is a hard architectural constraint.
+2. **Temporal owns durability.** LangGraph runs agent logic; Temporal ensures it survives crashes. LangGraph StateGraphs are wrapped as Temporal activities.
+3. **The Gateway is the only external entry point.** Dashboard and CLI both go through FastAPI. No component accepts external traffic directly.
+4. **Worktrees are agent-scoped.** Each coding agent (S5) gets its own git worktree. Worktrees are created by the Worktree Manager when the Agent Pool Manager allocates an agent, and cleaned up on completion.
+5. **Context is assembled, not fetched ad-hoc.** The Context Management system pre-assembles context tiers before agent execution begins. Agents do not query vector stores or databases directly during their PRA cycle.
 
 ---
 
 ## Data Flow
 
-### Primary Request Flow (PRD to Deployed Application)
+### Primary Data Flow: PRD to Delivered Application
 
 ```
-User submits PRD
+User PRD (natural language)
     |
     v
-[FastAPI Gateway] -- authenticate + validate
+[FastAPI Gateway] -- validates, authenticates, creates Project record
     |
     v
-[PostgreSQL: Projects] -- create project record
+[Temporal Workflow: FullSDLC] -- starts durable pipeline
     |
     v
-[Pipeline Manager] -- load pipeline preset (full.yaml)
-    |
+[Phase S0: Orchestrator]
+    | Reads PRD, creates project config, selects pipeline preset
+    | Writes: project_config, pipeline_graph to SharedState
     v
-[Graph Engine] -- compile DAG, topological sort
-    |
+[Phase S1: Brainstormer]
+    | Reads: PRD + project_config
+    | Writes: refined_requirements, feature_priorities, exploration_report
     v
-[Execution Layer 0: Orchestrator Agent]
-    | STATE_FLOW (project plan, agent assignments)
+[Phase S2: Researcher]
+    | Reads: refined_requirements
+    | Writes: research_findings, technology_recommendations
     v
-[Execution Layer 1: Brainstormer Agent]
-    | STATE_FLOW (brainstorm output)
+[Phase S3: Architect + Designer] (parallel within phase)
+    | Reads: research_findings + refined_requirements
+    | Writes: system_architecture, api_design, database_schema, ui_wireframes
     v
-[Execution Layer 2: Researcher Agent]
-    | STATE_FLOW (research report)
+[Phase S4: Planner]
+    | Reads: architecture artifacts
+    | Writes: task_graph (DAG of implementation tasks), tech_stack_config
     v
-[Execution Layer 3: Architect + Designer] (parallel)
-    | STATE_FLOW (architecture doc + design specs)
+[Phase S5: Implementation] (fan-out to parallel agents)
+    | Frontend Dev, Backend Dev, Middleware Dev, Infra Engineer
+    | Each in isolated git worktree
+    | Reads: assigned_tasks from task_graph
+    | Writes: code files (in worktree), merge to integration branch
     v
-[Execution Layer 4: Planner Agent]
-    | STATE_FLOW (task graph, assignments per agent)
+[Phase S6: Quality Assurance] (fan-out to parallel agents)
+    | Code Reviewer, Security Auditor, Accessibility, Performance, i18n
+    | Reads: merged code from S5
+    | Writes: review_findings, security_report, remediation_tasks
     v
-[Execution Layer 5: Frontend Dev | Backend Dev | Middleware Dev] (parallel, isolated worktrees)
-    | STATE_FLOW (file manifests, git diffs)
+[Phase S7: Tester]
+    | Reads: code + review_findings
+    | Writes: test_results, coverage_report
     v
-[Execution Layer 6: Code Reviewer | Security Auditor] (parallel)
-    | STATE_FLOW + MESSAGE_FLOW (review comments, security findings)
+[Phase S8: Debugger] (ExperimentLoop)
+    | Reads: failing test results
+    | Writes: fixes (keep/discard per experiment), updated code
+    | Loops until: all tests pass OR max iterations hit
     v
-[Execution Layer 7: Tester] (parallel test suites)
-    | STATE_FLOW (test results, coverage)
+[Phase S9: Doc Writer]
+    | Reads: final code + architecture + API specs
+    | Writes: API docs, user guides, architecture diagrams
     v
-[Execution Layer 8: Debugger] (ExperimentLoop -- iterates until tests pass)
-    | STATE_FLOW (stable code, resolved failures)
+[Phase S10: Delivery] (optional)
+    | Reads: code + docs + infra config
+    | Writes: build artifacts, deployment manifests
     v
-[Execution Layer 9: Doc Writer]
-    | STATE_FLOW (documentation artifacts)
-    v
-[Execution Layer 10: Infra Engineer -> Project Manager -> Human Approval Gate]
-    |
-    v
-[Object Store: Final Artifacts] -- application, docs, deployment manifests
-
-Every layer:
-  - Writes to [PostgreSQL: Agent Tasks] (status, result, tokens, cost)
-  - Publishes to [NATS JetStream] -> [Dashboard WebSocket] (real-time events)
-  - Updates [Vector Store] (new code indexed for L2 retrieval)
-  - Writes to [PostgreSQL: LLM Usage] (token/cost accounting)
-  - Checkpoints to [PostgreSQL: Pipeline Runs] (resume state)
+User receives: working application + handoff report
 ```
 
-### Agent-Level Data Flow (Single Agent Invocation)
+### Event Flow (NATS JetStream)
 
 ```
-[Graph Engine triggers node]
-    |
-    v
-[Context Adapter]
-    |-- Load L0 (project summary, role, task)  -- filesystem
-    |-- Load L1 (relevant files, upstream outputs) -- PostgreSQL + filesystem
-    |-- Register L2 MCP tools (semantic search hooks) -- ChromaDB
-    |
-    v
-[LLM Router] -- select (provider, model) based on task_type + complexity
-    |
-    v
-[CLI Agent Bridge or Direct LLM call]
-    |-- Claude Code (SDK): operates in git worktree, reads/writes files, runs commands
-    |-- Codex/Gemini CLI (subprocess): same, via temp prompt file
-    |-- Direct completion: planning, review, doc writing (no filesystem ops)
-    |
-    v
-[Output Parser] -- extract structured result (files changed, test output, recommendations)
-    |
-    v
-[State Update] -- write outputs to SharedState (Redis)
-    |
-    v
-[Event Emission] -- publish AgentCompleted event to NATS -> Dashboard
-    |
-    v
-[Checkpoint] -- persist state snapshot to PostgreSQL
-    |
-    v
-[Edge Evaluation] -- check downstream edge conditions, activate next layer
+Subject Hierarchy:
+  codebot.pipeline.{project_id}.phase.{stage}     -- phase lifecycle events
+  codebot.agent.{agent_id}.status                  -- agent state transitions
+  codebot.agent.{agent_id}.output                  -- agent output artifacts
+  codebot.gate.{gate_id}.result                    -- quality gate pass/fail
+  codebot.human.{project_id}.request               -- human-in-the-loop requests
+  codebot.human.{project_id}.response              -- human responses
+  codebot.metrics.{component}                      -- observability metrics
+
+Consumers:
+  - Dashboard: subscribes to all codebot.* for real-time visualization
+  - Pipeline Manager: subscribes to phase.* and gate.* for coordination
+  - Agents: subscribe to their own agent.{id}.* for task assignments
+  - Audit Log: subscribes to all codebot.* for persistent audit trail
 ```
 
-### Event / Real-Time Dashboard Flow
+### State Flow Between Layers
 
 ```
-[Any Agent Action]
+SharedState (in-memory, thread-safe dict)
     |
-    v
-[NATS JetStream: codebot.events.*]
+    |-- Written by: Agent outputs, State transforms on edges
+    |-- Read by: Downstream agents (via Context Adapter)
+    |-- Checkpointed to: PostgreSQL (via Checkpoint Manager, after each layer)
+    |-- Cached in: Redis (hot state for dashboard queries)
     |
-    v
-[FastAPI WebSocket handler]
-    |
-    v
-[Socket.IO broadcast to dashboard clients]
-    |
-    v
-[Dashboard: Zustand store update -> React re-render]
+    |-- Scoped per: Graph execution instance (one per pipeline run)
+    |-- Thread safety: Controlled by Execution Engine (one writer per layer)
+```
+
+### Dashboard Real-Time Data Flow
+
+```
+Agent Event (NATS) --> FastAPI WebSocket handler --> Socket.IO --> React Dashboard
+
+Specific channels:
+  - Pipeline graph state (node colors, edge progress)
+  - Agent logs and reasoning traces
+  - Code diffs and file changes
+  - Test results (pass/fail counts, coverage)
+  - Security scan findings
+  - Resource usage (tokens, cost, time)
 ```
 
 ---
 
-## Component Boundaries (What Talks to What)
+## Patterns to Follow
 
-| Boundary | Direction | Communication | Notes |
-|----------|-----------|---------------|-------|
-| Dashboard / CLI -> API Gateway | Bidirectional | REST + WebSocket (Socket.IO) | Auth token required |
-| API Gateway -> Graph Engine | Internal call | Direct Python (same process) | No network hop |
-| Graph Engine -> Agent Pool | Internal call | Direct Python; async Task | Agent runs in same process or subprocess |
-| Agent -> LLM Router | Internal call | Direct Python | Router selects provider |
-| LLM Router -> Provider (API) | External HTTP | HTTPS (Anthropic/OpenAI/Google) or local (Ollama/LM Studio) | Rate limited, cost tracked |
-| Agent -> CLI Agent Bridge | Internal call | Direct Python | Bridge manages subprocess |
-| CLI Agent Bridge -> Claude Code | External subprocess | Claude Agent SDK over stdio | Streaming |
-| CLI Agent Bridge -> Codex/Gemini CLI | External subprocess | stdin/stdout | Structured output |
-| Agent -> Context Adapter | Internal call | Direct Python | Assembles L0/L1/L2 |
-| Context Adapter -> ChromaDB | Internal | HTTP (ChromaDB REST) | Semantic search |
-| Agent -> Worktree Manager | Internal call | Direct Python | Provisions git worktree |
-| Security Pipeline -> Scanners | External subprocess | CLI (Semgrep, Trivy, Gitleaks etc.) or REST (SonarQube) | Parallel fan-out |
-| Agent -> NATS (events) | One-way publish | NATS JetStream | Fire-and-forget |
-| NATS -> Dashboard | One-way subscribe | WebSocket bridged via FastAPI | Real-time streaming |
-| Graph Engine -> PostgreSQL | Read/Write | SQLAlchemy async | State persistence |
-| Graph Engine -> Redis | Read/Write | aioredis | Live state cache, pubsub |
-| Delivery Agent -> Object Store | Write | MinIO SDK / S3 boto3 | Build artifacts |
+### Pattern 1: Activity-StateGraph (Temporal + LangGraph Integration)
 
----
+**What:** Wrap each LangGraph StateGraph as a Temporal activity. Temporal manages the workflow lifecycle (retry, timeout, checkpoint), while LangGraph manages the agent's decision logic within each activity.
 
-## Build Order (Component Dependencies)
+**When:** Always. This is the fundamental integration pattern for CodeBot's dual-engine architecture.
 
-The implementation must respect these dependency chains. A component cannot be built until all components it depends on are buildable (even in stub/mock form for testing).
+**Why:** LangGraph excels at agent state machines but is single-process without built-in distribution. Temporal provides durable execution, automatic retry, and cross-process coordination. Together they address both the "what to do" and "how to survive failure" concerns.
 
-```
-TIER 1 — No dependencies, build first:
-  - Data Layer (PostgreSQL schemas, Redis setup, ChromaDB, MinIO)
-  - Monorepo scaffolding (Turborepo, pyproject.toml, package.json, docker-compose.yml)
-  - BaseAgent class (stub — no real LLM calls)
-  - Core type definitions (shared-types lib: Node, Edge, Agent, Message schemas)
+**Confidence:** HIGH (confirmed by Grid Dynamics case study, Temporal + LangGraph integration POC on GitHub, and multiple 2026 production reports)
 
-TIER 2 — Depends on Tier 1:
-  - Graph Engine (DirectedGraph, Node, Edge, Scheduler, ExecutionEngine)
-    [depends on: BaseAgent stub, shared types, data layer for checkpoints]
-  - Multi-LLM Abstraction Layer (LLMProvider Protocol, per-provider adapters)
-    [depends on: shared types only]
-  - Context Manager (L0/L1/L2 tiers, ChromaDB integration)
-    [depends on: data layer, Tree-sitter indexer]
-  - Event Bus (NATS JetStream integration)
-    [depends on: NATS broker running in docker-compose]
+**Implementation sketch:**
+```python
+# Temporal activity wrapping a LangGraph StateGraph
+@activity.defn
+async def run_agent_graph(input: AgentGraphInput) -> AgentGraphOutput:
+    """Each phase's agent graph runs as a Temporal activity."""
+    graph = build_phase_graph(input.phase, input.agents)
+    compiled = graph.compile(checkpointer=MemorySaver())
+    result = await compiled.ainvoke(
+        input.state,
+        config={"configurable": {"thread_id": input.execution_id}}
+    )
+    return AgentGraphOutput(state=result, artifacts=extract_artifacts(result))
 
-TIER 3 — Depends on Tier 2:
-  - CLI Agent Bridge (Claude Code SDK, Codex/Gemini subprocess)
-    [depends on: LLM Abstraction, Worktree Manager]
-  - Worktree Manager
-    [depends on: data layer (task IDs for branch naming)]
-  - Sandbox Manager
-    [depends on: Docker available in environment]
-  - Security Pipeline (scanner wrappers, aggregator, quality gate)
-    [depends on: data layer for finding storage]
-
-TIER 4 — Depends on Tier 3:
-  - Agent implementations (~30 agents, starting with critical path)
-    [depends on: BaseAgent, Graph Engine, LLM Layer, CLI Bridge, Context Mgr]
-  - Pipeline Manager (phase coordination, preset loading)
-    [depends on: Graph Engine, Agent Pool, Checkpoint Manager]
-  - FastAPI API Gateway + WebSocket
-    [depends on: Pipeline Manager, Event Bus]
-
-TIER 5 — Depends on Tier 4:
-  - Web Dashboard (React)
-    [depends on: FastAPI endpoints + WebSocket streaming functional]
-  - CLI Interface (TypeScript)
-    [depends on: FastAPI REST API functional]
-  - IDE Extensions
-    [depends on: CLI Interface]
-
-TIER 6 — Integration and polish:
-  - End-to-end pipeline runs (all stages connected)
-  - Deployment agent (S10) + CI/CD generation
-  - SDK publishing (Python + TypeScript)
+# Temporal workflow orchestrating the full pipeline
+@workflow.defn
+class SDLCPipelineWorkflow:
+    @workflow.run
+    async def run(self, input: PipelineInput) -> PipelineOutput:
+        # Each phase is a Temporal activity with retry policy
+        for phase in input.phases:
+            result = await workflow.execute_activity(
+                run_agent_graph,
+                AgentGraphInput(phase=phase, state=current_state),
+                start_to_close_timeout=timedelta(minutes=30),
+                retry_policy=RetryPolicy(maximum_attempts=3),
+            )
+            current_state = result.state
+            await self.checkpoint(phase, current_state)
+        return PipelineOutput(state=current_state)
 ```
 
-**Critical path for first working pipeline:**
-Data Layer → Graph Engine → Multi-LLM Layer → Context Manager → BaseAgent → Core agents (Orchestrator, Planner, Backend Dev, Tester, Debugger) → Pipeline Manager → FastAPI → CLI → first end-to-end run.
+**Key constraint:** Data must serialize/deserialize at every Temporal activity boundary. All SharedState objects must use Pydantic models (already planned) with JSON-serializable types only.
+
+### Pattern 2: Supervisor-Worker with Dynamic Fan-Out
+
+**What:** The Orchestrator agent acts as a hierarchical supervisor. It decomposes the pipeline into phases, and within phases that support parallelism (S3, S5, S6), uses LangGraph's Send API to dynamically spawn worker agents.
+
+**When:** Phases S3 (Architecture & Design), S5 (Implementation), and S6 (Quality Assurance) where multiple agents work in parallel.
+
+**Why:** Static fan-out requires knowing agent count at compile time. The Send API allows the Planner (S4) to determine how many implementation agents are needed based on the task graph, and the Phase Coordinator spawns them dynamically.
+
+**Confidence:** HIGH (LangGraph's Send API is documented and stable since LangGraph 1.0, October 2025)
+
+### Pattern 3: ExperimentLoop (Keep/Discard Optimization)
+
+**What:** An autonomous loop where each iteration proposes a hypothesis, applies it to an experiment git branch, measures against a baseline metric, and either keeps (merges) or discards (deletes branch) the change. Tracks all experiments in a TSV log.
+
+**When:** Debug/Fix loops (S8), performance optimization (S6), security hardening (S6), test coverage improvement (S7), and standalone Improve mode.
+
+**Why:** This pattern, inspired by Karpathy's autoresearch framework, provides structured experimentation with rollback safety. Each experiment is isolated in its own git branch, so failures are free.
+
+**Confidence:** MEDIUM (the pattern is well-described in CodeBot's own design docs and draws from autoresearch, but large-scale production validation is limited)
+
+### Pattern 4: Progressive Validation Cascade
+
+**What:** Quality gates organized into 4 levels of increasing cost: (1) Syntax & Style checks, (2) Unit Tests, (3) Integration Tests, (4) Acceptance Checklist (security + architecture conformance). Each level must pass before the next executes.
+
+**When:** At every phase transition, particularly gates G5-G9.
+
+**Why:** Fast feedback. Cheap static checks (seconds) catch errors before expensive integration tests (minutes) run. Agents auto-fix Level 1 failures without human intervention.
+
+**Confidence:** HIGH (standard CI/CD pattern, well-proven in traditional software development)
+
+### Pattern 5: Git Worktree Isolation for Parallel Agents
+
+**What:** Each coding agent (S5) operates in an isolated git worktree. The Worktree Manager creates a worktree + branch per agent, agents work independently, and branches are merged sequentially after completion.
+
+**When:** Phase S5 (Implementation) where Frontend Dev, Backend Dev, Middleware Dev, and Infra Engineer work in parallel.
+
+**Why:** Without isolation, parallel agents would create file conflicts and corrupt each other's work. Worktrees provide complete filesystem isolation while sharing the same git history. This is the standard pattern adopted by Claude Code, Cursor, ccswarm, and Pochi as of 2026.
+
+**Known challenges:**
+- Port conflicts: Multiple dev servers on the same ports. Mitigation: assign unique port ranges per worktree.
+- Database isolation: Shared database state creates race conditions. Mitigation: use per-agent test databases or schema prefixes.
+- Disk space: Each worktree is a full checkout. Mitigation: sparse checkouts, aggressive cleanup after merge.
+
+**Confidence:** HIGH (widely adopted in production AI coding workflows, documented by Anthropic, confirmed by multiple independent teams)
+
+### Pattern 6: Tiered Context Assembly
+
+**What:** Pre-assemble agent context in three tiers before execution:
+- **L0 (Hot):** Always loaded — project config, pipeline state, agent system prompt, CLAUDE.md-style constitution
+- **L1 (Warm):** Phase-scoped — current phase artifacts, relevant upstream outputs, tool schemas
+- **L2 (Cold):** On-demand retrieval — vector store queries, Tree-sitter code index lookups, historical experiment logs
+
+**When:** Before every agent execution in the PRA cycle's Perception phase.
+
+**Why:** Context engineering is the single most important factor in agent reliability (confirmed by Anthropic's context engineering guide, Google ADK's tiered context design, and the Codified Context paper). Pre-assembly ensures agents receive curated, relevant context rather than raw data dumps.
+
+**Confidence:** HIGH (converged best practice across Google ADK, Anthropic, and academic research)
 
 ---
 
-## Scaling Considerations
+## Anti-Patterns to Avoid
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| Single developer (local) | Docker Compose, all services on one machine, SQLite acceptable for context store, Ollama for local LLMs |
-| Small team (2-10 projects concurrent) | Current architecture works; Redis + PostgreSQL handle the load; scale agent concurrency limit to 15+ |
-| Production SaaS (100+ concurrent pipelines) | Extract Graph Engine to dedicated worker pool; NATS cluster; PostgreSQL read replicas; horizontal agent workers; container orchestration (Kubernetes or Fly.io) |
+### Anti-Pattern 1: Direct Agent-to-Agent Communication
 
-### Scaling Priorities
+**What:** Agents calling each other directly via function calls or shared memory without going through the event bus or graph edges.
 
-1. **First bottleneck: LLM rate limits.** The system will hit API rate limits before any infrastructure limit. Mitigation: multi-provider routing, response caching for deterministic tasks, token budget enforcement.
-2. **Second bottleneck: Sandbox containers.** Each coding agent needs a Docker container. At 4 active coding agents concurrently, this is manageable. Beyond that, a dedicated container runtime host is needed.
-3. **Third bottleneck: Worktree disk space.** Each worktree is a full copy of the project. For large repos, this becomes significant. Mitigation: sparse checkout, cleanup on completion.
+**Why bad:** Creates tight coupling, makes the system impossible to debug, breaks agent isolation, and prevents replay/audit. When agent A calls agent B directly, you lose visibility into what happened and cannot retry or checkpoint the interaction.
 
----
+**Instead:** All inter-agent communication flows through NATS JetStream events or SharedState propagation via typed graph edges. This is a hard constraint in CodeBot's architecture.
 
-## Anti-Patterns
+### Anti-Pattern 2: Single-Engine Orchestration
 
-### Anti-Pattern 1: Shared Filesystem Without Worktrees
+**What:** Using only LangGraph (or only Temporal) for everything — both the agent logic and the pipeline durability.
 
-**What people do:** Multiple coding agents write directly to the project's main working tree simultaneously.
-**Why it's wrong:** Concurrent writes cause merge conflicts, race conditions on config files, and non-deterministic output. One agent's partial state corrupts another's context.
-**Do this instead:** Provision one git worktree per coding agent. Merge after individual tasks complete.
+**Why bad:** LangGraph is single-process and lacks distributed durability. Teams that used LangGraph alone hit state management and debugging issues at scale (Grid Dynamics case study). Temporal alone lacks the rich agent-specific primitives (conditional routing, Send API, supervisor patterns) that LangGraph provides.
 
-### Anti-Pattern 2: Monolithic Agent (One Agent for Everything)
+**Instead:** Dual-engine: LangGraph for agent decision logic (within-phase), Temporal for pipeline lifecycle (cross-phase). Wrap LangGraph graphs as Temporal activities.
 
-**What people do:** A single agent handles the entire SDLC: brainstorm, design, code, test, deploy.
-**Why it's wrong:** Context window overflows on any real project. Role confusion degrades output quality. Cannot parallelize. Debugging failures is impossible.
-**Do this instead:** Specialized agents per role with typed input/output contracts. Graph engine coordinates handoffs.
+### Anti-Pattern 3: Flat Context / No Context Engineering
 
-### Anti-Pattern 3: Direct Agent-to-Agent Calling (No Message Bus)
+**What:** Dumping all available information into the agent's prompt without curation or tiering.
 
-**What people do:** Agent A directly calls Agent B's function/API to get a result.
-**Why it's wrong:** Creates tight coupling. If Agent B fails, Agent A is stuck. No replay, no observability, no fan-out.
-**Do this instead:** All inter-agent communication via the event bus (NATS) for async messages or via SharedState for output propagation. Graph engine manages execution order.
+**Why bad:** Exceeds context windows, dilutes relevant information, increases token costs, and degrades agent performance. Research shows that agents with curated context consistently outperform those with raw data dumps.
 
-### Anti-Pattern 4: Full Codebase in Every Agent's Context
+**Instead:** Tiered context assembly (L0/L1/L2). The Context Management system pre-assembles relevant context before the agent's PRA cycle begins. Agents do not query data stores directly.
 
-**What people do:** Inject the entire codebase as context for every agent invocation.
-**Why it's wrong:** Exceeds context windows on any real project. Dramatically increases token cost. Most content is irrelevant to the specific task, degrading focus.
-**Do this instead:** 3-tier context management. L0 always, L1 role-relevant on demand, L2 via semantic retrieval only when needed.
+### Anti-Pattern 4: Shared Worktree for Parallel Agents
 
-### Anti-Pattern 5: Synchronous Security Scanning (After Delivery)
+**What:** Multiple coding agents writing to the same git working directory simultaneously.
 
-**What people do:** Run security scans as a final step before releasing the build.
-**Why it's wrong:** Late-stage findings require rewrites of already-"complete" code. Debugging context is cold. Developer agents have already moved on.
-**Do this instead:** Security pipeline runs in parallel with code review (S6) immediately after implementation (S5). Findings feed back into the debug loop before documentation or deployment.
+**Why bad:** File conflicts, race conditions, corrupted state. One agent's intermediate file writes can break another agent's compilation or test runs.
 
-### Anti-Pattern 6: No Checkpointing (Restart from Zero on Failure)
+**Instead:** Isolated git worktrees per agent. Merge sequentially after all agents complete.
 
-**What people do:** Run the full pipeline as a single transaction — if it fails at S7, restart from S0.
-**Why it's wrong:** Full pipeline runs can take hours and cost significant LLM tokens. A failure deep in the pipeline should not require re-running brainstorming and architecture.
-**Do this instead:** Checkpoint state after every execution layer. On restart, load the latest checkpoint and resume from the failed node.
+### Anti-Pattern 5: Monolithic Agent Design
+
+**What:** Building one large, general-purpose agent that handles everything instead of specialized agents.
+
+**Why bad:** Large tool sets decrease agent reliability. An agent with 50 tools performs worse than 5 agents with 10 tools each. LangChain's 2026 guidance explicitly recommends focusing tasks per agent.
+
+**Instead:** 30 specialized agents, each with a focused role and limited tool set. The Orchestrator coordinates them via the graph.
 
 ---
 
-## Integration Points
+## Scalability Considerations
 
-### External Services
+| Concern | At 1 user (dev) | At 10 users (team) | At 100+ users (enterprise) |
+|---------|-----------------|---------------------|---------------------------|
+| **Agent concurrency** | Single pipeline, 5-8 parallel agents max | Multiple pipelines, Temporal worker scaling | Temporal cluster, agent pool with backpressure |
+| **LLM API throughput** | Direct API calls, single provider | Load balancing across providers, rate limit management | RouteLLM intelligent routing, cost optimization, provider failover |
+| **Event bus** | Single NATS server | NATS cluster (3 nodes) | NATS super-cluster with leaf nodes |
+| **State storage** | Single PostgreSQL | Read replicas, connection pooling | Partitioned by project, archival policy |
+| **Dashboard updates** | Direct WebSocket | Socket.IO with Redis adapter | Socket.IO cluster with Redis pub/sub fan-out |
+| **Git worktrees** | Local filesystem | Shared NFS or distributed filesystem | Object storage-backed worktrees, sparse checkouts |
+| **Vector store** | ChromaDB (local) | ChromaDB/LanceDB (single instance) | Qdrant cluster (distributed, sharded) |
 
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| Anthropic API | HTTPS REST via Claude Agent SDK (for Claude Code) or direct completion API | Primary provider for reasoning + code review |
-| OpenAI API | HTTPS REST; Codex CLI via subprocess | Code generation + test writing |
-| Google Gemini API | HTTPS REST; Gemini CLI via subprocess | Research + documentation |
-| Ollama | Local HTTP REST (localhost:11434) | Self-hosted LLMs; no latency budget for reasoning tasks |
-| LM Studio | Local HTTP REST (OpenAI-compatible endpoint) | Self-hosted alternative |
-| GitHub / GitLab | git CLI + REST API (PR creation, webhook triggers) | Push generated code, create PRs for human review |
-| Semgrep | CLI subprocess | SAST; run in sandbox container |
-| SonarQube CE | REST API (self-hosted Docker) | Code quality gate |
-| Trivy | CLI subprocess | Container + SCA scanning |
-| Gitleaks | CLI subprocess + pre-commit hook | Secrets detection |
-| npm / PyPI / crates.io | CLI (npm install, pip install) inside sandbox | Dependency resolution |
-| Cloud providers (AWS/GCP/Azure/Vercel/Railway) | Provider SDKs + CLI tools inside sandbox | Deployment (S10) |
+---
 
-### Internal Boundaries
+## Suggested Build Order
 
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| Graph Engine <-> Pipeline Manager | Direct Python call | Both in same process; Pipeline Manager drives top-level graph |
-| Graph Engine <-> Agent implementations | Direct Python async call | Nodes are agent wrappers; graph calls node.execute() |
-| Agent <-> LLM Router | Direct Python call | Router is called per agent invocation, not per message |
-| Agent <-> Context Adapter | Direct Python call | Adapter called before each invocation to assemble context payload |
-| Context Adapter <-> ChromaDB | HTTP REST | ChromaDB runs as a Docker container; accessed via client library |
-| CLI Agent Bridge <-> Worktree Manager | Direct Python call | Bridge requests worktree path before spawning subprocess |
-| Pipeline Manager <-> Checkpoint Manager | Direct Python call | Checkpoint saved after each layer completes |
-| Graph Engine <-> Event Bus | Direct Python call (publish only) | Events flow one direction: engine -> bus -> dashboard |
-| FastAPI <-> Graph Engine | Direct Python call (in-process) | No queue needed for single-machine deployment |
-| FastAPI <-> NATS | async subscribe | Dashboard streaming uses NATS as the pub/sub bridge |
+The build order reflects component dependencies — each phase builds on the previous one's outputs. This directly informs the milestone/phase structure for the roadmap.
+
+### Phase 1: Foundation (No agents yet)
+
+**Build:** Monorepo scaffolding, Docker stack, database schema, shared models, NATS event bus
+
+**Rationale:** Everything else depends on these. You cannot run agents without a database to store state, an event bus for communication, or shared types for data flow. This is already partially complete (monorepo, Docker, NATS, shared models).
+
+**Status:** Largely done per PROJECT.md.
+
+### Phase 2: Graph Engine + Agent Framework
+
+**Build:** Graph Skeleton (Node, Edge, DirectedGraph), Execution Engine (topological sort, parallel execution), BaseAgent with PRA cycle, AgentNode wrapper, SharedState
+
+**Rationale:** The graph engine is the core execution substrate. Without it, agents have no way to be scheduled, executed, or coordinated. BaseAgent defines the contract all 30 agents must implement. SharedState is the data flow mechanism between nodes.
+
+**Depends on:** Phase 1 (shared models, database for checkpoints, NATS for events)
+
+**This is the critical path.** If the graph engine is wrong, everything built on top is wrong.
+
+### Phase 3: Multi-LLM Abstraction + Context Management
+
+**Build:** Provider-agnostic LLM interface (LiteLLM wrapper), intelligent routing (RouteLLM), fallback chains, token tracking, context tiers (L0/L1/L2), vector store integration, Tree-sitter indexing
+
+**Rationale:** Agents need LLM access and context to function. The LLM abstraction must exist before any agent can reason. Context management must exist before agents can perceive their environment (the "P" in PRA).
+
+**Depends on:** Phase 2 (agents need the BaseAgent interface to consume LLM and context services)
+
+### Phase 4: Temporal Integration + Pipeline Orchestration
+
+**Build:** Temporal workflow definitions, Activity-StateGraph pattern, Pipeline Manager, Phase Coordinator, Checkpoint Manager, quality gates
+
+**Rationale:** Once agents can execute within a graph, the next need is durability and lifecycle management. Temporal provides retry, timeout, and checkpoint/resume for long-running pipelines. Quality gates enforce phase transitions.
+
+**Depends on:** Phase 2 (graph engine), Phase 3 (LLM + context — needed for gate evaluation)
+
+### Phase 5: First Agents (Vertical Slice)
+
+**Build:** Orchestrator agent, one implementation agent (e.g., Backend Dev), Code Reviewer, Tester, Debugger. Wire them into a minimal pipeline: Orchestrator -> Backend Dev -> Code Reviewer -> Tester -> Debugger.
+
+**Rationale:** Validate the entire architecture end-to-end with a minimal vertical slice before building all 30 agents. This proves the graph engine, LLM abstraction, context management, Temporal integration, event bus, worktree isolation, and quality gates all work together.
+
+**Depends on:** Phases 2, 3, 4
+
+### Phase 6: Worktree Manager + CLI Agent Bridge
+
+**Build:** Git worktree creation/cleanup, branch management, Claude Code/Codex CLI/Gemini CLI subprocess integration
+
+**Rationale:** The vertical slice in Phase 5 can use a simple working directory. Full worktree isolation and CLI agent delegation are needed for parallel implementation agents in Phase 7.
+
+**Depends on:** Phase 5 (validated agent execution)
+
+### Phase 7: Remaining Agents (Breadth)
+
+**Build:** All 30 agents across 10 categories, YAML-declarative agent configurations, ComposedGraphs (CodingPipeline, ReviewGate, DebugFixLoop, ExperimentLoop)
+
+**Rationale:** With the infrastructure proven by the vertical slice, build out the full agent roster. Each agent follows the same BaseAgent interface and PRA cycle.
+
+**Depends on:** Phases 5, 6
+
+### Phase 8: Security Pipeline + Quality Gates
+
+**Build:** Semgrep, Trivy, Gitleaks integration, Progressive Validation Cascade (4-level), security quality gates, SonarQube integration
+
+**Rationale:** Security scanning and quality gates need working code to scan. They sit between Implementation (S5) and Testing (S7) in the pipeline.
+
+**Depends on:** Phase 7 (agents produce code to scan)
+
+### Phase 9: FastAPI Server + Dashboard
+
+**Build:** REST API, WebSocket server, Socket.IO integration, React dashboard with React Flow pipeline visualization, Monaco editor, xterm.js terminal, real-time updates
+
+**Rationale:** The backend must be working before building the UI. The dashboard is critical for monitoring 30 agents but is not on the critical path for agent execution — agents can run headless via CLI.
+
+**Depends on:** Phase 7 (agents to monitor), Phase 4 (Temporal to query pipeline state)
+
+### Phase 10: CLI Application + Polish
+
+**Build:** TypeScript CLI, pipeline execution commands, agent interaction interface, CRDT-based collaboration (Yjs), pipeline presets (full/quick/review-only)
+
+**Depends on:** Phase 9 (API to interact with)
+
+### Build Order Dependency Graph
+
+```
+Phase 1: Foundation
+    |
+    v
+Phase 2: Graph Engine + Agent Framework  <-- CRITICAL PATH
+    |
+    +---> Phase 3: Multi-LLM + Context Management
+    |         |
+    |         v
+    +---> Phase 4: Temporal + Pipeline Orchestration
+              |
+              v
+          Phase 5: First Agents (Vertical Slice)  <-- VALIDATION CHECKPOINT
+              |
+              +---> Phase 6: Worktree Manager + CLI Agent Bridge
+              |         |
+              |         v
+              +---> Phase 7: Remaining Agents (Breadth)
+                        |
+                        +---> Phase 8: Security Pipeline
+                        |
+                        +---> Phase 9: FastAPI + Dashboard
+                                  |
+                                  v
+                              Phase 10: CLI + Polish
+```
+
+### Key Ordering Rationale
+
+1. **Graph Engine before Agents:** The execution substrate must exist before any agent can run. Building agents without the graph engine is like writing microservices without a container runtime.
+
+2. **Vertical Slice before Breadth:** Building 5 agents end-to-end proves the architecture faster than building 30 agents against an unvalidated foundation. The vertical slice (Phase 5) is the first point where the system can be tested as a whole.
+
+3. **LLM + Context before Temporal:** Agents need to reason (LLM) and perceive (context) before they need durability (Temporal). A crashing agent that reasons correctly is easier to fix than a durable agent that reasons poorly.
+
+4. **Dashboard after Agents:** The dashboard visualizes agent activity. Without running agents, there is nothing to visualize. Agents can execute headlessly via Temporal's built-in UI for early development.
+
+5. **Security Pipeline after Implementation Agents:** Security tools scan code. Code must exist first. Wiring Semgrep/Trivy integration before any agent produces code is premature.
+
+---
+
+## Technology Validation Notes
+
+### LangGraph
+
+- **Status:** Stable, production-ready (v1.0 released October 2025, MIT license)
+- **Stars:** ~24.6K GitHub stars
+- **Key features used:** StateGraph, Send API (dynamic branching), conditional edges, supervisor pattern, MemorySaver checkpointing
+- **Risk:** LangGraph 1.0 includes built-in durable execution which overlaps with Temporal. Monitor whether the dual-engine approach becomes redundant as LangGraph matures.
+- **Confidence:** HIGH
+
+### Temporal
+
+- **Status:** Production-proven, widely adopted (~18.9K stars, MIT)
+- **Key features used:** Workflow durability, activity retry, timeout, cross-process coordination
+- **Integration pattern:** Activity-StateGraph (wrap LangGraph as Temporal activities)
+- **Risk:** Serialization boundary overhead. All state passed between activities must be JSON-serializable.
+- **Confidence:** HIGH
+
+### NATS JetStream
+
+- **Status:** Production-proven, already integrated in CodeBot (Phase 01-03)
+- **Key features used:** Pub/sub with persistence, subject-based routing, queue groups, KV store
+- **Scaling concern:** Keep total consumers below ~100K (Synadia anti-patterns guide). At 30 agents with per-project streams, this is well within limits.
+- **Confidence:** HIGH
+
+### Git Worktree Isolation
+
+- **Status:** Well-validated pattern, adopted by Claude Code, Cursor, ccswarm, Pochi
+- **Key features used:** Per-agent isolated worktrees, branch-per-worktree, sequential merge
+- **Challenges:** Port conflicts, database isolation, disk space
+- **Confidence:** HIGH
+
+### Tiered Context (L0/L1/L2)
+
+- **Status:** Industry standard as of 2025-2026, converged across Google ADK, Anthropic, and academic research
+- **Validation:** Confirmed by "Codified Context" paper (arXiv:2602.20478), Google ADK's tiered architecture, OpenDev's 5-tier prompt system
+- **Confidence:** HIGH
 
 ---
 
 ## Sources
 
-- Project documentation: `docs/architecture/ARCHITECTURE.md` (v2.5, 2026-03-18) — C4 model diagrams, 5-layer architecture, all subsystem designs. HIGH confidence.
-- Project documentation: `docs/design/SYSTEM_DESIGN.md` (v2.5, 2026-03-18) — Graph engine design, agent specs, pipeline orchestration. HIGH confidence.
-- Project documentation: `docs/refernces/RESEARCH_SUMMARY.md` (v2.5, 2026-03-18) — Reference implementations: MASFactory, Automaker, Codebuff, Superset, OpenViking, OpenSandbox, claude-mem. HIGH confidence.
-- MASFactory (arXiv:2603.06007, Apache 2.0): Foundational four-layer architecture (Graph Skeleton, Component, Protocol, Interaction layers). HIGH confidence (cited in project docs).
-- Automaker, Codebuff, Superset, cmux: Git worktree isolation, subprocess-based CLI agent orchestration, parallel agent dashboards. MEDIUM confidence (cited in research summary).
-- OpenViking: Hierarchical context (L0/L1/L2) and filesystem-paradigm context organization. MEDIUM confidence (cited in research summary).
-- OpenSandbox (Alibaba): Docker-per-agent sandbox with gVisor/Kata isolation, live preview patterns. MEDIUM confidence (cited in research summary).
-- claude-mem: Episodic memory with lifecycle hooks, semantic compression, progressive disclosure, cross-project learning. MEDIUM confidence (cited in research summary).
+### Architecture & Multi-Agent Patterns
+- [Google's Eight Essential Multi-Agent Design Patterns (InfoQ, Jan 2026)](https://www.infoq.com/news/2026/01/multi-agent-design-patterns/)
+- [Choosing the Right Multi-Agent Architecture (LangChain Blog)](https://blog.langchain.com/choosing-the-right-multi-agent-architecture/)
+- [Four Design Patterns for Event-Driven Multi-Agent Systems (Confluent)](https://www.confluent.io/blog/event-driven-multi-agent-systems/)
+- [Designing Effective Multi-Agent Architectures (O'Reilly Radar)](https://www.oreilly.com/radar/designing-effective-multi-agent-architectures/)
+- [How to Build Multi-Agent Systems: Complete 2026 Guide (DEV Community)](https://dev.to/eira-wexford/how-to-build-multi-agent-systems-complete-2026-guide-1io6)
 
----
+### Temporal + LangGraph Integration
+- [Temporal + LangGraph: A Two-Layer Architecture (anup.io)](https://www.anup.io/temporal-langgraph-a-two-layer-architecture-for-multi-agent-coordination/)
+- [Agentic AI Workflows: Why Orchestration with Temporal is Key (IntuitionLabs)](https://intuitionlabs.ai/articles/agentic-ai-temporal-orchestration)
+- [Temporal and LangGraph Integration POC (DeepWiki)](https://deepwiki.com/domainio/temporal-langgraph-poc/2.1-temporal-and-langgraph-integration)
+- [Orchestrating Multi-Step Agents: Temporal/Dagster/LangGraph Patterns (Kinde)](https://www.kinde.com/learn/ai-for-software-engineering/ai-devops/orchestrating-multi-step-agents-temporal-dagster-langgraph-patterns-for-long-running-work/)
 
-*Architecture research for: Autonomous multi-agent SDLC platform (CodeBot)*
-*Researched: 2026-03-18*
+### LangGraph Specifics
+- [LangGraph Multi-Agent Workflows (LangChain Blog)](https://blog.langchain.com/langgraph-multi-agent-workflows/)
+- [Production-Grade Multi-Agent Communication Using LangGraph (MarkTechPost, Mar 2026)](https://www.marktechpost.com/2026/03/01/how-to-design-a-production-grade-multi-agent-communication-system-using-langgraph-structured-message-bus-acp-logging-and-persistent-shared-state-architecture/)
+- [LangGraph Supervisor Reference (LangChain)](https://reference.langchain.com/python/langgraph/supervisor/)
+
+### NATS JetStream
+- [JetStream Architecture (NATS Docs)](https://docs.nats.io/nats-concepts/jetstream)
+- [JetStream Anti-Patterns: Avoid These Pitfalls (Synadia)](https://www.synadia.com/blog/jetstream-design-patterns-for-scale)
+- [NATS JetStream Event-Driven Architecture on Kubernetes](https://oneuptime.com/blog/post/2026-02-09-nats-jetstream-event-driven-kubernetes/view)
+- [Why NATS JetStream is Well Suited to AI at the Edge (Synadia)](https://www.synadia.com/blog/ai-at-the-edge-with-nats-jetstream)
+
+### Git Worktree Isolation
+- [Git Worktrees: The Secret Weapon for Running Multiple AI Coding Agents in Parallel](https://medium.com/@mabd.dev/git-worktrees-the-secret-weapon-for-running-multiple-ai-coding-agents-in-parallel-e9046451eb96)
+- [Git Worktree Isolation in Claude Code (Towards AI, Mar 2026)](https://medium.com/@richardhightower/git-worktree-isolation-in-claude-code-parallel-development-without-the-chaos-262e12b85cc5)
+- [ccswarm: Multi-agent orchestration with Git worktree isolation (GitHub)](https://github.com/nwiizo/ccswarm)
+- [How We Built True Parallel Agents With Git Worktrees (DEV Community)](https://dev.to/getpochi/how-we-built-true-parallel-agents-with-git-worktrees-2580)
+
+### Context Management
+- [Effective Context Engineering for AI Agents (Anthropic)](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)
+- [Codified Context: Infrastructure for AI Agents in a Complex Codebase (arXiv:2602.20478)](https://arxiv.org/html/2602.20478v1)
+- [Architecting Efficient Context-Aware Multi-Agent Framework (Google Developers Blog)](https://developers.googleblog.com/architecting-efficient-context-aware-multi-agent-framework-for-production/)
+- [Context Management: The Missing Piece for Agentic AI (DataHub)](https://datahub.com/blog/context-management/)
+
+### Dashboard & Real-Time
+- [Building Real-Time Dashboards with React and WebSockets](https://www.wildnetedge.com/blogs/building-real-time-dashboards-with-react-and-websockets)
+- [How to Use WebSockets in React for Real-Time Applications](https://oneuptime.com/blog/post/2026-01-15-websockets-react-real-time-applications/view)
