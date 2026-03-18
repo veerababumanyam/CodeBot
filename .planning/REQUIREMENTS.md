@@ -22,18 +22,18 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Agent Framework
 
-- [ ] **AGNT-01**: All agents extend BaseAgent with Perception-Reasoning-Action (PRA) cognitive cycle
+- [x] **AGNT-01**: All agents extend BaseAgent with Perception-Reasoning-Action (PRA) cognitive cycle
 - [ ] **AGNT-02**: AgentNode wraps BaseAgent instances for graph execution with typed inputs/outputs
-- [ ] **AGNT-03**: Agents follow state machine: IDLE → INITIALIZING → EXECUTING → REVIEWING → COMPLETED/FAILED → RECOVERING
+- [x] **AGNT-03**: Agents follow state machine: IDLE → INITIALIZING → EXECUTING → REVIEWING → COMPLETED/FAILED → RECOVERING
 - [ ] **AGNT-04**: Each coding agent operates in an isolated git worktree
-- [ ] **AGNT-05**: Agent configurations are declarative YAML (system prompt, tools, LLM model, context tiers, retry policy)
-- [ ] **AGNT-06**: Agents self-review output against acceptance criteria before marking COMPLETED
-- [ ] **AGNT-07**: Failed agents trigger recovery strategy (retry with different prompt, escalate, rollback)
+- [x] **AGNT-05**: Agent configurations are declarative YAML (system prompt, tools, LLM model, context tiers, retry policy)
+- [x] **AGNT-06**: Agents self-review output against acceptance criteria before marking COMPLETED
+- [x] **AGNT-07**: Failed agents trigger recovery strategy (retry with different prompt, escalate, rollback)
 - [ ] **AGNT-08**: System supports 30 specialized agents across 10 categories
 - [ ] **AGNT-09**: Skill Creator agent can generate reusable skills for other agents
 - [ ] **AGNT-10**: Hooks Creator agent can create event-triggered hooks
 - [ ] **AGNT-11**: Tools Creator agent can expose new tool capabilities to the agent ecosystem
-- [ ] **AGNT-12**: Agent metrics tracked: execution time, token usage, cost, success rate, retry count
+- [x] **AGNT-12**: Agent metrics tracked: execution time, token usage, cost, success rate, retry count
 
 ### Multi-LLM Abstraction
 
@@ -253,18 +253,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GRPH-08 | Phase 2 | Complete |
 | GRPH-09 | Phase 2 | Complete |
 | GRPH-10 | Phase 2 | Complete |
-| AGNT-01 | Phase 3 | Pending |
+| AGNT-01 | Phase 3 | Complete |
 | AGNT-02 | Phase 3 | Pending |
-| AGNT-03 | Phase 3 | Pending |
+| AGNT-03 | Phase 3 | Complete |
 | AGNT-04 | Phase 3 | Pending |
-| AGNT-05 | Phase 3 | Pending |
-| AGNT-06 | Phase 3 | Pending |
-| AGNT-07 | Phase 3 | Pending |
+| AGNT-05 | Phase 3 | Complete |
+| AGNT-06 | Phase 3 | Complete |
+| AGNT-07 | Phase 3 | Complete |
 | AGNT-08 | Phase 9 | Pending |
 | AGNT-09 | Phase 11 | Pending |
 | AGNT-10 | Phase 11 | Pending |
 | AGNT-11 | Phase 11 | Pending |
-| AGNT-12 | Phase 3 | Pending |
+| AGNT-12 | Phase 3 | Complete |
 | LLM-01 | Phase 4 | Pending |
 | LLM-02 | Phase 4 | Pending |
 | LLM-03 | Phase 4 | Pending |

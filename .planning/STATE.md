@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Completed 02-03-PLAN.md (CheckpointManager, Dynamic Fan-Out) -- Phase 2 complete
-last_updated: "2026-03-18T11:00:30.806Z"
-last_activity: 2026-03-18 -- Completed 02-03 (CheckpointManager, Dynamic Fan-Out)
+status: executing
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-03-18T11:14:35.568Z"
+last_activity: 2026-03-18 -- Completed 03-01 (BaseAgent PRA cycle, state machine, recovery, config)
 progress:
   total_phases: 11
   completed_phases: 3
   total_plans: 34
-  completed_plans: 7
-  percent: 21
+  completed_plans: 8
+  percent: 24
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** User describes an idea in natural language, gets working, tested, security-scanned code autonomously through a multi-agent pipeline
-**Current focus:** Phase 2 - Graph Engine
+**Current focus:** Phase 3 - Agent Framework
 
 ## Current Position
 
-Phase: 2 of 11 (Graph Engine)
-Plan: 3 of 3 in current phase
-Status: Phase Complete
-Last activity: 2026-03-18 -- Completed 02-03 (CheckpointManager, Dynamic Fan-Out)
+Phase: 3 of 11 (Agent Framework)
+Plan: 1 of 2 in current phase
+Status: In Progress
+Last activity: 2026-03-18 -- Completed 03-01 (BaseAgent PRA cycle, state machine, recovery, config)
 
-Progress: [██░░░░░░░░] 21%
+Progress: [██░░░░░░░░] 24%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9 (Phase 1: 3, Phase 5: 3, Phase 2: 3)
-- Average duration: 7min (Phases 2+5)
-- Total execution time: 41min (Phases 2+5, Phase 1 pre-GSD)
+- Total plans completed: 10 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 1)
+- Average duration: 7min (Phases 2+3+5)
+- Total execution time: 49min (Phases 2+3+5, Phase 1 pre-GSD)
 
 **By Phase:**
 
@@ -45,11 +45,12 @@ Progress: [██░░░░░░░░] 21%
 |-------|-------|-------|----------|
 | 1. Foundation | 3/3 | N/A | N/A |
 | 2. Graph Engine | 3/3 | 20min | 7min |
+| 3. Agent Framework | 1/2 | 8min | 8min |
 | 5. Context Management | 3/3 | 21min | 7min |
 
 **Recent Trend:**
-- Last 5 plans: 05-02 (8min), 05-03 (5min), 02-01 (5min), 02-02 (10min), 02-03 (5min)
-- Trend: Stable/Improving
+- Last 5 plans: 05-03 (5min), 02-01 (5min), 02-02 (10min), 02-03 (5min), 03-01 (8min)
+- Trend: Stable
 
 *Updated after each plan completion*
 
@@ -87,6 +88,11 @@ Recent decisions affecting current work:
 - [Phase 2-03]: MemorySaver for all checkpoint unit tests -- no Postgres dependency required
 - [Phase 2-03]: Send imported from langgraph.types (not deprecated langgraph.constants)
 - [Phase 2-03]: GraphCompiler auto-detects fanout config in node definitions and wires conditional_edges dispatch
+- [Phase 3-01]: AgentPhase runtime enum separate from ORM AgentStatus -- higher resolution for EXECUTING/REVIEWING/RECOVERING
+- [Phase 3-01]: State machine and metrics created fresh per execute() -- enforces statelessness between executions
+- [Phase 3-01]: Hand-rolled FSM with dict transition table -- 7 states too simple for library overhead
+- [Phase 3-01]: RecoveryAction uses class-level constants (not enum) for extensibility
+- [Phase 3-01]: AgentConfig uses frozen=True and extra=forbid for strict YAML validation
 
 ### Pending Todos
 
@@ -100,6 +106,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-18
-Stopped at: Completed 02-03-PLAN.md (CheckpointManager, Dynamic Fan-Out) -- Phase 2 complete
+Last session: 2026-03-18T11:14:35.563Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None
