@@ -7,7 +7,7 @@ derived from the YAML configuration's routing table.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import litellm
 
@@ -35,7 +35,7 @@ class FallbackChainManager:
         self._config = config
         self._provider_registry = provider_registry
 
-    def build_litellm_router(self) -> litellm.Router:
+    def build_litellm_router(self) -> Any:
         """Build a configured LiteLLM Router with fallback chains.
 
         Creates the Router with:
@@ -56,7 +56,7 @@ class FallbackChainManager:
             if fallback_models
         ]
 
-        router = litellm.Router(
+        router = litellm.Router(  # type: ignore[attr-defined]
             model_list=model_list,
             num_retries=self._config.fallback.num_retries,
             timeout=self._config.fallback.timeout_seconds,
