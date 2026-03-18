@@ -1,179 +1,255 @@
 # Requirements: CodeBot
 
-## Overview
+**Defined:** 2026-03-18
+**Core Value:** A user can describe an idea and get working, tested, security-scanned code autonomously through a multi-agent pipeline
 
-**Total v1 requirements:** 39
-**Categories:** 9 (INFRA, ENGINE, AGENT, LLM, CONTEXT, PIPELINE, SECURITY, SURFACE, PLATFORM)
-**Priority levels:** P0 (must have for launch), P1 (should have, add when possible), P2 (nice to have, future)
+## v1 Requirements
 
-## Requirements
+Requirements for initial release. Each maps to roadmap phases.
 
-### INFRA: Infrastructure and Foundation
+### Graph Engine
 
-| ID | Requirement | Priority | Phase |
-|----|-------------|----------|-------|
-| REQ-001 | Turborepo monorepo with apps/ (server, dashboard, cli) and libs/ (agent-sdk, shared-types, graph-engine) | P0 | 1 |
-| REQ-002 | Docker Compose dev stack (PostgreSQL, Redis, NATS, LanceDB/Qdrant) | P0 | 1 |
-| REQ-003 | Database schemas (SQLAlchemy models, Alembic migrations) for pipeline state, agent tasks, LLM usage | P0 | 1 |
-| REQ-004 | Shared type definitions (Python Pydantic models, TypeScript shared-types lib) | P0 | 1 |
-| REQ-005 | Event bus (NATS JetStream) for async agent messaging and dashboard streaming | P0 | 1 |
+- [ ] **GRPH-01**: System can execute directed graphs with typed nodes and edges in topological order
+- [ ] **GRPH-02**: System supports node types: AGENT, SUBGRAPH, LOOP, SWITCH, HUMAN_IN_LOOP, PARALLEL, MERGE, CHECKPOINT, TRANSFORM
+- [ ] **GRPH-03**: System provides SharedState for graph-level data flow between nodes
+- [ ] **GRPH-04**: System can load and validate graph definitions from YAML
+- [ ] **GRPH-05**: System detects cycles, missing dependencies, and invalid edge types during validation
+- [ ] **GRPH-06**: System can checkpoint graph state and resume execution from checkpoint
+- [ ] **GRPH-07**: System traces execution with timing, token usage, and output per node
+- [ ] **GRPH-08**: System executes parallel branches concurrently via asyncio TaskGroup
+- [ ] **GRPH-09**: System supports conditional routing (SWITCH nodes) based on SharedState
+- [ ] **GRPH-10**: System supports dynamic fan-out via LangGraph Send API for parallel agent dispatch
 
-### ENGINE: Graph Engine and Execution
+### Agent Framework
 
-| ID | Requirement | Priority | Phase |
-|----|-------------|----------|-------|
-| REQ-006 | Graph-centric multi-agent orchestration engine (MASFactory-inspired DAG execution with topological sort, parallel layer execution) | P0 | 2 |
-| REQ-007 | Node types: AGENT, SUBGRAPH, LOOP, EXPERIMENT_LOOP, SWITCH, HUMAN_IN_LOOP, PARALLEL, MERGE, CHECKPOINT, TRANSFORM | P0 | 2 |
-| REQ-008 | Edge types: STATE_FLOW, MESSAGE_FLOW, CONTROL_FLOW with typed message passing | P0 | 2 |
-| REQ-009 | Checkpoint-based pipeline resume (state snapshots after each execution layer, restart from failure point) | P0 | 2 |
+- [ ] **AGNT-01**: All agents extend BaseAgent with Perception-Reasoning-Action (PRA) cognitive cycle
+- [ ] **AGNT-02**: AgentNode wraps BaseAgent instances for graph execution with typed inputs/outputs
+- [ ] **AGNT-03**: Agents follow state machine: IDLE → INITIALIZING → EXECUTING → REVIEWING → COMPLETED/FAILED → RECOVERING
+- [ ] **AGNT-04**: Each coding agent operates in an isolated git worktree
+- [ ] **AGNT-05**: Agent configurations are declarative YAML (system prompt, tools, LLM model, context tiers, retry policy)
+- [ ] **AGNT-06**: Agents self-review output against acceptance criteria before marking COMPLETED
+- [ ] **AGNT-07**: Failed agents trigger recovery strategy (retry with different prompt, escalate, rollback)
+- [ ] **AGNT-08**: System supports 30 specialized agents across 10 categories
+- [ ] **AGNT-09**: Skill Creator agent can generate reusable skills for other agents
+- [ ] **AGNT-10**: Hooks Creator agent can create event-triggered hooks
+- [ ] **AGNT-11**: Tools Creator agent can expose new tool capabilities to the agent ecosystem
+- [ ] **AGNT-12**: Agent metrics tracked: execution time, token usage, cost, success rate, retry count
 
-### LLM: Multi-LLM Abstraction
+### Multi-LLM Abstraction
 
-| ID | Requirement | Priority | Phase |
-|----|-------------|----------|-------|
-| REQ-010 | Multi-LLM support: Claude Code, OpenAI Codex, Google Gemini, Ollama, LM Studio via LiteLLM gateway | P0 | 2 |
-| REQ-011 | Intelligent model routing (task-based, complexity-based, privacy-based, cost-based, latency-based) with fallback chains | P0 | 2 |
-| REQ-012 | Cost intelligence: per-agent token tracking, per-stage costs, budget limits, cloud cost estimation | P0 | 2 |
+- [ ] **LLM-01**: System provides provider-agnostic interface via LiteLLM supporting Anthropic, OpenAI, Google, and self-hosted (Ollama/vLLM)
+- [ ] **LLM-02**: System routes tasks to optimal model by task type, complexity, privacy, cost, and latency via RouteLLM
+- [ ] **LLM-03**: System supports fallback chains (primary model fails → fallback model)
+- [ ] **LLM-04**: System tracks token usage and cost per agent, per stage, per model
+- [ ] **LLM-05**: System supports streaming responses for real-time output
+- [ ] **LLM-06**: System can operate fully air-gapped with self-hosted models only
+- [ ] **LLM-07**: Cost estimates provided before pipeline execution begins
+- [ ] **LLM-08**: Budget limits can halt execution when cost threshold exceeded
 
-### CONTEXT: Context Management
+### Pipeline Orchestration
 
-| ID | Requirement | Priority | Phase |
-|----|-------------|----------|-------|
-| REQ-013 | 3-tier context management (L0 always-loaded, L1 on-demand, L2 deep retrieval via vector store) | P0 | 2 |
-| REQ-014 | Vector store (LanceDB dev / Qdrant prod) with Tree-sitter code indexing for semantic code chunking | P0 | 2 |
-| REQ-015 | Episodic memory with cross-session and cross-project learning | P1 | 8 |
+- [ ] **PIPE-01**: System executes 10-stage SDLC pipeline: S0 Init → S1 Brainstorm → S2 Research → S3 Architecture → S4 Planning → S5 Implementation → S6 QA → S7 Testing → S8 Debug → S9 Documentation
+- [ ] **PIPE-02**: Stages S3, S5, and S6 execute agents in parallel via DAG topology
+- [ ] **PIPE-03**: Pipeline supports entry/exit gates with human approval at configurable checkpoints
+- [ ] **PIPE-04**: Pipeline configurations loadable from YAML presets: full, quick, review-only
+- [ ] **PIPE-05**: Temporal provides durable workflow orchestration with retry, timeout, and crash recovery
+- [ ] **PIPE-06**: Pipeline can resume from last checkpoint after failure or manual pause
+- [ ] **PIPE-07**: Pipeline detects project type (greenfield, inflight, brownfield) and adapts stage configuration
+- [ ] **PIPE-08**: Pipeline emits events to NATS JetStream for every stage transition, agent action, and gate decision
 
-### AGENT: Agent Framework and Implementations
+### Input Processing (S0)
 
-| ID | Requirement | Priority | Phase |
-|----|-------------|----------|-------|
-| REQ-016 | BaseAgent class with shared lifecycle, tool bindings, context assembly, and YAML-declarative config | P0 | 3 |
-| REQ-017 | CLI agent integration (Claude Code SDK, Codex CLI subprocess, Gemini CLI subprocess) for code generation | P0 | 3 |
-| REQ-018 | Git worktree isolation per coding agent (provision, execute, merge, cleanup lifecycle) | P0 | 3 |
-| REQ-019 | Sandboxed code execution (Docker container per agent, resource limits, gVisor/Kata isolation) | P0 | 3 |
-| REQ-020 | Critical-path agents: Orchestrator, Planner, Backend Dev, Tester, Debugger | P0 | 3 |
-| REQ-021 | ~30 specialized AI agents with role-specific prompts and tool access covering all 11 SDLC stages | P0 | 4 |
-| REQ-022 | Agent learning: skill creation, hook creation, tool creation, pattern library, anti-pattern registry | P1 | 8 |
+- [ ] **INPT-01**: User can describe project idea in natural language
+- [ ] **INPT-02**: System accepts structured PRDs in Markdown, JSON, or YAML
+- [ ] **INPT-03**: System accepts multi-modal input: text, images (wireframes, screenshots), and reference URLs
+- [ ] **INPT-04**: System extracts functional requirements, non-functional requirements, constraints, and acceptance criteria via NLP
+- [ ] **INPT-05**: System initiates clarification loop when requirements are ambiguous or incomplete
+- [ ] **INPT-06**: User can select UI/UX template (Shadcn/ui, Tailwind UI, Material Design, custom)
+- [ ] **INPT-07**: User can select or auto-recommend tech stack (language, framework, database, hosting)
+- [ ] **INPT-08**: System imports existing codebases from local directories or Git repositories for brownfield projects
 
-### PIPELINE: SDLC Pipeline Stages
+### Brainstorming (S1)
 
-| ID | Requirement | Priority | Phase |
-|----|-------------|----------|-------|
-| REQ-023 | 11-stage SDLC pipeline (S0 Project Init through S10 Deployment) with phase gates and YAML presets (full/quick/review-only) | P0 | 4 |
-| REQ-024 | Brainstorming phase (S1): idea exploration, competitive analysis, feature prioritization, scope definition | P0 | 4 |
-| REQ-025 | Research phase (S2): technology research, pattern discovery, dependency analysis, API discovery | P0 | 4 |
-| REQ-026 | Architecture phase (S3, parallel): system architecture (C4), database design, API design, UI/UX design | P0 | 4 |
-| REQ-027 | Planning phase (S4): task decomposition, dependency graphs, topological ordering, resource allocation | P0 | 4 |
-| REQ-028 | Implementation phase (S5, parallel worktrees): frontend, backend, middleware, mobile, infrastructure, integrations | P0 | 4 |
-| REQ-029 | Quality assurance phase (S6, parallel): code review, security audit, accessibility, i18n, performance analysis | P0 | 4 |
-| REQ-030 | Testing phase (S7): unit, integration, E2E, and additional test types (performance, security, accessibility, contract, mutation) | P0 | 4 |
-| REQ-031 | Debug and fix cycle (S8): root cause analysis, automated fix generation, regression testing, ExperimentLoop with keep/discard semantics (autoresearch-inspired: hypothesis → experiment branch → measure → keep if improved, discard otherwise; experiment log tracking) | P0 | 4 |
-| REQ-032 | Documentation phase (S9): API docs, README, ADRs, deployment guides, runbooks | P0 | 4 |
-| REQ-033 | Human-in-the-loop approval gates at configurable checkpoints | P0 | 4 |
-| REQ-034 | Communication protocol: state flow, message flow, control flow, event flow, broadcast flow | P0 | 4 |
-| REQ-035 | 4 project modes: greenfield, inflight, brownfield, improve (autonomous ExperimentLoop-based optimization with time/token budgets, inspired by autoresearch) | P1 | 7 |
-| REQ-036 | Self-healing: automatic dependency resolution, config auto-fix, test flakiness detection, LLM fallback chains, pipeline resume from checkpoint | P0 | 4 |
+- [ ] **BRST-01**: System facilitates idea exploration sessions with open-ended brainstorming
+- [ ] **BRST-02**: System maps problems to potential solution approaches
+- [ ] **BRST-03**: System performs competitive analysis of existing solutions
+- [ ] **BRST-04**: System prioritizes features using MoSCoW or RICE frameworks
+- [ ] **BRST-05**: System presents trade-off analysis for architectural and feature decisions
+- [ ] **BRST-06**: System generates user personas based on product idea
+- [ ] **BRST-07**: System defines MVP scope vs future iterations
 
-### SECURITY: Security Pipeline
+### Research (S2)
 
-| ID | Requirement | Priority | Phase |
-|----|-------------|----------|-------|
-| REQ-037 | SAST security scanning (Semgrep, Gitleaks) integrated into pipeline quality gates | P0 | 4 |
-| REQ-038 | Agent safety guardrails: sandboxed creation, review before activation, capability boundaries | P0 | 3 |
+- [ ] **RSRC-01**: Researcher agent evaluates libraries, APIs, and frameworks for the target stack
+- [ ] **RSRC-02**: Researcher discovers best practices and reference implementations
+- [ ] **RSRC-03**: Researcher identifies potential risks and compatibility issues
+- [ ] **RSRC-04**: Research outputs feed into Architecture phase as structured context
 
-### SURFACE: User-Facing Interfaces
+### Architecture & Design (S3)
 
-| ID | Requirement | Priority | Phase |
-|----|-------------|----------|-------|
-| REQ-039 | FastAPI REST API gateway with WebSocket streaming for all pipeline operations | P0 | 5 |
-| REQ-040 | CLI interface (TypeScript): init, brainstorm, plan, start, status, review, deploy, config commands | P0 | 5 |
-| REQ-041 | Web dashboard (React/Vite/TypeScript/Tailwind): pipeline view, agent activity, code viewer, test results, deployment status, brainstorming board, template gallery, tech stack configurator, cost tracker, knowledge base browser, architecture visualizer, git timeline | P0 | 6 |
-| REQ-042 | Live preview (hot-reload, mobile viewport emulation, VNC for desktop apps) | P1 | 6 |
-| REQ-043 | IDE extensions (VS Code, JetBrains, Neovim, Cursor) | P1 | 8 |
+- [ ] **ARCH-01**: Architect agent designs system architecture with component boundaries and data flow
+- [ ] **ARCH-02**: API Designer agent generates REST/GraphQL API specifications
+- [ ] **ARCH-03**: Database Designer agent creates schema with migrations
+- [ ] **ARCH-04**: UI/UX Designer agent generates wireframes and component hierarchy
+- [ ] **ARCH-05**: S3 agents execute in parallel with SharedState for cross-agent data flow
+- [ ] **ARCH-06**: Architecture outputs validated against requirements before advancing
 
-### PLATFORM: Cross-Cutting Platform Features
+### Planning (S4)
 
-| ID | Requirement | Priority | Phase |
-|----|-------------|----------|-------|
-| REQ-044 | Deployment phase (S10): CI/CD generation, multi-cloud (AWS, GCP, Azure, Vercel, Railway, Netlify, Fly.io, DigitalOcean), multi-environment management, rollback automation, monitoring setup | P1 | 7 |
-| REQ-045 | React Native cross-platform mobile development | P1 | 7 |
-| REQ-046 | Full security pipeline: DAST (OWASP ZAP), SCA (Trivy), license compliance (ORT/ScanCode) | P1 | 7 |
-| REQ-047 | Full test suite expansion: E2E (Playwright), performance (k6), accessibility (axe-core), visual regression, contract (Pact), mutation (Stryker), chaos (optional) | P1 | 7 |
-| REQ-048 | Responsive web design across all generated applications | P0 | 4 |
-| REQ-049 | Multi-repo support with cross-repo dependency management | P1 | 7 |
-| REQ-050 | Template system: Material Design, Ant Design, Tailwind UI, Shadcn/ui, Chakra UI, Bootstrap, custom | P1 | 7 |
-| REQ-051 | Multi-modal input: text, images, diagrams, voice (transcribed), video walkthroughs, reference URLs | P1 | 8 |
-| REQ-052 | Plugin system (pluggy-based): agent plugins, LLM provider plugins, template plugins | P1 | 8 |
-| REQ-053 | ExperimentLog data model: tracks hypothesis, git branch, metrics before/after, delta, keep/discard decision, duration, token cost for every experiment in debug (S8), QA optimization (S6), and Improve mode | P0 | 2 |
+- [ ] **PLAN-01**: Planner agent decomposes architecture into implementable tasks with dependencies
+- [ ] **PLAN-02**: Task dependency graph determines execution order and parallelization opportunities
+- [ ] **PLAN-03**: Each task specifies target files, acceptance criteria, and estimated complexity
 
-## Priority Summary
+### Implementation (S5)
 
-| Priority | Count | Description |
-|----------|-------|-------------|
-| P0 | 35 | Must have for v1 launch |
-| P1 | 18 | Should have, add when possible |
-| P2 | 0 | Future (tracked in PROJECT.md Out of Scope) |
+- [ ] **IMPL-01**: Frontend agent generates React/TypeScript UI code from design specs
+- [ ] **IMPL-02**: Backend agent generates Python/FastAPI server code from API specs
+- [ ] **IMPL-03**: Mobile agent generates cross-platform or native mobile code
+- [ ] **IMPL-04**: Infrastructure agent generates Docker, CI/CD, and config files
+- [ ] **IMPL-05**: S5 agents execute in parallel in isolated git worktrees
+- [ ] **IMPL-06**: CLI agent integration delegates coding to Claude Code, Codex CLI, or Gemini CLI
+- [ ] **IMPL-07**: Generated code follows project style conventions and linting rules
+
+### Quality Assurance (S6)
+
+- [ ] **QA-01**: Code Review agent reviews generated code for correctness, patterns, and maintainability
+- [ ] **QA-02**: Security Scanner agent runs Semgrep, Trivy, and Gitleaks on all generated code
+- [ ] **QA-03**: Accessibility agent audits UI for WCAG 2.1 AA compliance
+- [ ] **QA-04**: Performance agent profiles code for bottlenecks and optimization opportunities
+- [ ] **QA-05**: i18n/L10n agent verifies internationalization completeness
+- [ ] **QA-06**: Quality gates must pass before code advances to Testing phase
+- [ ] **QA-07**: S6 agents execute in parallel
+
+### Testing (S7)
+
+- [ ] **TEST-01**: Test Generator agent creates unit tests with >= 80% line coverage target
+- [ ] **TEST-02**: Test Generator creates integration tests for API endpoints and data flows
+- [ ] **TEST-03**: Test Generator creates E2E tests using Playwright/Vitest
+- [ ] **TEST-04**: Tests execute in sandboxed environments (Docker containers)
+- [ ] **TEST-05**: Test results feed back to Debug phase when failures detected
+
+### Debug & Fix (S8)
+
+- [ ] **DBUG-01**: Debugger agent performs root cause analysis on test failures
+- [ ] **DBUG-02**: Debugger generates fix proposals and applies them
+- [ ] **DBUG-03**: Fix-test loop iterates until all tests pass or max retries exceeded
+- [ ] **DBUG-04**: Security-specific debugging addresses vulnerability findings from S6
+
+### Documentation (S9)
+
+- [ ] **DOCS-01**: Documentation agent generates API documentation from code
+- [ ] **DOCS-02**: Documentation agent creates user guides and setup instructions
+- [ ] **DOCS-03**: Documentation agent produces architecture decision records
+- [ ] **DOCS-04**: Generated docs include deployment guides (Docker, CI/CD configs)
+
+### Context Management
+
+- [ ] **CTXT-01**: L0 context (always present): project config, current task, agent system prompt
+- [ ] **CTXT-02**: L1 context (phase-scoped): phase requirements, related code files, architecture decisions
+- [ ] **CTXT-03**: L2 context (on-demand): vector store retrieval for code search, documentation lookup
+- [ ] **CTXT-04**: Vector store (LanceDB/Qdrant) indexes codebase for semantic search
+- [ ] **CTXT-05**: Tree-sitter parses code for structural understanding (functions, classes, imports)
+- [ ] **CTXT-06**: Context compression summarizes large outputs to fit within token budgets
+- [ ] **CTXT-07**: Hard token budgets enforced per agent call to prevent context exhaustion
+
+### Security Pipeline
+
+- [ ] **SECP-01**: Semgrep runs static analysis with custom rules for AI-generated code patterns
+- [ ] **SECP-02**: Trivy scans container images and dependencies for known vulnerabilities
+- [ ] **SECP-03**: Gitleaks detects secrets, API keys, and credentials in generated code
+- [ ] **SECP-04**: Quality gates block advancement when critical/high vulnerabilities found
+- [ ] **SECP-05**: Security scanning runs after every code generation step, not just at S6 gate
+- [ ] **SECP-06**: Dependency allowlist prevents hallucinated/malicious package installation
+
+### FastAPI Server
+
+- [ ] **SRVR-01**: REST API endpoints for project CRUD, pipeline control, and agent monitoring
+- [ ] **SRVR-02**: WebSocket endpoint for real-time pipeline status and agent output streaming
+- [ ] **SRVR-03**: Authentication and authorization for API access
+- [ ] **SRVR-04**: Pipeline configuration endpoints accept YAML preset selection
+- [ ] **SRVR-05**: Agent management endpoints (start, stop, restart, configure)
+
+### React Dashboard
+
+- [ ] **DASH-01**: Real-time pipeline visualization using React Flow with node status indicators
+- [ ] **DASH-02**: Agent monitoring panel showing status, logs, and metrics per agent
+- [ ] **DASH-03**: Code editor integration via Monaco Editor for viewing/editing generated code
+- [ ] **DASH-04**: Terminal emulator via xterm.js for CLI interaction within dashboard
+- [ ] **DASH-05**: CRDT-based real-time collaboration via Yjs for human-AI co-editing
+- [ ] **DASH-06**: Socket.IO live updates for pipeline progress and agent events
+- [ ] **DASH-07**: Cost dashboard showing token usage and cost breakdown per agent/stage/model
+- [ ] **DASH-08**: Live preview panel showing running application mid-pipeline via sandbox hot-reload
+
+### CLI Application
+
+- [ ] **CLI-01**: TypeScript CLI for project creation with interactive prompts
+- [ ] **CLI-02**: Pipeline execution commands (start, pause, resume, stop)
+- [ ] **CLI-03**: Agent status and log streaming from terminal
+- [ ] **CLI-04**: Pipeline preset selection (full, quick, review-only)
+
+### Event System
+
+- [ ] **EVNT-01**: NATS JetStream pub/sub for all inter-agent messaging
+- [ ] **EVNT-02**: Event replay capability for debugging and audit
+- [ ] **EVNT-03**: Full audit trail: every agent action, gate decision, and state transition persisted
+- [ ] **EVNT-04**: Event-sourced architecture enables complete pipeline reconstruction from events
+
+### Worktree Management
+
+- [ ] **WORK-01**: Worktree lifecycle manager creates/cleans git worktrees per coding agent
+- [ ] **WORK-02**: Per-worktree Docker Compose profiles for runtime isolation
+- [ ] **WORK-03**: Dynamic port allocation prevents conflicts between parallel agents
+- [ ] **WORK-04**: Sequential merge strategy with conflict detection for worktree results
+
+## v2 Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### Deployment Automation (S10)
+
+- **DPLY-01**: Automated cloud deployment to AWS, GCP, Azure
+- **DPLY-02**: Terraform/Pulumi infrastructure-as-code generation
+- **DPLY-03**: Kubernetes manifest generation and deployment
+- **DPLY-04**: CI/CD pipeline generation (GitHub Actions, GitLab CI)
+
+### Multi-Repository
+
+- **MREP-01**: Cross-repo dependency management
+- **MREP-02**: Multi-repo pipeline orchestration
+- **MREP-03**: Cross-repo versioning and deployment ordering
+
+### Platform Extensions
+
+- **PEXT-01**: Plugin/extension marketplace
+- **PEXT-02**: IDE extensions (VS Code, JetBrains)
+- **PEXT-03**: Team features (multi-user, RBAC)
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Custom LLM fine-tuning | RAG with vector store achieves similar results at lower cost; provider model improvements outpace custom fine-tuning |
+| Every programming language from day one | Launch with Python, TypeScript/JavaScript, React; add languages incrementally based on demand |
+| GUI-only interface (no CLI) | CLI-first for developer audience; dashboard enhances but does not replace CLI |
+| Full autonomy without human gates | 48% of AI code is insecure; configurable autonomy with approval gates at phase boundaries |
+| Built-in IDE / code editor | Monaco in dashboard for viewing; users keep their preferred IDE; integrate via MCP/LSP |
+| S10 Cloud Deployment | Generate deployment configs/docs in S9; automated deployment deferred to v2 |
+| Mobile dashboard app | Web dashboard sufficient for v1 |
+| Billing/payment system | Open-source, no monetization in v1 |
 
 ## Traceability
 
+Which phases cover which requirements. Updated during roadmap creation.
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REQ-001 | Phase 1 | Complete |
-| REQ-002 | Phase 1 | Complete |
-| REQ-003 | Phase 1 | Complete |
-| REQ-004 | Phase 1 | Complete |
-| REQ-005 | Phase 1 | Complete |
-| REQ-006 | Phase 2 | Pending |
-| REQ-007 | Phase 2 | Pending |
-| REQ-008 | Phase 2 | Pending |
-| REQ-009 | Phase 2 | Pending |
-| REQ-010 | Phase 2 | Pending |
-| REQ-011 | Phase 2 | Pending |
-| REQ-012 | Phase 2 | Pending |
-| REQ-013 | Phase 2 | Pending |
-| REQ-014 | Phase 2 | Pending |
-| REQ-015 | Phase 8 | Pending |
-| REQ-016 | Phase 3 | Pending |
-| REQ-017 | Phase 3 | Pending |
-| REQ-018 | Phase 3 | Pending |
-| REQ-019 | Phase 3 | Pending |
-| REQ-020 | Phase 3 | Pending |
-| REQ-021 | Phase 4 | Pending |
-| REQ-022 | Phase 8 | Pending |
-| REQ-023 | Phase 4 | Pending |
-| REQ-024 | Phase 4 | Pending |
-| REQ-025 | Phase 4 | Pending |
-| REQ-026 | Phase 4 | Pending |
-| REQ-027 | Phase 4 | Pending |
-| REQ-028 | Phase 4 | Pending |
-| REQ-029 | Phase 4 | Pending |
-| REQ-030 | Phase 4 | Pending |
-| REQ-031 | Phase 4 | Pending |
-| REQ-032 | Phase 4 | Pending |
-| REQ-033 | Phase 4 | Pending |
-| REQ-034 | Phase 4 | Pending |
-| REQ-035 | Phase 7 | Pending |
-| REQ-036 | Phase 4 | Pending |
-| REQ-037 | Phase 4 | Pending |
-| REQ-038 | Phase 3 | Pending |
-| REQ-039 | Phase 5 | Pending |
-| REQ-040 | Phase 5 | Pending |
-| REQ-041 | Phase 6 | Pending |
-| REQ-042 | Phase 6 | Pending |
-| REQ-043 | Phase 8 | Pending |
-| REQ-044 | Phase 7 | Pending |
-| REQ-045 | Phase 7 | Pending |
-| REQ-046 | Phase 7 | Pending |
-| REQ-047 | Phase 7 | Pending |
-| REQ-048 | Phase 4 | Pending |
-| REQ-049 | Phase 7 | Pending |
-| REQ-050 | Phase 7 | Pending |
-| REQ-051 | Phase 8 | Pending |
-| REQ-052 | Phase 8 | Pending |
+| *(populated by roadmapper)* | | |
 
-| REQ-053 | Phase 2 | Pending |
-
-**Coverage:** 53/53 requirements mapped. No orphans.
+**Coverage:**
+- v1 requirements: 98 total
+- Mapped to phases: 0
+- Unmapped: 98
 
 ---
-*Generated: 2026-03-18*
+*Requirements defined: 2026-03-18*
+*Last updated: 2026-03-18 after research synthesis*
