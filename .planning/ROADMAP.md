@@ -88,11 +88,11 @@ Plans:
   3. When a primary model fails, the system automatically falls back to the next model in the fallback chain and completes the request
   4. Token usage and cost are tracked per agent, per stage, and per model, queryable at any time
   5. Pipeline execution can be halted automatically when cumulative cost exceeds a configured budget threshold
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md -- LLM schemas, YAML config, provider registry, and task-based model router
+- [ ] 04-02-PLAN.md -- LLMService facade, fallback chains, cost tracking, budget enforcement, and streaming
 
 ### Phase 5: Context Management
 **Goal**: Agents receive precisely the right context for their task -- always-present essentials, phase-scoped materials, and on-demand retrieval -- within token budgets
