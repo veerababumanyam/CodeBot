@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from graph_engine.engine.compiler import GateFailedError, GraphCompiler
+from graph_engine.engine.executor import ExecutionEngine
 from graph_engine.engine.validator import GraphValidator, ValidationResult
 from graph_engine.models.edge_types import EdgeDefinition, EdgeType
 from graph_engine.models.execution import ExecutionRecord, GraphResult
@@ -17,6 +18,7 @@ __version__ = "0.1.0"
 __all__ = [
     "EdgeDefinition",
     "EdgeType",
+    "ExecutionEngine",
     "ExecutionRecord",
     "ExecutionTracer",
     "GateFailedError",
