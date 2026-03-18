@@ -15,9 +15,9 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **GRPH-04**: System can load and validate graph definitions from YAML
 - [x] **GRPH-05**: System detects cycles, missing dependencies, and invalid edge types during validation
 - [ ] **GRPH-06**: System can checkpoint graph state and resume execution from checkpoint
-- [ ] **GRPH-07**: System traces execution with timing, token usage, and output per node
-- [ ] **GRPH-08**: System executes parallel branches concurrently via asyncio TaskGroup
-- [ ] **GRPH-09**: System supports conditional routing (SWITCH nodes) based on SharedState
+- [x] **GRPH-07**: System traces execution with timing, token usage, and output per node
+- [x] **GRPH-08**: System executes parallel branches concurrently via asyncio TaskGroup
+- [x] **GRPH-09**: System supports conditional routing (SWITCH nodes) based on SharedState
 - [ ] **GRPH-10**: System supports dynamic fan-out via LangGraph Send API for parallel agent dispatch
 
 ### Agent Framework
@@ -249,9 +249,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GRPH-04 | Phase 2 | Complete |
 | GRPH-05 | Phase 2 | Complete |
 | GRPH-06 | Phase 2 | Pending |
-| GRPH-07 | Phase 2 | Pending |
-| GRPH-08 | Phase 2 | Pending |
-| GRPH-09 | Phase 2 | Pending |
+| GRPH-07 | Phase 2 | Complete |
+| GRPH-08 | Phase 2 | Complete |
+| GRPH-09 | Phase 2 | Complete |
 | GRPH-10 | Phase 2 | Pending |
 | AGNT-01 | Phase 3 | Pending |
 | AGNT-02 | Phase 3 | Pending |

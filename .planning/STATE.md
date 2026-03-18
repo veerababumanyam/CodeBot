@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Completed 02-01-PLAN.md (Domain models, YAML loader, graph validator)
-last_updated: "2026-03-18T10:31:22.000Z"
-last_activity: 2026-03-18 -- Completed 02-01 (Domain models, YAML loader, graph validator)
+stopped_at: Completed 02-02-PLAN.md (GraphCompiler, ExecutionEngine, ExecutionTracer)
+last_updated: "2026-03-18T10:44:40.000Z"
+last_activity: 2026-03-18 -- Completed 02-02 (GraphCompiler, ExecutionEngine, ExecutionTracer)
 progress:
   total_phases: 11
   completed_phases: 1
   total_plans: 29
-  completed_plans: 5
-  percent: 17
+  completed_plans: 6
+  percent: 21
 ---
 
 # Project State
@@ -26,29 +26,29 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 2 of 11 (Graph Engine)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In Progress
-Last activity: 2026-03-18 -- Completed 02-01 (Domain models, YAML loader, graph validator)
+Last activity: 2026-03-18 -- Completed 02-02 (GraphCompiler, ExecutionEngine, ExecutionTracer)
 
-Progress: [██░░░░░░░░] 17%
+Progress: [██░░░░░░░░] 21%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7 (Phase 1: 3, Phase 5: 3, Phase 2: 1)
+- Total plans completed: 8 (Phase 1: 3, Phase 5: 3, Phase 2: 2)
 - Average duration: 7min (Phases 2+5)
-- Total execution time: 26min (Phases 2+5, Phase 1 pre-GSD)
+- Total execution time: 36min (Phases 2+5, Phase 1 pre-GSD)
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Foundation | 3/3 | N/A | N/A |
-| 2. Graph Engine | 1/3 | 5min | 5min |
+| 2. Graph Engine | 2/3 | 15min | 8min |
 | 5. Context Management | 3/3 | 21min | 7min |
 
 **Recent Trend:**
-- Last 5 plans: 05-01 (8min), 05-02 (8min), 05-03 (5min), 02-01 (5min)
+- Last 5 plans: 05-01 (8min), 05-02 (8min), 05-03 (5min), 02-01 (5min), 02-02 (10min)
 - Trend: Improving
 
 *Updated after each plan completion*
@@ -80,6 +80,9 @@ Recent decisions affecting current work:
 - [Phase 2-01]: noqa TC001 for Pydantic model imports that must stay at runtime
 - [Phase 2-01]: Kahn's algorithm with sorted initial queue for deterministic layer ordering
 - [Phase 2-01]: Loop back-edge detection via BFS descendant check from LOOP node
+- [Phase 2-02]: LangGraph strips non-TypedDict keys from state -- SWITCH routing must use node_outputs
+- [Phase 2-02]: add_conditional_edges requires explicit path_map to register target nodes
+- [Phase 2-02]: SWITCH node function evaluates conditions and stores route hint in node_outputs for router
 
 ### Pending Todos
 
@@ -94,5 +97,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 02-01-PLAN.md (Domain models, YAML loader, graph validator)
+Stopped at: Completed 02-02-PLAN.md (GraphCompiler, ExecutionEngine, ExecutionTracer)
 Resume file: None
