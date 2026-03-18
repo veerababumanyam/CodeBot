@@ -19,13 +19,13 @@ Public API:
     - :func:`run_worker` -- connect to Temporal and run the worker
 """
 
-from codebot.pipeline.events import PipelineEvent, PipelineEventEmitter
 from codebot.pipeline.checkpoint import (
     PhaseInput,
     PhaseResult,
     PipelineCheckpoint,
     PipelineInput,
 )
+from codebot.pipeline.events import PipelineEvent, PipelineEventEmitter
 from codebot.pipeline.loader import load_preset
 from codebot.pipeline.models import (
     GateConfig,
