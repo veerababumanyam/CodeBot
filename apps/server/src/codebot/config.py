@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     # Embedded Vector Store (LanceDB — runs in-process, no Docker service needed)
     lancedb_path: str = "data/lancedb"
 
+    # LLM Configuration
+    llm_config_path: str = "configs/providers/llm.yaml"
+
     # Server
     debug: bool = True
     log_level: str = "INFO"

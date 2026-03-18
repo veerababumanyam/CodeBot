@@ -1,0 +1,110 @@
+# CodeBot LLM Provider Configuration
+# Loaded by apps/server/src/codebot/llm/config.py
+
+providers:
+  - model_name: "claude-opus"
+    litellm_model: "anthropic/claude-opus-4"
+    api_key_env: "ANTHROPIC_API_KEY"
+    enabled: true
+
+  - model_name: "claude-sonnet"
+    litellm_model: "anthropic/claude-sonnet-4"
+    api_key_env: "ANTHROPIC_API_KEY"
+    enabled: true
+
+  - model_name: "claude-haiku"
+    litellm_model: "anthropic/claude-haiku-3.5"
+    api_key_env: "ANTHROPIC_API_KEY"
+    enabled: true
+
+  - model_name: "gpt-4o"
+    litellm_model: "openai/gpt-4o"
+    api_key_env: "OPENAI_API_KEY"
+    enabled: true
+
+  - model_name: "gpt-4o-mini"
+    litellm_model: "openai/gpt-4o-mini"
+    api_key_env: "OPENAI_API_KEY"
+    enabled: true
+
+  - model_name: "gemini-pro"
+    litellm_model: "gemini/gemini-2.5-pro"
+    api_key_env: "GOOGLE_API_KEY"
+    enabled: true
+
+  - model_name: "gemini-flash"
+    litellm_model: "gemini/gemini-2.5-flash"
+    api_key_env: "GOOGLE_API_KEY"
+    enabled: true
+
+  - model_name: "ollama-llama"
+    litellm_model: "ollama/llama3.1:70b"
+    api_base: "http://localhost:11434"
+    enabled: true
+
+routing_table:
+  ORCHESTRATION:
+    primary_model: "claude-opus"
+    fallback_models: ["gpt-4o", "gemini-pro"]
+    reason: "Complex planning and reasoning"
+  CODE_GENERATION:
+    primary_model: "claude-sonnet"
+    fallback_models: ["gpt-4o", "gemini-pro"]
+    reason: "Fast, high-quality code generation"
+  CODE_REVIEW:
+    primary_model: "claude-opus"
+    fallback_models: ["gpt-4o"]
+    reason: "Nuanced code understanding"
+  RESEARCH:
+    primary_model: "gemini-pro"
+    fallback_models: ["claude-opus"]
+    reason: "Large context window for research synthesis"
+  SIMPLE_TRANSFORM:
+    primary_model: "claude-haiku"
+    fallback_models: ["gemini-flash", "gpt-4o-mini"]
+    reason: "Fast, cheap transformations"
+  DOCUMENTATION:
+    primary_model: "claude-sonnet"
+    fallback_models: ["gpt-4o", "gemini-pro"]
+    reason: "Clear technical writing"
+  TESTING:
+    primary_model: "claude-sonnet"
+    fallback_models: ["gpt-4o"]
+    reason: "Test generation with good coverage"
+  DEBUGGING:
+    primary_model: "claude-opus"
+    fallback_models: ["gpt-4o", "claude-sonnet"]
+    reason: "Deep reasoning for root cause analysis"
+  BRAINSTORMING:
+    primary_model: "claude-opus"
+    fallback_models: ["gemini-pro", "gpt-4o"]
+    reason: "Creative ideation"
+  ARCHITECTURE:
+    primary_model: "claude-opus"
+    fallback_models: ["gpt-4o", "gemini-pro"]
+    reason: "System design expertise"
+  PLANNING:
+    primary_model: "claude-sonnet"
+    fallback_models: ["gpt-4o"]
+    reason: "Task decomposition"
+  SECURITY_SCAN:
+    primary_model: "claude-sonnet"
+    fallback_models: ["gpt-4o"]
+    reason: "Security pattern recognition"
+
+budget:
+  global_budget_usd: 50.0
+  warn_threshold: 0.8
+  halt_threshold: 0.95
+  agent_budgets: {}
+
+fallback:
+  num_retries: 3
+  timeout_seconds: 60
+  cooldown_seconds: 300
+
+settings:
+  default_temperature: 0.7
+  default_max_tokens: 4096
+  enable_streaming: true
+  enable_cost_tracking: true
