@@ -1,0 +1,11 @@
+{
+  "name": "@codebot/agent-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CodeBot agent SDK (Turborepo shim for Python package)",
+  "scripts": {
+    "build": "echo 'Python build handled by uv'",
+    "lint": "uv run ruff check src/",
+    "typecheck": "uv run mypy src/"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@codebot/server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CodeBot FastAPI backend server (Turborepo shim)",
+  "scripts": {
+    "build": "echo 'Python build handled by uv'",
+    "test": "uv run pytest",
+    "lint": "uv run ruff check src/",
+    "typecheck": "uv run mypy src/",
+    "migrate": "uv run alembic upgrade head",
+    "dev": "uv run uvicorn codebot.main:app --reload --host 0.0.0.0 --port 8000"
+  }
+}
