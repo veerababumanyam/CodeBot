@@ -55,12 +55,12 @@ Plans:
   3. Conditional routing (SWITCH nodes) directs execution to different branches based on SharedState values
   4. Graph execution can checkpoint mid-run and resume from that checkpoint after restart
   5. Execution traces capture timing, token usage, and output per node for every graph run
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
-- [ ] 02-03: TBD
+- [ ] 02-01-PLAN.md — Domain models, YAML loader, and graph validator (NodeType, EdgeType, SharedState, GraphDefinition, Kahn's cycle detection)
+- [ ] 02-02-PLAN.md — Graph compiler and execution engine (YAML-to-LangGraph compilation, SWITCH routing, parallel execution, execution tracing)
+- [ ] 02-03-PLAN.md — Checkpointing and dynamic fan-out (AsyncPostgresSaver checkpoint/resume, LangGraph Send API for runtime parallelism)
 
 ### Phase 3: Agent Framework
 **Goal**: Agents can be defined, configured, and executed within the graph engine following a structured cognitive cycle
