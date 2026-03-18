@@ -18,7 +18,7 @@ from codebot.db.models import (
     User,
     UserRole,
 )
-from codebot.db.models.security import Severity
+from codebot.db.models.security import FindingType, Severity
 
 
 # ---------------------------------------------------------------------------
@@ -226,3 +226,54 @@ async def test_all_expected_tables_exist(async_session: AsyncSession) -> None:
     actual_tables = {row[0] for row in result.fetchall()}
     missing = expected_tables - actual_tables
     assert not missing, f"Missing tables: {missing}"
+
+
+# ---------------------------------------------------------------------------
+# 7. SOC 2 compliance fields
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_finding_type_includes_compliance_violation(
+    async_session: AsyncSession,
+) -> None:
+    """FindingType enum must include COMPLIANCE_VIOLATION."""
+    assert FindingType.COMPLIANCE_VIOLATION.value == "COMPLIANCE_VIOLATION"
+
+
+@pytest.mark.asyncio
+async def test_audit_log_soc2_fields_exist(async_session: AsyncSession) -> None:
+    """AuditLog can be created with SOC 2 compliance fields."""
+    from datetime import datetime, timezone
+
+    from codebot.db.models.user import AuditLog
+
+    user = User(
+        email="soc2_test@example.com",
+        password_hash="hash",
+        name="SOC2 Tester",
+        role=UserRole.USER,
+    )
+    async_session.add(user)
+    await async_session.flush()
+
+    retention = datetime(2027, 3, 18, tzinfo=timezone.utc)
+    log = AuditLog(
+        user_id=user.id,
+        action="create_project",
+        resource_type="Project",
+        resource_id="test-123",
+        content_hash="a" * 64,
+        compliance_framework="SOC2",
+        evidence_type="CC6",
+        retention_until=retention,
+    )
+    async_session.add(log)
+    await async_session.flush()
+
+    fetched = await async_session.get(AuditLog, log.id)
+    assert fetched is not None
+    assert fetched.content_hash == "a" * 64
+    assert fetched.compliance_framework == "SOC2"
+    assert fetched.evidence_type == "CC6"
+    assert fetched.retention_until == retention

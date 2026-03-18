@@ -117,6 +117,9 @@ class ApiKey(Base):
 class AuditLog(Base):
     """Immutable audit log entry recording an action taken by a user.
 
+    Database-level immutability is enforced via PostgreSQL rules that prevent
+    UPDATE and DELETE operations on the ``audit_logs`` table.
+
     Attributes:
         id: Primary key UUID.
         user_id: Optional FK to the acting User (null = system action).
@@ -126,6 +129,10 @@ class AuditLog(Base):
         details: Arbitrary JSON payload with contextual details.
         ip_address: Client IP at time of action.
         user_agent: HTTP User-Agent header.
+        content_hash: SHA-256 tamper-detection hash of the log entry payload.
+        compliance_framework: Applicable framework (SOC2, HIPAA, GDPR, PCI_DSS).
+        evidence_type: Trust Service Criteria category (e.g. CC6, CC7, CC8, CC9).
+        retention_until: Retention expiry per compliance policy.
         created_at: When the action occurred.
     """
 
@@ -143,6 +150,18 @@ class AuditLog(Base):
     details: Mapped[dict | None] = mapped_column(sa.JSON, nullable=True)
     ip_address: Mapped[str | None] = mapped_column(sa.String(45), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    content_hash: Mapped[str | None] = mapped_column(
+        sa.String(64), nullable=True, comment="SHA-256 tamper-detection hash"
+    )
+    compliance_framework: Mapped[str | None] = mapped_column(
+        sa.String(32), nullable=True, comment="SOC2, HIPAA, GDPR, PCI_DSS"
+    )
+    evidence_type: Mapped[str | None] = mapped_column(
+        sa.String(64), nullable=True, comment="TSC category e.g. CC6, CC7, CC8, CC9"
+    )
+    retention_until: Mapped[datetime | None] = mapped_column(
+        sa.DateTime(timezone=True), nullable=True, comment="Retention expiry per compliance policy"
+    )
     created_at: Mapped[datetime] = mapped_column(
         sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
     )

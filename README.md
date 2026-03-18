@@ -394,7 +394,6 @@ Multi-Cloud Support
 CodeBot's 30 agents are organized into **10 functional categories**:
 
 ```mermaid
-%%{init: {'theme': 'neutral'}}%%
 pie title Agent Distribution by Category
     "Design" : 5
     "Implementation" : 5
@@ -520,7 +519,6 @@ CodeBot is **provider-agnostic** — use the best model for each task, or run en
 ### Intelligent Routing
 
 ```mermaid
-%%{init: {'theme': 'neutral'}}%%
 graph LR
     A[Incoming Task] --> B{Router}
     B -->|Complex Architecture| C[Claude Opus]
@@ -567,7 +565,6 @@ Code Generated ──> Semgrep ──> SonarQube ──> Trivy ──> Gitleaks 
 ### 5-Layer Architecture
 
 ```mermaid
-%%{init: {'theme': 'neutral'}}%%
 graph TB
     subgraph L1["Layer 1: Presentation"]
         Dashboard["React Dashboard — Vite + TypeScript + Tailwind"]

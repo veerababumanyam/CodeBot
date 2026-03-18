@@ -283,7 +283,7 @@ ExperimentStatus: KEEP | DISCARD | CRASH | TIMEOUT | REGRESSION
 └──────────────────────────────────────────┘
 
 FindingType: VULNERABILITY | SECRET | LICENSE_VIOLATION | CODE_SMELL |
-             DEPENDENCY_RISK | CONFIG_ISSUE
+             DEPENDENCY_RISK | CONFIG_ISSUE | COMPLIANCE_VIOLATION
 
 Severity: CRITICAL | HIGH | MEDIUM | LOW | INFO
 
@@ -422,8 +422,21 @@ UserRole: ADMIN | USER | VIEWER
 │ details: JSON (nullable)                 │
 │ ip_address: String (nullable)            │
 │ user_agent: String (nullable)            │
+│ content_hash: String(64) (nullable)      │
+│ compliance_framework: String(32) (null.) │
+│ evidence_type: String(64) (nullable)     │
+│ retention_until: DateTime (nullable)     │
 │ created_at: DateTime                     │
 └──────────────────────────────────────────┘
+
+SOC 2 Compliance Fields:
+- `content_hash` — SHA-256 tamper-detection hash of the log entry payload
+- `compliance_framework` — Applicable framework: SOC2, HIPAA, GDPR, PCI_DSS
+- `evidence_type` — TSC category: CC6, CC7, CC8, CC9, A1, PI1, C1, P1
+- `retention_until` — Retention expiry per compliance policy
+
+Database-level immutability enforced via PostgreSQL rules preventing
+UPDATE and DELETE on the `audit_logs` table.
 ```
 
 ### 2.4 ProjectManagerReport
@@ -767,6 +780,38 @@ WcagLevel: A | AA | AAA
 │ last_sync_at: DateTime (nullable)        │
 │ created_at: DateTime                     │
 └──────────────────────────────────────────┘
+```
+
+### 2.20 ComplianceReport (Pydantic)
+
+```python
+class ComplianceFramework(StrEnum):
+    SOC2 = "SOC2"
+    HIPAA = "HIPAA"
+    GDPR = "GDPR"
+    PCI_DSS = "PCI_DSS"
+
+class TrustServiceCategory(StrEnum):
+    CC6 = "CC6"   # Logical Access Controls
+    CC7 = "CC7"   # System Operations
+    CC8 = "CC8"   # Change Management
+    CC9 = "CC9"   # Risk Mitigation
+    A1 = "A1"     # Availability
+    PI1 = "PI1"   # Processing Integrity
+    C1 = "C1"     # Confidentiality
+    P1 = "P1"     # Privacy
+
+class ComplianceCheckResult(BaseModel):
+    category: TrustServiceCategory
+    passed: bool
+    description: str
+    evidence: list[str] = []
+
+class ComplianceReport(BaseModel):
+    framework: ComplianceFramework
+    checks: list[ComplianceCheckResult] = []
+    passed: bool = True
+    summary: str = ""
 ```
 
 ---

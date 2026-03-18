@@ -31,7 +31,57 @@ The worktree manager requires more custom engineering (flagged as a concern in S
 | WORK-04 | Sequential merge strategy with conflict detection for worktree results | BranchStrategy with sequential merge, AI-assisted conflict resolution via LLM, octopus and squash alternatives |
 | IMPL-05 | S5 agents execute in parallel in isolated git worktrees | CLIAgentRunner uses WorktreePool.acquire() to provision worktrees before agent execution |
 | IMPL-06 | CLI agent integration delegates coding to Claude Code, Codex CLI, or Gemini CLI | CLIAgentRunner with adapter pattern (ClaudeCodeAdapter, CodexAdapter, GeminiCLIAdapter); subprocess management via SessionManager |
+| CMPL-01 | SOC 2 compliance checker evaluates generated code against Trust Service Criteria | SOC2ComplianceChecker with file-system + pattern-based TSC evaluation; produces ScanFinding with tool="soc2-compliance" |
+| CMPL-02 | Immutable audit logging with tamper-detection content hashing | ImmutableAuditLogger wrapping AuditLog ORM; SHA-256 hashing; PostgreSQL rules prevent UPDATE/DELETE |
+| CMPL-03 | Compliance evidence collection and export for auditor review | ComplianceEvidenceCollector exports structured JSON evidence packages per TSC category |
+| CMPL-04 | COMPLIANCE_VIOLATION finding type in SecurityReport | New FindingType enum value; SecurityGate can evaluate compliance findings via require_compliance_pass flag |
 </phase_requirements>
+
+## SOC 2 Compliance Integration
+
+### Trust Service Criteria Mapping to CodeBot Subsystems
+
+| TSC | Criteria | CodeBot Subsystem | Check Method |
+|-----|----------|-------------------|--------------|
+| CC6 | Logical Access Controls | Auth middleware, RBAC enforcement | Pattern detection for auth decorators, RBAC checks |
+| CC7 | System Operations | Health checks, structured logging | File/pattern inspection for logging and monitoring |
+| CC8 | Change Management | DB migrations, version control | File existence checks for migration scripts, git history |
+| CC9 | Risk Mitigation | Input validation, dependency pinning, rate limiting | Pattern + file detection |
+| A1 | Availability | Health endpoints, error handling | Endpoint detection, error handler patterns |
+| PI1 | Processing Integrity | Data validation, checksums | Input validation pattern detection |
+| C1 | Confidentiality | Secrets externalized, TLS config | Delegates to Gitleaks results + TLS config inspection |
+| P1 | Privacy | Data retention policies, PII handling | Pattern detection for PII types, retention configs |
+
+### Dual-Level Compliance Architecture
+
+1. **Platform level** (CodeBot itself): Immutable audit logs with SHA-256 content hashing, event-sourced pipeline execution records stored in PostgreSQL, compliance evidence collection and JSON export for auditor review. Database-level immutability enforced via PostgreSQL rules.
+
+2. **Generated code level** (code agents produce): SOC2ComplianceChecker evaluates generated application code against TSC patterns. File-system and regex-based checks identify missing security controls. Findings flow into the standard SecurityReport pipeline as `COMPLIANCE_VIOLATION` type.
+
+### SOC2ComplianceChecker Design
+
+The checker is file-system + pattern-based (not an external CLI tool). It:
+- Reads TSC rule definitions from `configs/security/compliance/soc2.yaml`
+- Scans the project directory for files and patterns matching each TSC category
+- Produces `ScanFinding` objects with `tool="soc2-compliance"` and `finding_type=COMPLIANCE_VIOLATION`
+- Runs as an optional 4th scanner in the SecurityOrchestrator parallel fan-out
+
+### Immutable Audit Logging
+
+The `ImmutableAuditLogger` helper:
+- Computes SHA-256 hash of the log entry payload before insertion
+- Stores hash in `content_hash` column on `audit_logs`
+- Tags entries with `compliance_framework` and `evidence_type`
+- Sets `retention_until` based on framework requirements (SOC 2 = 1 year minimum)
+- Provides `verify()` method to detect tampered entries by recomputing hashes
+
+### Evidence Collection
+
+The `ComplianceEvidenceCollector`:
+- Gathers audit log entries, scan reports, and pipeline execution records
+- Groups evidence by TSC category
+- Exports structured JSON packages suitable for SOC 2 Type II auditor review
+- Supports date range filtering for audit periods
 
 ## Standard Stack
 
