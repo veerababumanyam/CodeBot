@@ -85,6 +85,14 @@ class L0Context(BaseModel):
         pipeline_phase: Current pipeline phase name.
         agent_system_prompt: System prompt for the agent.
         constraints: Non-functional requirements and constraints.
+        branding: Branding settings (role-filtered from ProjectSettings).
+        ui_ux: UI/UX settings (role-filtered from ProjectSettings).
+        i18n: Internationalization settings (role-filtered from ProjectSettings).
+        visibility: Visibility settings (role-filtered from ProjectSettings).
+        deployment: Deployment settings (role-filtered from ProjectSettings).
+        pipeline_settings: Pipeline execution settings (role-filtered from ProjectSettings).
+        accessibility: Accessibility settings (role-filtered from ProjectSettings).
+        project_archetype: Computed archetype string (e.g. "python-fastapi-react-postgresql").
     """
 
     project_name: str
@@ -94,6 +102,30 @@ class L0Context(BaseModel):
     pipeline_phase: str
     agent_system_prompt: str
     constraints: list[str] = []
+    branding: dict[str, object] = {}
+    ui_ux: dict[str, object] = {}
+    i18n: dict[str, object] = {}
+    visibility: dict[str, object] = {}
+    deployment: dict[str, object] = {}
+    pipeline_settings: dict[str, object] = {}
+    accessibility: dict[str, object] = {}
+    project_archetype: str = ""
+
+
+SETTINGS_RELEVANCE: dict[str, list[str]] = {
+    "FRONTEND_DEV": ["tech_stack", "branding", "ui_ux", "i18n", "accessibility"],
+    "BACKEND_DEV": ["tech_stack", "deployment", "i18n"],
+    "MOBILE_DEV": ["tech_stack", "branding", "ui_ux", "i18n", "accessibility"],
+    "DESIGNER": ["branding", "ui_ux", "i18n", "visibility", "accessibility"],
+    "ARCHITECT": ["tech_stack", "deployment", "visibility"],
+    "INFRA_ENGINEER": ["tech_stack", "deployment"],
+    "SECURITY_AUDITOR": ["tech_stack", "visibility", "deployment"],
+    "ACCESSIBILITY_AUDITOR": ["accessibility", "ui_ux", "branding"],
+    "I18N_SPECIALIST": ["i18n", "ui_ux"],
+    "DOC_WRITER": ["tech_stack", "branding", "visibility"],
+    "ORCHESTRATOR": ["tech_stack", "pipeline_settings", "deployment"],
+    "DEFAULT": ["tech_stack"],
+}
 
 
 class L1Context(BaseModel):

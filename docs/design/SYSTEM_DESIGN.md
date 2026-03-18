@@ -29,6 +29,8 @@
 17. [Data Retention Policy](#17-data-retention-policy)
 18. [Agent Safety Guardrails](#18-agent-safety-guardrails)
 19. [Authentication & Authorization](#19-authentication--authorization)
+20. [Dead Letter Queue (DLQ) Processing](#20-dead-letter-queue-dlq-processing)
+21. [Settings Lifecycle](#21-settings-lifecycle)
 
 ---
 
@@ -6722,6 +6724,73 @@ Messages that fail processing after all retry attempts are routed to a Dead Lett
 | Error code is E1001 (rate limit) and retry window has passed | Auto-replay after cooldown period |
 | Error code is E3002 (event bus unavailable) and NATS is healthy | Auto-replay when health check passes |
 | DLQ item age > 30 days and status is `pending` | Auto-discard with notification |
+
+---
+
+## 21. Settings Lifecycle
+
+### 21.1 Overview
+
+The Project Settings system provides typed, versioned preferences that flow from user input through the pipeline into every agent's execution context. Settings are captured at project creation (S0), refined during brainstorming (S1), and can be updated anytime via the API or dashboard.
+
+### 21.2 Settings Flow
+
+```
+User creates project (S0)
+    │
+    ▼
+POST /api/v1/projects { settings: { tech_stack: {...}, branding: {...} } }
+    │
+    ▼
+ProjectSettings.model_validate(request.settings) → Project.config (JSON)
+    │
+    ▼
+Pipeline starts → SharedState["project_settings"] = Project.config
+    │
+    ▼
+S1 Brainstorming → Agent proposes patches → merge into SharedState
+    │                                           │
+    ▼                                           ▼
+User updates via PATCH /settings    ProjectSettingsHistory row created
+    │                                           │
+    ▼                                           ▼
+ContextAdapter filters by agent role → L0Context injected
+    │
+    ▼
+Agent receives typed settings in context window
+```
+
+### 21.3 Role-Based Filtering
+
+Not every agent needs all 8 settings categories. The `SETTINGS_RELEVANCE` map in `apps/server/src/codebot/context/models.py` controls which categories each agent role receives in L0Context:
+
+| Agent Role | Settings Categories |
+|-----------|-------------------|
+| FRONTEND_DEV | tech_stack, branding, ui_ux, i18n, accessibility |
+| BACKEND_DEV | tech_stack, deployment, i18n |
+| DESIGNER | branding, ui_ux, i18n, visibility, accessibility |
+| ARCHITECT | tech_stack, deployment, visibility |
+| ORCHESTRATOR | tech_stack, pipeline_settings, deployment |
+| DEFAULT | tech_stack |
+
+### 21.4 Change Tracking
+
+Every settings mutation creates a `ProjectSettingsHistory` row with:
+- Full JSON snapshot of the settings at that version
+- Who/what triggered the change (`changed_by`, `change_source`)
+- Human-readable summary (`change_summary`)
+
+This enables point-in-time reconstruction and audit trails.
+
+### 21.5 Event Emission
+
+Settings changes emit NATS events:
+- `PROJECT_SETTINGS_CREATED` — when settings are first initialized
+- `PROJECT_SETTINGS_UPDATED` — on any subsequent change
+
+### 21.6 SharedState Integration
+
+Settings are loaded into `SharedState["project_settings"]` at pipeline start. The `merge_dicts` reducer ensures agent patches to individual categories merge rather than overwrite, allowing multiple agents to contribute settings during brainstorming (S1).
 
 ---
 

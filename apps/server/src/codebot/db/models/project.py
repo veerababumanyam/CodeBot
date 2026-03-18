@@ -3,11 +3,15 @@
 import enum
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from codebot.db.models.base import Base
+
+if TYPE_CHECKING:
+    from agent_sdk.models.project_settings import ProjectSettings
 
 
 class ProjectStatus(enum.Enum):
@@ -156,6 +160,18 @@ class Project(Base):
     pipelines: Mapped[list["Pipeline"]] = relationship(
         "Pipeline", back_populates="project", cascade="all, delete-orphan"
     )
+
+    @property
+    def settings(self) -> "ProjectSettings":
+        """Deserialize config JSON into typed ProjectSettings."""
+        from agent_sdk.models.project_settings import ProjectSettings
+
+        return ProjectSettings.model_validate(self.config or {})
+
+    @settings.setter
+    def settings(self, value: "ProjectSettings") -> None:
+        """Serialize ProjectSettings back to config JSON."""
+        self.config = value.model_dump(mode="json")
 
 
 class Pipeline(Base):
