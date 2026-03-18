@@ -138,12 +138,13 @@ Plans:
   3. Code Reviewer agent reviews the generated code and produces actionable feedback that the system can act on
   4. Tester agent generates unit and integration tests that execute against the generated code
   5. When tests fail, Debugger agent performs root cause analysis, generates fixes, and re-runs tests until they pass or max retries are exhausted
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
-- [ ] 07-03: TBD
+- [ ] 07-01-PLAN.md — Input processing domain and Orchestrator agent (RequirementExtractor, ClarificationLoop, OrchestratorAgent)
+- [ ] 07-02-PLAN.md — Backend Dev and Code Reviewer agents (code generation with lint/typecheck, structured review with quality gate)
+- [ ] 07-03-PLAN.md — Tester and Debugger agents (test generation/execution, root cause analysis, ExperimentLoop with keep/discard)
+- [ ] 07-04-PLAN.md — Pipeline wiring and E2E validation (vertical-slice graph builder, NATS event emission, integration tests)
 
 ### Phase 8: Security Pipeline + Worktree Manager
 **Goal**: Generated code is security-scanned at every step with quality gates, and coding agents operate in fully isolated git worktrees
@@ -221,7 +222,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 4. Multi-LLM Abstraction | 0/2 | Not started | - |
 | 5. Context Management | 0/3 | Not started | - |
 | 6. Pipeline Orchestration | 0/3 | Not started | - |
-| 7. Vertical Slice | 0/3 | Not started | - |
+| 7. Vertical Slice | 0/4 | Not started | - |
 | 8. Security Pipeline + Worktree Manager | 0/3 | Not started | - |
 | 9. Full Agent Roster | 0/5 | Not started | - |
 | 10. FastAPI Server + API Layer | 0/2 | Not started | - |
