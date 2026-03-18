@@ -191,11 +191,11 @@ Plans:
   3. API access requires authentication and enforces authorization (unauthorized requests are rejected)
   4. Pipeline configuration endpoints accept preset selection (full, quick, review-only) and return the configured pipeline
   5. Agent management endpoints allow starting, stopping, restarting, and reconfiguring individual agents
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 10-01: TBD
-- [ ] 10-02: TBD
+- [ ] 10-01-PLAN.md — Auth foundation, response envelope, deps, middleware, project CRUD endpoints (SRVR-01, SRVR-03)
+- [ ] 10-02-PLAN.md — Pipeline config/lifecycle, agent management, WebSocket real-time streaming (SRVR-02, SRVR-04, SRVR-05)
 
 ### Phase 11: React Dashboard + CLI Application
 **Goal**: Users can monitor, control, and interact with CodeBot through a real-time web dashboard and a command-line interface
