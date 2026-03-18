@@ -14,15 +14,13 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from unittest.mock import AsyncMock
+from typing import TYPE_CHECKING
 
 import pytest
 
-from agent_sdk.agents.metrics import AgentMetrics
+from agent_sdk.agents.base import BaseAgent
 from agent_sdk.agents.recovery import RecoveryAction, RecoveryContext, RecoveryStrategy
 from graph_engine.nodes.agent_node import AgentNode, NoOpWorktreeProvider
-
-from conftest import ConcreteTestAgent, FailingTestAgent, SlowTestAgent
 
 
 class MockRetryStrategy(RecoveryStrategy):
@@ -52,7 +50,7 @@ class MockRollbackStrategy(RecoveryStrategy):
         return RecoveryAction(RecoveryAction.ROLLBACK)
 
 
-async def test_agent_node_executes_agent(test_agent: ConcreteTestAgent) -> None:
+async def test_agent_node_executes_agent(test_agent: BaseAgent) -> None:
     """AgentNode wrapping a ConcreteTestAgent returns updated SharedState."""
     node = AgentNode(node_id="test-node", agent=test_agent)
     state = {"task_id": str(uuid.uuid4()), "context": {}}
@@ -60,7 +58,7 @@ async def test_agent_node_executes_agent(test_agent: ConcreteTestAgent) -> None:
     assert result["agent_completed"] is True
 
 
-async def test_agent_node_builds_agent_input(test_agent: ConcreteTestAgent) -> None:
+async def test_agent_node_builds_agent_input(test_agent: BaseAgent) -> None:
     """SharedState with task_id and context keys converts to AgentInput correctly."""
     node = AgentNode(node_id="test-node", agent=test_agent)
     task_id = uuid.uuid4()
@@ -74,7 +72,7 @@ async def test_agent_node_builds_agent_input(test_agent: ConcreteTestAgent) -> N
     assert agent_input.context_tiers == {"l0": "system prompt"}
 
 
-async def test_agent_node_records_metrics(test_agent: ConcreteTestAgent) -> None:
+async def test_agent_node_records_metrics(test_agent: BaseAgent) -> None:
     """After successful execution, node.last_metrics is populated with execution_time_ms > 0."""
     node = AgentNode(node_id="test-node", agent=test_agent)
     state = {"task_id": str(uuid.uuid4()), "context": {}}
@@ -83,7 +81,7 @@ async def test_agent_node_records_metrics(test_agent: ConcreteTestAgent) -> None
     assert node.last_metrics.execution_time_ms >= 0
 
 
-async def test_agent_node_recovery_on_failure(failing_agent: FailingTestAgent) -> None:
+async def test_agent_node_recovery_on_failure(failing_agent: BaseAgent) -> None:
     """When agent raises and recovery returns RETRY_MODIFIED, agent is re-executed up to max_retries."""
     strategy = MockRetryStrategy()
     node = AgentNode(
@@ -100,7 +98,7 @@ async def test_agent_node_recovery_on_failure(failing_agent: FailingTestAgent) -
     assert strategy.call_count >= 2
 
 
-async def test_agent_node_recovery_escalate(failing_agent: FailingTestAgent) -> None:
+async def test_agent_node_recovery_escalate(failing_agent: BaseAgent) -> None:
     """When recovery returns ESCALATE, AgentNode raises the original exception."""
     strategy = MockEscalateStrategy()
     node = AgentNode(
@@ -113,7 +111,7 @@ async def test_agent_node_recovery_escalate(failing_agent: FailingTestAgent) -> 
         await node.execute(state)
 
 
-async def test_agent_node_recovery_rollback(failing_agent: FailingTestAgent) -> None:
+async def test_agent_node_recovery_rollback(failing_agent: BaseAgent) -> None:
     """When recovery returns ROLLBACK, AgentNode returns original state unchanged."""
     strategy = MockRollbackStrategy()
     node = AgentNode(
@@ -127,7 +125,7 @@ async def test_agent_node_recovery_rollback(failing_agent: FailingTestAgent) -> 
     assert "agent_completed" not in result
 
 
-async def test_agent_node_no_recovery_raises(failing_agent: FailingTestAgent) -> None:
+async def test_agent_node_no_recovery_raises(failing_agent: BaseAgent) -> None:
     """When no recovery_strategy set and agent fails, exception propagates."""
     node = AgentNode(node_id="test-node", agent=failing_agent)
     state = {"task_id": str(uuid.uuid4()), "context": {}}
@@ -135,7 +133,7 @@ async def test_agent_node_no_recovery_raises(failing_agent: FailingTestAgent) ->
         await node.execute(state)
 
 
-async def test_agent_node_worktree_stub(test_agent: ConcreteTestAgent) -> None:
+async def test_agent_node_worktree_stub(test_agent: BaseAgent) -> None:
     """AgentNode with NoOpWorktreeProvider executes successfully."""
     worktree = NoOpWorktreeProvider()
     node = AgentNode(
@@ -148,7 +146,7 @@ async def test_agent_node_worktree_stub(test_agent: ConcreteTestAgent) -> None:
     assert result["agent_completed"] is True
 
 
-async def test_agent_node_timeout(slow_agent: SlowTestAgent) -> None:
+async def test_agent_node_timeout(slow_agent: BaseAgent) -> None:
     """AgentNode with timeout_seconds=0.001 cancels long-running agent."""
     node = AgentNode(
         node_id="test-node",
@@ -160,7 +158,7 @@ async def test_agent_node_timeout(slow_agent: SlowTestAgent) -> None:
         await node.execute(state)
 
 
-async def test_agent_node_emits_event_callback(test_agent: ConcreteTestAgent) -> None:
+async def test_agent_node_emits_event_callback(test_agent: BaseAgent) -> None:
     """on_event callback receives dict with agent_id, agent_type, metrics after execution."""
     events: list[dict] = []
 
