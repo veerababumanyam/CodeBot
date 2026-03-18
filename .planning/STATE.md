@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-03-18T19:49:43.796Z"
-last_activity: 2026-03-18 -- Completed 04-02 (LLM service facade, budget, callbacks)
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-03-18T20:04:01.087Z"
+last_activity: 2026-03-18 -- Completed 06-01 (Pipeline config models, preset loader, project detector)
 progress:
   total_phases: 12
   completed_phases: 5
   total_plans: 36
-  completed_plans: 11
-  percent: 34
+  completed_plans: 12
+  percent: 36
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** User describes an idea in natural language, gets working, tested, security-scanned code autonomously through a multi-agent pipeline
-**Current focus:** Phase 4 - Multi-LLM Abstraction
+**Current focus:** Phase 6 - Pipeline Orchestration
 
 ## Current Position
 
-Phase: 4 of 11 (Multi-LLM Abstraction)
-Plan: 2 of 3 in current phase
+Phase: 6 of 11 (Pipeline Orchestration)
+Plan: 1 of 4 in current phase
 Status: In Progress
-Last activity: 2026-03-18 -- Completed 04-02 (LLM service facade, budget, callbacks)
+Last activity: 2026-03-18 -- Completed 06-01 (Pipeline config models, preset loader, project detector)
 
-Progress: [███░░░░░░░] 34%
+Progress: [████░░░░░░] 36%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 2)
-- Average duration: 8min (Phases 2+3+4+5)
-- Total execution time: 76min (Phases 2+3+4+5, Phase 1 pre-GSD)
+- Total plans completed: 14 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 2, Phase 6: 1)
+- Average duration: 7min (Phases 2+3+4+5+6)
+- Total execution time: 81min (Phases 2+3+4+5+6, Phase 1 pre-GSD)
 
 **By Phase:**
 
@@ -48,9 +48,10 @@ Progress: [███░░░░░░░] 34%
 | 3. Agent Framework | 2/2 | 14min | 7min |
 | 4. Multi-LLM Abstraction | 2/3 | 21min | 11min |
 | 5. Context Management | 3/3 | 21min | 7min |
+| 6. Pipeline Orchestration | 1/4 | 5min | 5min |
 
 **Recent Trend:**
-- Last 5 plans: 02-03 (5min), 03-01 (8min), 03-02 (6min), 04-01 (9min), 04-02 (12min)
+- Last 5 plans: 03-01 (8min), 03-02 (6min), 04-01 (9min), 04-02 (12min), 06-01 (5min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -110,6 +111,11 @@ Recent decisions affecting current work:
 - [Phase 4-02]: litellm.Router typed as Any due to missing py.typed in litellm package
 - [Phase 4-02]: Conservative fallback pricing ($0.01/1k input, $0.03/1k output) for unknown models
 - [Phase 4-02]: Deduplicated fallback mappings when same primary model in multiple task types
+- [Phase 6-01]: frozen=True ConfigDict on all pipeline config models for immutability
+- [Phase 6-01]: full.yaml has 11 phases (S0-S10) with human gates on design and deliver
+- [Phase 6-01]: Brownfield/improve project types skip brainstorm and research phases via skip_for_project_types
+- [Phase 6-01]: Source file count threshold of 50 distinguishes inflight from brownfield
+- [Phase 6-01]: PRD content project_type hint overrides heuristic detection
 
 ### Pending Todos
 
@@ -123,6 +129,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-18T18:59:00.192Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-03-18T20:02:02Z
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None

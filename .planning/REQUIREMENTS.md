@@ -51,10 +51,10 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **PIPE-01**: System executes 10-stage SDLC pipeline: S0 Init → S1 Brainstorm → S2 Research → S3 Architecture → S4 Planning → S5 Implementation → S6 QA → S7 Testing → S8 Debug → S9 Documentation
 - [ ] **PIPE-02**: Stages S3, S5, and S6 execute agents in parallel via DAG topology
 - [ ] **PIPE-03**: Pipeline supports entry/exit gates with human approval at configurable checkpoints
-- [ ] **PIPE-04**: Pipeline configurations loadable from YAML presets: full, quick, review-only
+- [x] **PIPE-04**: Pipeline configurations loadable from YAML presets: full, quick, review-only
 - [ ] **PIPE-05**: Temporal provides durable workflow orchestration with retry, timeout, and crash recovery
 - [ ] **PIPE-06**: Pipeline can resume from last checkpoint after failure or manual pause
-- [ ] **PIPE-07**: Pipeline detects project type (greenfield, inflight, brownfield) and adapts stage configuration
+- [x] **PIPE-07**: Pipeline detects project type (greenfield, inflight, brownfield) and adapts stage configuration
 - [ ] **PIPE-08**: Pipeline emits events to NATS JetStream for every stage transition, agent action, and gate decision
 
 ### Input Processing (S0)
@@ -276,10 +276,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PIPE-01 | Phase 6 | Pending |
 | PIPE-02 | Phase 6 | Pending |
 | PIPE-03 | Phase 6 | Pending |
-| PIPE-04 | Phase 6 | Pending |
+| PIPE-04 | Phase 6 | Complete |
 | PIPE-05 | Phase 6 | Pending |
 | PIPE-06 | Phase 6 | Pending |
-| PIPE-07 | Phase 6 | Pending |
+| PIPE-07 | Phase 6 | Complete |
 | PIPE-08 | Phase 6 | Pending |
 | INPT-01 | Phase 7 | Pending |
 | INPT-02 | Phase 7 | Pending |
