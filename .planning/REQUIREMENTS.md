@@ -243,13 +243,143 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| *(populated by roadmapper)* | | |
+| GRPH-01 | Phase 2 | Pending |
+| GRPH-02 | Phase 2 | Pending |
+| GRPH-03 | Phase 2 | Pending |
+| GRPH-04 | Phase 2 | Pending |
+| GRPH-05 | Phase 2 | Pending |
+| GRPH-06 | Phase 2 | Pending |
+| GRPH-07 | Phase 2 | Pending |
+| GRPH-08 | Phase 2 | Pending |
+| GRPH-09 | Phase 2 | Pending |
+| GRPH-10 | Phase 2 | Pending |
+| AGNT-01 | Phase 3 | Pending |
+| AGNT-02 | Phase 3 | Pending |
+| AGNT-03 | Phase 3 | Pending |
+| AGNT-04 | Phase 3 | Pending |
+| AGNT-05 | Phase 3 | Pending |
+| AGNT-06 | Phase 3 | Pending |
+| AGNT-07 | Phase 3 | Pending |
+| AGNT-08 | Phase 9 | Pending |
+| AGNT-09 | Phase 11 | Pending |
+| AGNT-10 | Phase 11 | Pending |
+| AGNT-11 | Phase 11 | Pending |
+| AGNT-12 | Phase 3 | Pending |
+| LLM-01 | Phase 4 | Pending |
+| LLM-02 | Phase 4 | Pending |
+| LLM-03 | Phase 4 | Pending |
+| LLM-04 | Phase 4 | Pending |
+| LLM-05 | Phase 4 | Pending |
+| LLM-06 | Phase 4 | Pending |
+| LLM-07 | Phase 4 | Pending |
+| LLM-08 | Phase 4 | Pending |
+| PIPE-01 | Phase 6 | Pending |
+| PIPE-02 | Phase 6 | Pending |
+| PIPE-03 | Phase 6 | Pending |
+| PIPE-04 | Phase 6 | Pending |
+| PIPE-05 | Phase 6 | Pending |
+| PIPE-06 | Phase 6 | Pending |
+| PIPE-07 | Phase 6 | Pending |
+| PIPE-08 | Phase 6 | Pending |
+| INPT-01 | Phase 7 | Pending |
+| INPT-02 | Phase 7 | Pending |
+| INPT-03 | Phase 9 | Pending |
+| INPT-04 | Phase 7 | Pending |
+| INPT-05 | Phase 7 | Pending |
+| INPT-06 | Phase 9 | Pending |
+| INPT-07 | Phase 9 | Pending |
+| INPT-08 | Phase 9 | Pending |
+| BRST-01 | Phase 9 | Pending |
+| BRST-02 | Phase 9 | Pending |
+| BRST-03 | Phase 9 | Pending |
+| BRST-04 | Phase 9 | Pending |
+| BRST-05 | Phase 9 | Pending |
+| BRST-06 | Phase 9 | Pending |
+| BRST-07 | Phase 9 | Pending |
+| RSRC-01 | Phase 9 | Pending |
+| RSRC-02 | Phase 9 | Pending |
+| RSRC-03 | Phase 9 | Pending |
+| RSRC-04 | Phase 9 | Pending |
+| ARCH-01 | Phase 9 | Pending |
+| ARCH-02 | Phase 9 | Pending |
+| ARCH-03 | Phase 9 | Pending |
+| ARCH-04 | Phase 9 | Pending |
+| ARCH-05 | Phase 9 | Pending |
+| ARCH-06 | Phase 9 | Pending |
+| PLAN-01 | Phase 9 | Pending |
+| PLAN-02 | Phase 9 | Pending |
+| PLAN-03 | Phase 9 | Pending |
+| IMPL-01 | Phase 9 | Pending |
+| IMPL-02 | Phase 7 | Pending |
+| IMPL-03 | Phase 9 | Pending |
+| IMPL-04 | Phase 9 | Pending |
+| IMPL-05 | Phase 8 | Pending |
+| IMPL-06 | Phase 8 | Pending |
+| IMPL-07 | Phase 7 | Pending |
+| QA-01 | Phase 7 | Pending |
+| QA-02 | Phase 9 | Pending |
+| QA-03 | Phase 9 | Pending |
+| QA-04 | Phase 9 | Pending |
+| QA-05 | Phase 9 | Pending |
+| QA-06 | Phase 7 | Pending |
+| QA-07 | Phase 9 | Pending |
+| TEST-01 | Phase 7 | Pending |
+| TEST-02 | Phase 7 | Pending |
+| TEST-03 | Phase 9 | Pending |
+| TEST-04 | Phase 9 | Pending |
+| TEST-05 | Phase 7 | Pending |
+| DBUG-01 | Phase 7 | Pending |
+| DBUG-02 | Phase 7 | Pending |
+| DBUG-03 | Phase 7 | Pending |
+| DBUG-04 | Phase 9 | Pending |
+| DOCS-01 | Phase 9 | Pending |
+| DOCS-02 | Phase 9 | Pending |
+| DOCS-03 | Phase 9 | Pending |
+| DOCS-04 | Phase 9 | Pending |
+| CTXT-01 | Phase 5 | Pending |
+| CTXT-02 | Phase 5 | Pending |
+| CTXT-03 | Phase 5 | Pending |
+| CTXT-04 | Phase 5 | Pending |
+| CTXT-05 | Phase 5 | Pending |
+| CTXT-06 | Phase 5 | Pending |
+| CTXT-07 | Phase 5 | Pending |
+| SECP-01 | Phase 8 | Pending |
+| SECP-02 | Phase 8 | Pending |
+| SECP-03 | Phase 8 | Pending |
+| SECP-04 | Phase 8 | Pending |
+| SECP-05 | Phase 8 | Pending |
+| SECP-06 | Phase 8 | Pending |
+| SRVR-01 | Phase 10 | Pending |
+| SRVR-02 | Phase 10 | Pending |
+| SRVR-03 | Phase 10 | Pending |
+| SRVR-04 | Phase 10 | Pending |
+| SRVR-05 | Phase 10 | Pending |
+| DASH-01 | Phase 11 | Pending |
+| DASH-02 | Phase 11 | Pending |
+| DASH-03 | Phase 11 | Pending |
+| DASH-04 | Phase 11 | Pending |
+| DASH-05 | Phase 11 | Pending |
+| DASH-06 | Phase 11 | Pending |
+| DASH-07 | Phase 11 | Pending |
+| DASH-08 | Phase 11 | Pending |
+| CLI-01 | Phase 11 | Pending |
+| CLI-02 | Phase 11 | Pending |
+| CLI-03 | Phase 11 | Pending |
+| CLI-04 | Phase 11 | Pending |
+| EVNT-01 | Phase 7 | Pending |
+| EVNT-02 | Phase 9 | Pending |
+| EVNT-03 | Phase 9 | Pending |
+| EVNT-04 | Phase 9 | Pending |
+| WORK-01 | Phase 8 | Pending |
+| WORK-02 | Phase 8 | Pending |
+| WORK-03 | Phase 8 | Pending |
+| WORK-04 | Phase 8 | Pending |
 
 **Coverage:**
-- v1 requirements: 98 total
-- Mapped to phases: 0
-- Unmapped: 98
+- v1 requirements: 131 total
+- Mapped to phases: 131
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-18*
-*Last updated: 2026-03-18 after research synthesis*
+*Last updated: 2026-03-18 -- traceability populated by roadmapper*
