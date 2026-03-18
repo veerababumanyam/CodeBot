@@ -1,10 +1,10 @@
 # CodeBot -- System Architecture Document
 
-**Version:** 2.4
+**Version:** 2.5
 **Date:** 2026-03-18
 **Status:** Draft
 **Author:** Architecture Team
-**Related:** [PRD v2.1](../prd/PRD.md) | [References](../refernces/ref.md)
+**Related:** [PRD v2.5](../prd/PRD.md) | [References](../refernces/ref.md)
 
 ---
 
@@ -1383,7 +1383,7 @@ messaging system.
 |  |  | ESCALATION        | Escalate issue to orchestrator/human   |   |
 |  |  +-------------------+----------------------------------------+   |
 |  |                                                                   |
-|  |  Transport: Redis Streams (persistent, ordered, consumer groups)  |
+|  |  Transport: NATS JetStream (persistent, ordered, consumer groups)  |
 |  |  Format: JSON with schema validation                              |
 |  |  Delivery: At-least-once with idempotency keys                    |
 |  +-------------------------------------------------------------------+
@@ -2266,10 +2266,10 @@ StandardMessage:
 
 | Guarantee | Implementation |
 |---|---|
-| **At-least-once delivery** | Redis Streams with consumer group acknowledgment; unacknowledged messages are re-delivered after timeout |
+| **At-least-once delivery** | NATS JetStream with consumer acknowledgment; unacknowledged messages are re-delivered after timeout |
 | **Per-pair ordering** | Messages between any specific (source, target) pair are delivered in send order via dedicated stream partitions |
 | **Idempotency** | Each message carries an `idempotency_key`; receivers track processed keys to skip duplicates |
-| **Durability** | Redis Streams persist messages to disk; critical messages also written to PostgreSQL |
+| **Durability** | NATS JetStream persists messages to disk; critical messages also written to PostgreSQL |
 
 ### 16.3 Large Message Offloading
 
@@ -2363,7 +2363,7 @@ Observability Data Flow:
 |---|---|---|
 | Agent execution logs | 90 days | Auto-purge from PostgreSQL and Object Store |
 | LLM request/response logs | 30 days | Auto-purge from Object Store |
-| Event bus messages | 7 days | Auto-purge from Redis Streams |
+| Event bus messages | 7 days | Auto-purge from NATS JetStream |
 | Security scan results | 1 year | Auto-archive to cold storage (S3 Glacier / equivalent) |
 | Build artifacts | 30 days after project completion | Auto-purge from Object Store |
 | Project configuration | Indefinite | Retained as long as project exists |
@@ -2720,5 +2720,5 @@ written to PostgreSQL.
 
 ---
 
-*Document generated for CodeBot v2.4 architecture planning. Subject to revision
+*Document generated for CodeBot v2.5 architecture planning. Subject to revision
 as the system evolves through milestones M1-M8.*

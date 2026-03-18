@@ -1,6 +1,6 @@
 # CodeBot API Specification
 
-> **Version:** 2.3.0
+> **Version:** 2.5.0
 > **Base URL:** `https://<host>/api/v1`
 > **Protocol:** HTTPS (TLS 1.3)
 > **Content-Type:** `application/json`

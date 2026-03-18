@@ -1,6 +1,6 @@
 # CodeBot Technical Requirements Document
 
-**Version:** 2.4
+**Version:** 2.5
 **Last Updated:** 2026-03-18
 **Status:** Draft
 **Authors:** CodeBot Core Team
@@ -1821,4 +1821,4 @@ docker compose up -d
 
 ---
 
-*End of Technical Requirements Document (v2.4)*
+*End of Technical Requirements Document (v2.5)*

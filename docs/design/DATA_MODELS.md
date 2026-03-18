@@ -1,6 +1,6 @@
 # CodeBot — Data Models & Configuration Design
 
-**Version:** 2.4
+**Version:** 2.5
 **Date:** 2026-03-18
 
 ---
@@ -1515,7 +1515,7 @@ monitoring:
 
 ## 5. Agent Graph Definition Schema
 
-Example of how the expanded SDLC pipeline is defined as a MASFactory-compatible graph with all 29 agents:
+Example of how the expanded SDLC pipeline is defined as a MASFactory-compatible graph with all 30 agents:
 
 ```python
 # templates/pipelines/standard_sdlc.py
@@ -1539,7 +1539,7 @@ from codebot.agents import (
 )
 
 def create_sdlc_pipeline(project_config: dict) -> RootGraph:
-    """Create the expanded SDLC pipeline graph with 29 agents."""
+    """Create the expanded SDLC pipeline graph with 30 agents."""
 
     graph = RootGraph(
         name="sdlc_pipeline_v2",

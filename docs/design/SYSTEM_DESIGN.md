@@ -1,9 +1,9 @@
 # CodeBot System Design Document
 
-> **Version:** 2.4
+> **Version:** 2.5
 > **Date:** 2026-03-18
 > **Status:** Draft
-> **Related:** PRD v2.3
+> **Related:** PRD v2.5
 > **Architecture:** Graph-Centric Multi-Agent System (LangGraph engine, inspired by MASFactory, arXiv:2603.06007)
 
 ---
@@ -6230,4 +6230,4 @@ CodeBot supports dual authentication mechanisms:
 
 ---
 
-*Document generated for CodeBot v2.3 -- Last updated: 2026-03-18*
+*Document generated for CodeBot v2.5 -- Last updated: 2026-03-18*

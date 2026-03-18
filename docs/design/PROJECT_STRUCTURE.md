@@ -1,6 +1,6 @@
 # CodeBot — Project Structure
 
-**Version:** 2.4
+**Version:** 2.5
 **Date:** 2026-03-18
 
 ---
@@ -181,7 +181,7 @@ codebot/
 │   │   │       │   ├── __init__.py
 │   │   │       │   ├── orchestrator.py    # Security scan orchestrator
 │   │   │       │   ├── sast.py            # Semgrep + SonarQube
-│   │   │       │   ├── dast.py            # Shannon integration
+│   │   │       │   ├── dast.py            # OWASP ZAP integration
 │   │   │       │   ├── dependency.py      # Trivy + OpenSCA
 │   │   │       │   ├── secrets.py         # Gitleaks
 │   │   │       │   ├── license.py         # ScanCode/FOSSology/ORT

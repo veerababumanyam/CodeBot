@@ -1,10 +1,10 @@
 # CodeBot Agent Workflows
 
-**Version:** 2.3
+**Version:** 2.5
 **Date:** 2026-03-18
 **Status:** Draft
 **Author:** Architecture Team
-**Related:** [PRD v2.1](../prd/PRD.md) | [MASFactory (arXiv:2603.06007)](https://github.com/BUPT-GAMMA/MASFactory)
+**Related:** [PRD v2.5](../prd/PRD.md) | LangGraph + Temporal
 
 ---
 

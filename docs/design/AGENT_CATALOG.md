@@ -1,6 +1,6 @@
 # CodeBot — Enhanced Agent Catalog
 
-**Version:** 2.3
+**Version:** 2.5
 **Date:** 2026-03-18
 **Status:** Draft
 **Architecture:** Graph-Centric Multi-Agent System (inspired by MASFactory, arXiv:2603.06007)
@@ -23,16 +23,17 @@
 11. [Testing Agents](#testing-agents)
 12. [Operations Agents](#operations-agents)
 13. [Tooling Agents](#tooling-agents)
-14. [Agent Collaboration Matrix](#agent-collaboration-matrix)
-15. [Agent Scaling Strategy](#agent-scaling-strategy)
-16. [Agent Extension Points](#agent-extension-points)
-17. [Agent Template Configurations](#agent-template-configurations)
+14. [Coordination Agents](#coordination-agents)
+15. [Agent Collaboration Matrix](#agent-collaboration-matrix)
+16. [Agent Scaling Strategy](#agent-scaling-strategy)
+17. [Agent Extension Points](#agent-extension-points)
+18. [Agent Template Configurations](#agent-template-configurations)
 
 ---
 
 ## Agent Catalog Overview
 
-CodeBot employs **29 specialized agents** organized across **10 categories** to cover every aspect of the software development lifecycle. Each agent is a node in a directed computation graph, with typed edges encoding data flow, message passing, and control signals between them.
+CodeBot employs **30 specialized agents** organized across **10 categories** to cover every aspect of the software development lifecycle. Each agent is a node in a directed computation graph, with typed edges encoding data flow, message passing, and control signals between them.
 
 All agents share a common state machine:
 
@@ -74,7 +75,8 @@ IDLE --> INITIALIZING --> EXECUTING --> REVIEWING --> COMPLETED
 | Testing | Tester, Debugger | 2 | Phase 7-8 |
 | Operations | DevOps, GitHub, Documentation Writer | 3 | Phase 9-10 |
 | Tooling | Skill Creator, Hooks Creator, Tools Creator, Integrations | 4 | Cross-cutting |
-| **Total** | | **29** | |
+| Coordination | Project Manager | 1 | Cross-cutting |
+| **Total** | | **30** | |
 
 ---
 
@@ -208,7 +210,7 @@ IDLE --> INITIALIZING --> EXECUTING --> REVIEWING --> COMPLETED
 |------|---------|-------------|
 | `graph_executor` | Execute the agent DAG with topological ordering | Core graph engine |
 | `task_scheduler` | Schedule tasks with dependency resolution | `core/task_scheduler.py` |
-| `event_bus` | Publish/subscribe real-time events | Redis pub/sub or in-memory |
+| `event_bus` | Publish/subscribe real-time events | NATS + JetStream (or in-memory for dev) |
 | `checkpoint_manager` | Save/restore pipeline state | Filesystem + database |
 | `budget_tracker` | Monitor token usage and cost per agent | LLM cost module |
 | `approval_gate` | Block execution pending human approval | WebSocket + REST API |
@@ -3503,9 +3505,76 @@ integrations:
 
 ---
 
+## Coordination Agents
+
+### 17.1 Project Manager Agent (#30)
+
+**Stage:** S0 (Project Initialization) / Cross-cutting
+**Category:** Coordination
+**Model:** Claude Opus 4
+
+#### Overview
+The Project Manager Agent serves as the cross-cutting coordination layer that tracks project-wide progress, manages timelines, allocates resources across agent pools, and ensures pipeline-level coherence. It monitors all stage gates, handles escalations, and provides unified project status reporting.
+
+#### Responsibilities
+- Track project-wide progress across all pipeline stages (S0-S10)
+- Monitor stage gate pass/fail metrics and escalate blockers
+- Allocate and rebalance agent pool resources based on workload
+- Generate unified project status reports and dashboards
+- Manage inter-stage dependencies and handoff coordination
+- Handle timeline estimation and milestone tracking
+- Coordinate human-in-the-loop approvals and notifications
+
+#### Input/Output Specification
+
+**Input:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `project_id` | string | Yes | Active project identifier |
+| `stage_statuses` | object | Yes | Current status of each pipeline stage |
+| `agent_pool_metrics` | object | No | Resource utilization across agent pools |
+| `escalations` | array | No | Pending escalation items |
+
+**Output:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `project_report` | object | Unified project status report |
+| `resource_allocations` | object | Updated agent pool assignments |
+| `escalation_decisions` | array | Resolution actions for escalated items |
+| `timeline_updates` | object | Updated milestone estimates |
+
+#### Tools
+| Tool | Description | Implementation |
+|------|-------------|----------------|
+| `pipeline_monitor` | Track stage gate metrics | NATS + JetStream subscription |
+| `resource_allocator` | Manage agent pool sizing | LangGraph state management |
+| `report_generator` | Generate project status reports | Template + LLM synthesis |
+| `escalation_handler` | Process and route escalations | Rule engine + LLM triage |
+| `timeline_tracker` | Estimate and track milestones | Historical data analysis |
+
+#### Error Handling
+| Error | Recovery | Fallback |
+|-------|----------|----------|
+| Stage gate timeout | Retry with extended timeout | Escalate to human operator |
+| Agent pool exhaustion | Queue tasks, alert operator | Degrade to sequential execution |
+| Metrics collection failure | Use cached metrics | Log gap, continue with partial data |
+
+#### Configuration
+```yaml
+project_manager:
+  model: claude-opus-4
+  poll_interval: 30s
+  escalation_timeout: 300s
+  report_frequency: per_stage_completion
+  max_concurrent_projects: 5
+  resource_rebalance_threshold: 0.8
+```
+
+---
+
 ## Agent Collaboration Matrix
 
-The following matrix shows interaction patterns between all 29 agents. Each cell indicates the type of interaction:
+The following matrix shows interaction patterns between all 30 agents. Each cell indicates the type of interaction:
 
 - **D** = Data flow (state propagation)
 - **M** = Message flow (direct communication)
@@ -3712,13 +3781,13 @@ class EnhancedSecurityAuditor(SecurityAuditorAgent):
 
 ## Agent Template Configurations
 
-### Full Pipeline (All 29 Agents)
+### Full Pipeline (All 30 Agents)
 
 ```yaml
 # configs/pipelines/full.yaml
 pipeline:
   name: full_sdlc
-  description: "Complete SDLC pipeline with all 29 agents"
+  description: "Complete SDLC pipeline with all 30 agents"
   phases:
     - name: ideation
       agents: [brainstorming]

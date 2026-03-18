@@ -129,7 +129,7 @@ Architecture runs after research because the Architect needs technology evaluati
 | Mobile Architecture | Native iOS (SwiftUI/UIKit) and Android (Jetpack Compose/XML) architecture design, or cross-platform (React Native/Flutter) architecture |
 | Infrastructure Design | IaC templates (Terraform, Pulumi, Docker, Kubernetes manifests, Helm charts) for all target cloud providers |
 | API Gateway Design | API gateway architecture with routing rules, authentication, rate limiting, request/response transformation, and versioning |
-| Event Architecture | Event-driven architecture design with message brokers (Kafka, RabbitMQ, Redis Streams, SQS/SNS) |
+| Event Architecture | Event-driven architecture design with message brokers (Kafka, RabbitMQ, NATS JetStream, SQS/SNS) |
 | Deployment Architecture | Multi-environment deployment architecture (dev, staging, production) with blue-green, canary, or rolling update strategies |
 | Security Architecture | Authentication/authorization architecture (OAuth2, OIDC, JWT, RBAC, ABAC), encryption strategy, and network security design |
 | Monitoring Architecture | Observability architecture with logging (ELK, CloudWatch), metrics (Prometheus, Grafana, Datadog), tracing (Jaeger, OpenTelemetry), and alerting |
@@ -294,7 +294,7 @@ Planning runs after architecture because you need the system blueprint, database
 - Full pipeline operation requires at minimum one self-hosted model with 13B+ parameters
 - Offline mode automatically disables: GitHub integration, cloud deployment, template remote registry, external API research
 - All dependencies must be pre-cached (pip/npm packages, Docker images)
-- Context/vector store operates fully local with ChromaDB
+- Context/vector store operates fully local with LanceDB
 - Offline mode indicator in dashboard and CLI
 
 ### 5.4 CLI Agent Integration
@@ -909,7 +909,7 @@ CodeBot captures **cross-session and cross-project memory** — what happened, w
 |---|---|---|
 | **Project Context Store** | Primary hierarchical context — project knowledge, decisions, learnings, brainstorming history, architecture artifacts | Filesystem-paradigm context DB (SQLite + file tree) |
 | **Episodic Memory** | Cross-session observations, decisions, tool usage history, compressed summaries | Vector DB (Chroma) + SQLite with semantic + keyword search |
-| **Code Context** | Code-aware semantic search with AST understanding across all repositories | Vector DB (Chroma/Weaviate) + Tree-sitter indexing |
+| **Code Context** | Code-aware semantic search with AST understanding across all repositories | Vector DB (LanceDB/Qdrant) + Tree-sitter indexing |
 | **Documentation** | Project docs, API specs, requirement tracing, template docs | RAG pipeline with deep document understanding |
 | **Tool Results** | Real-time tool output injection (test results, scan reports, deployment status) | MCP Protocol event stream |
 | **Collaboration Context** | Real-time edits, cursor positions, and change streams from human collaborators | CRDT Store (Yjs/Automerge) |
@@ -1225,7 +1225,7 @@ After completing a project, CodeBot can extract and save the project's architect
 | **Authentication** | NextAuth, Clerk, Auth0, Supabase Auth, Firebase Auth, Keycloak, custom JWT |
 | **Payment** | Stripe, PayPal, Square, Braintree, Lemon Squeezy, Paddle |
 | **Hosting** | AWS, GCP, Azure, Vercel, Railway, Netlify, Fly.io, DigitalOcean, Render, Cloudflare |
-| **Message Queue** | Kafka, RabbitMQ, Redis Streams, SQS, Bull/BullMQ |
+| **Message Queue** | NATS + JetStream (primary), Kafka, RabbitMQ (alternatives) |
 | **Search** | Elasticsearch, OpenSearch, Meilisearch, Typesense, Algolia |
 | **Monitoring** | Prometheus + Grafana, Datadog, New Relic, Sentry, LogRocket |
 | **CDN** | Cloudflare, CloudFront, Fastly, Akamai |

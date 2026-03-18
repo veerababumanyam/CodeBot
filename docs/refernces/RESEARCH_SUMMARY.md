@@ -1,6 +1,6 @@
 # CodeBot — Research Summary
 
-**Version:** 2.4
+**Version:** 2.5
 **Date:** 2026-03-18
 
 ---
@@ -29,7 +29,7 @@ MASFactory provides the foundational architecture for CodeBot's multi-agent orch
 5. **Visualization**: Topology preview and runtime tracing. CodeBot implements via React Flow graph visualization in the dashboard.
 
 ### Integration Strategy
-- Use MASFactory (`pip install masfactory`) as the graph execution engine
+- Use LangGraph as the primary graph execution engine (inspired by MASFactory patterns)
 - Extend its Agent class with CodeBot-specific tooling and context management
 - Use its RootGraph for pipeline definition and execution
 - Leverage its visualization tools for the dashboard agent graph view
