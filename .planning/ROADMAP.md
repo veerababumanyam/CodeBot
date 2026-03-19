@@ -16,11 +16,11 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation Infrastructure** - Monorepo, Docker, NATS, shared models, DB schema
 - [x] **Phase 2: Graph Engine** - Directed graph runtime with all node types, parallel execution, validation, and checkpointing (completed 2026-03-18)
-- [ ] **Phase 3: Agent Framework** - BaseAgent with PRA cycle, AgentNode, state machine, YAML config, isolation, and metrics
+- [x] **Phase 3: Agent Framework** - BaseAgent with PRA cycle, AgentNode, state machine, YAML config, isolation, and metrics (completed 2026-03-18)
 - [x] **Phase 3.5: Project Settings** - Typed, versioned project preferences system (8 categories, SharedState integration, L0Context, audit trail) (INSERTED, completed 2026-03-18)
 - [x] **Phase 4: Multi-LLM Abstraction** - Provider-agnostic LLM interface with routing, fallbacks, cost tracking, and streaming (completed 2026-03-18)
 - [x] **Phase 5: Context Management** - 3-tier context system (L0/L1/L2), vector store, Tree-sitter indexing, and compression (completed 2026-03-18)
-- [ ] **Phase 6: Pipeline Orchestration** - Temporal durable workflows, pipeline lifecycle, gates, presets, and checkpoint/resume
+- [x] **Phase 6: Pipeline Orchestration** - Temporal durable workflows, pipeline lifecycle, gates, presets, and checkpoint/resume (completed 2026-03-18)
 - [ ] **Phase 7: Vertical Slice** - 5 agents end-to-end proving the full architecture (Orchestrator, Backend Dev, Code Reviewer, Tester, Debugger)
 - [ ] **Phase 8: Security Pipeline + Worktree Manager** - Security scanning cascade, worktree isolation, CLI agent bridge, and dependency allowlists
 - [ ] **Phase 9: Full Agent Roster** - All 30 agents across S0-S9 stages with parallel execution and composed graphs
@@ -59,9 +59,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Domain models, YAML loader, and graph validator (NodeType, EdgeType, SharedState, GraphDefinition, Kahn's cycle detection)
-- [ ] 02-02-PLAN.md — Graph compiler and execution engine (YAML-to-LangGraph compilation, SWITCH routing, parallel execution, execution tracing)
-- [ ] 02-03-PLAN.md — Checkpointing and dynamic fan-out (AsyncPostgresSaver checkpoint/resume, LangGraph Send API for runtime parallelism)
+- [x] 02-01-PLAN.md — Domain models, YAML loader, and graph validator (NodeType, EdgeType, SharedState, GraphDefinition, Kahn's cycle detection)
+- [x] 02-02-PLAN.md — Graph compiler and execution engine (YAML-to-LangGraph compilation, SWITCH routing, parallel execution, execution tracing)
+- [x] 02-03-PLAN.md — Checkpointing and dynamic fan-out (AsyncPostgresSaver checkpoint/resume, LangGraph Send API for runtime parallelism)
 
 ### Phase 3: Agent Framework
 **Goal**: Agents can be defined, configured, and executed within the graph engine following a structured cognitive cycle
@@ -76,8 +76,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — BaseAgent with PRA cycle, state machine, recovery strategies, metrics, config models, and protocol stubs
-- [ ] 03-02-PLAN.md — AgentNode graph adapter, YAML agent configs, config loader, and integration tests
+- [x] 03-01-PLAN.md — BaseAgent with PRA cycle, state machine, recovery strategies, metrics, config models, and protocol stubs
+- [x] 03-02-PLAN.md — AgentNode graph adapter, YAML agent configs, config loader, and integration tests
 
 ### Phase 3.5: Project Settings (INSERTED)
 **Goal**: Typed, versioned project preferences that flow into every agent's context
@@ -102,7 +102,7 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md -- LLM schemas, YAML config, provider registry, and task-based model router
-- [ ] 04-02-PLAN.md -- LLMService facade, fallback chains, cost tracking, budget enforcement, and streaming
+- [x] 04-02-PLAN.md -- LLMService facade, fallback chains, cost tracking, budget enforcement, and streaming
 
 ### Phase 5: Context Management
 **Goal**: Agents receive precisely the right context for their task -- always-present essentials, phase-scoped materials, and on-demand retrieval -- within token budgets
@@ -117,9 +117,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md -- Context models, token budget enforcement, and three-tier loader (L0/L1)
-- [ ] 05-02-PLAN.md -- Vector store backends (LanceDB/Qdrant) and Tree-sitter code indexer
-- [ ] 05-03-PLAN.md -- Context compressor and ContextAdapter (full assembly pipeline)
+- [x] 05-01-PLAN.md -- Context models, token budget enforcement, and three-tier loader (L0/L1)
+- [x] 05-02-PLAN.md -- Vector store backends (LanceDB/Qdrant) and Tree-sitter code indexer
+- [x] 05-03-PLAN.md -- Context compressor and ContextAdapter (full assembly pipeline)
 
 ### Phase 6: Pipeline Orchestration
 **Goal**: Multi-stage pipelines run durably with retry, checkpoint/resume, human approval gates, and configurable presets
@@ -131,12 +131,13 @@ Plans:
   3. Pipeline pauses at configured checkpoints for human approval and resumes only after approval is granted
   4. A pipeline that crashes mid-execution resumes from its last checkpoint without re-executing completed stages
   5. Pipeline presets (full, quick, review-only) load from YAML and configure which stages execute
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
-- [ ] 06-03: TBD
+- [x] 06-01-PLAN.md — Pipeline configuration data models, YAML preset loader, and project type detection
+- [x] 06-02-PLAN.md — Pipeline lifecycle DTOs, PhaseRegistry, GateManager, and NATS event emitter
+- [x] 06-03-PLAN.md — NATS JetStream event infrastructure and pipeline event stream
+- [x] 06-04-PLAN.md — Temporal workflows, worker setup, and integration tests
 
 ### Phase 7: Vertical Slice
 **Goal**: A minimal 5-agent pipeline proves the entire architecture end-to-end by accepting a natural language description and producing tested, reviewed code
@@ -241,9 +242,9 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 3.5 -> 4 -> 5 -> 6 -> 7 -> 8 -> 
 | 2. Graph Engine | 3/3 | Complete   | 2026-03-18 |
 | 3. Agent Framework | 2/2 | Complete | 2026-03-18 |
 | 3.5. Project Settings | 1/1 | Complete | 2026-03-18 |
-| 4. Multi-LLM Abstraction | 1/2 | Complete    | 2026-03-18 |
-| 5. Context Management | 3/3 | Complete   | 2026-03-18 |
-| 6. Pipeline Orchestration | 0/3 | Not started | - |
+| 4. Multi-LLM Abstraction | 2/2 | Complete | 2026-03-18 |
+| 5. Context Management | 3/3 | Complete | 2026-03-18 |
+| 6. Pipeline Orchestration | 4/4 | Complete | 2026-03-18 |
 | 7. Vertical Slice | 0/4 | Not started | - |
 | 8. Security Pipeline + Worktree Manager | 0/5 | Not started | - |
 | 9. Full Agent Roster | 0/5 | Not started | - |
