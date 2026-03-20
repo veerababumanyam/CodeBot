@@ -443,12 +443,14 @@ name = "codebot-workspace"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "ephemeral-port-reserve" },
     { name = "instructor" },
     { name = "temporalio" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "ephemeral-port-reserve", specifier = ">=1.1.4" },
     { name = "instructor", specifier = ">=1.14.5" },
     { name = "temporalio", specifier = ">=1.23.0" },
 ]
@@ -522,6 +524,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b2/9d/c3b43da9515bd270df0f80548d9944e389870713cc1fe2b8fb35fe2bcefd/docstring_parser-0.17.0.tar.gz", hash = "sha256:583de4a309722b3315439bb31d64ba3eebada841f2e2cee23b99df001434c912", size = 27442, upload-time = "2025-07-21T07:35:01.868Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/55/e2/2537ebcff11c1ee1ff17d8d0b6f4db75873e3b0fb32c2d4a2ee31ecb310a/docstring_parser-0.17.0-py3-none-any.whl", hash = "sha256:cf2569abd23dce8099b300f9b4fa8191e9582dda731fd533daf54c4551658708", size = 36896, upload-time = "2025-07-21T07:35:00.684Z" },
+]
+
+[[package]]
+name = "ephemeral-port-reserve"
+version = "1.1.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ef/93/3f0b75f75f94227f67ccfe86f989415e40ac054dd67b55dfac7abdc0a2d2/ephemeral_port_reserve-1.1.4.tar.gz", hash = "sha256:b8f7da2c97090cb0801949dec1d6d40c97220505b742a70935ffbd43234c14b2", size = 3541, upload-time = "2021-02-11T17:18:58.971Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2d/2f/28948390896745afd561dad6a39daf49f74637b7b3398582a649b5acc4c5/ephemeral_port_reserve-1.1.4-py2.py3-none-any.whl", hash = "sha256:dae8da99422c643bb52478ed55d5a8428099092391656ba3726ff30c801600c8", size = 4448, upload-time = "2021-02-11T17:18:57.782Z" },
 ]
 
 [[package]]
