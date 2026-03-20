@@ -103,21 +103,21 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Implementation (S5)
 
 - [ ] **IMPL-01**: Frontend agent generates React/TypeScript UI code from design specs
-- [ ] **IMPL-02**: Backend agent generates Python/FastAPI server code from API specs
+- [x] **IMPL-02**: Backend agent generates Python/FastAPI server code from API specs
 - [ ] **IMPL-03**: Mobile agent generates cross-platform or native mobile code
 - [ ] **IMPL-04**: Infrastructure agent generates Docker, CI/CD, and config files
 - [ ] **IMPL-05**: S5 agents execute in parallel in isolated git worktrees
 - [ ] **IMPL-06**: CLI agent integration delegates coding to Claude Code, Codex CLI, or Gemini CLI
-- [ ] **IMPL-07**: Generated code follows project style conventions and linting rules
+- [x] **IMPL-07**: Generated code follows project style conventions and linting rules
 
 ### Quality Assurance (S6)
 
-- [ ] **QA-01**: Code Review agent reviews generated code for correctness, patterns, and maintainability
+- [x] **QA-01**: Code Review agent reviews generated code for correctness, patterns, and maintainability
 - [ ] **QA-02**: Security Scanner agent runs Semgrep, Trivy, and Gitleaks on all generated code
 - [ ] **QA-03**: Accessibility agent audits UI for WCAG 2.1 AA compliance
 - [ ] **QA-04**: Performance agent profiles code for bottlenecks and optimization opportunities
 - [ ] **QA-05**: i18n/L10n agent verifies internationalization completeness
-- [ ] **QA-06**: Quality gates must pass before code advances to Testing phase
+- [x] **QA-06**: Quality gates must pass before code advances to Testing phase
 - [ ] **QA-07**: S6 agents execute in parallel
 
 ### Testing (S7)
@@ -310,18 +310,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLAN-02 | Phase 9 | Pending |
 | PLAN-03 | Phase 9 | Pending |
 | IMPL-01 | Phase 9 | Pending |
-| IMPL-02 | Phase 7 | Pending |
+| IMPL-02 | Phase 7 | Complete |
 | IMPL-03 | Phase 9 | Pending |
 | IMPL-04 | Phase 9 | Pending |
 | IMPL-05 | Phase 8 | Pending |
 | IMPL-06 | Phase 8 | Pending |
-| IMPL-07 | Phase 7 | Pending |
-| QA-01 | Phase 7 | Pending |
+| IMPL-07 | Phase 7 | Complete |
+| QA-01 | Phase 7 | Complete |
 | QA-02 | Phase 9 | Pending |
 | QA-03 | Phase 9 | Pending |
 | QA-04 | Phase 9 | Pending |
 | QA-05 | Phase 9 | Pending |
-| QA-06 | Phase 7 | Pending |
+| QA-06 | Phase 7 | Complete |
 | QA-07 | Phase 9 | Pending |
 | TEST-01 | Phase 7 | Pending |
 | TEST-02 | Phase 7 | Pending |
