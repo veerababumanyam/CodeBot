@@ -1,0 +1,52 @@
+# Template for per-worktree Docker services.
+# Copy and customize per agent worktree, or use env-file overrides.
+# Ports are injected via environment variables from PortAllocator.
+#
+# Usage:
+#   PORT_DB=5434 PORT_REDIS=6380 PORT_WEB=3001 PORT_API=8001 \
+#     docker compose -f docker-compose.worktree.yml --profile worktree up -d
+
+services:
+  worktree-db:
+    image: postgres:16-alpine
+    profiles: ["worktree"]
+    environment:
+      POSTGRES_USER: codebot_agent
+      POSTGRES_PASSWORD: agent_dev
+      POSTGRES_DB: codebot_agent
+    ports:
+      - "${PORT_DB:-5434}:5432"
+    volumes:
+      - worktree-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codebot_agent"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  worktree-redis:
+    image: redis:7-alpine
+    profiles: ["worktree"]
+    ports:
+      - "${PORT_REDIS:-6380}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  worktree-app:
+    image: node:22-slim
+    profiles: ["worktree"]
+    working_dir: /app
+    ports:
+      - "${PORT_WEB:-3001}:3000"
+      - "${PORT_API:-8001}:8000"
+    volumes:
+      - ${WORKTREE_PATH:-.}:/app
+    environment:
+      DATABASE_URL: postgresql://codebot_agent:agent_dev@worktree-db:5432/codebot_agent
+      REDIS_URL: redis://worktree-redis:6379/0
+
+volumes:
+  worktree-db-data:
