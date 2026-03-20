@@ -14,98 +14,36 @@ A user can describe an idea in natural language and get working, tested, securit
 
 <!-- Shipped and confirmed valuable. -->
 
-- ✓ Monorepo foundation (Turborepo, uv, pnpm workspaces) — Phase 01-01
-- ✓ Shared Pydantic models + TypeScript types (agent-sdk, shared-types) — Phase 01-03
-- ✓ NATS JetStream event bus with integration tests — Phase 01-03
-- ✓ Docker stack configuration (PostgreSQL, Redis, NATS) — Phase 01-02
-- ✓ Database schema (Alembic migrations) — Phase 01-02
+- ✓ Monorepo foundation (Turborepo, uv, pnpm workspaces) — v1.0
+- ✓ Shared Pydantic models + TypeScript types — v1.0
+- ✓ NATS JetStream event bus — v1.0
+- ✓ Docker stack (PostgreSQL, Redis, NATS) — v1.0
+- ✓ Database schema (Alembic migrations) — v1.0
+- ✓ Graph execution engine (LangGraph, 9 node types, parallel fan-out, checkpointing) — v1.0
+- ✓ Agent framework (BaseAgent PRA cycle, 7-state FSM, YAML config, recovery strategies) — v1.0
+- ✓ 30 specialized agents across 10 SDLC stages — v1.0
+- ✓ Multi-LLM abstraction (task-based routing, fallback chains, cost tracking, streaming) — v1.0
+- ✓ 3-tier context management (L0/L1/L2, Tree-sitter indexing, vector store, compression) — v1.0
+- ✓ Pipeline orchestration (Temporal workflows, gates, presets, checkpoint/resume) — v1.0
+- ✓ Vertical slice (5-agent NL-to-tested-code pipeline) — v1.0
+- ✓ Security scanning cascade (Semgrep, Trivy, Gitleaks, quality gates) — v1.0
+- ✓ Worktree isolation (WorktreePool, PortAllocator, BranchStrategy) — v1.0
+- ✓ CLI agent adapters (Claude Code, Codex, Gemini) — v1.0
+- ✓ SOC 2 compliance checker with immutable audit logging — v1.0
+- ✓ FastAPI REST API with JWT auth, project/pipeline/agent endpoints — v1.0
+- ✓ WebSocket real-time streaming (Socket.IO + NATS bridge) — v1.0
+- ✓ React dashboard (React Flow pipeline graph, Monaco editor, xterm.js terminal) — v1.0
+- ✓ TypeScript CLI (interactive project creation, pipeline control, log streaming) — v1.0
+- ✓ Creator agents (Skill, Hooks, Tools) — v1.0
 
 ### Active
 
-<!-- Current scope. Building toward these. -->
+<!-- Next milestone scope -->
 
-**Agent Graph Engine**
-- [ ] Directed graph runtime (nodes, edges, execution order, parallel execution)
-- [ ] Node types: AGENT, SUBGRAPH, LOOP, SWITCH, HUMAN_IN_LOOP, PARALLEL, MERGE, CHECKPOINT, TRANSFORM
-- [ ] SharedState for graph-level data flow between nodes
-- [ ] YAML-declarative graph definitions
-- [ ] Graph validation, cycle detection, and execution tracing
-- [ ] Checkpoint/resume for long-running workflows
-
-**Agent Framework**
-- [ ] BaseAgent with Perception-Reasoning-Action (PRA) cognitive cycle
-- [ ] AgentNode wrapper for graph execution
-- [ ] Agent state machine (IDLE → INITIALIZING → EXECUTING → REVIEWING → COMPLETED/FAILED → RECOVERING)
-- [ ] Agent isolation via git worktrees
-- [ ] 30 specialized agents across 10 categories (Orchestration, Ideation, Planning, Research, Design, Implementation, Quality, Testing, Operations, Tooling)
-- [ ] Agent configuration via YAML
-- [ ] Agent skill/hook/tool creation (extensible ecosystem)
-
-**Multi-LLM Abstraction Layer**
-- [ ] Provider-agnostic interface for Anthropic (Claude), OpenAI (GPT-4o+), Google (Gemini), self-hosted (Ollama/vLLM/LocalAI)
-- [ ] Intelligent routing by task type, complexity, privacy, cost, and latency
-- [ ] Fallback chains and retry logic
-- [ ] Token tracking and cost management
-- [ ] Streaming support
-
-**CLI Agent Integration**
-- [ ] Claude Code subprocess/SDK integration
-- [ ] OpenAI Codex CLI integration
-- [ ] Gemini CLI integration
-- [ ] Unified tool interface across CLI agents
-
-**11-Stage SDLC Pipeline (S0–S9)**
-- [ ] S0: Project initialization (PRD ingestion, multi-modal input, tech stack selection)
-- [ ] S1: Brainstorming (idea exploration, competitive analysis, feature prioritization)
-- [ ] S2: Research (technology research, best practices, pattern discovery)
-- [ ] S3: Architecture & Design (system architecture, API design, database schema, UI/UX) — parallel
-- [ ] S4: Planning (task decomposition, dependency graph, sprint planning)
-- [ ] S5: Implementation (code generation across web/mobile/backend) — parallel
-- [ ] S6: Quality Assurance (code review, security scanning, accessibility audit) — parallel
-- [ ] S7: Testing (unit, integration, E2E test generation and execution)
-- [ ] S8: Debug & Fix (automated debugging loop with root cause analysis)
-- [ ] S9: Documentation (API docs, user guides, architecture docs)
-
-**Context Management**
-- [ ] 3-tier system: L0 (always in context), L1 (phase-scoped), L2 (on-demand retrieval)
-- [ ] Vector store integration (ChromaDB/LanceDB/Qdrant)
-- [ ] Tree-sitter code indexing
-- [ ] Context compression and summarization
-
-**Security Pipeline**
-- [ ] Semgrep static analysis
-- [ ] Trivy container/dependency scanning
-- [ ] Gitleaks secret detection
-- [ ] SonarQube integration
-- [ ] Quality gates between pipeline phases
-- [ ] SOC 2 compliance checker integrated into security scanning pipeline
-- [ ] Immutable audit logging with tamper detection (content hashing)
-- [ ] Compliance evidence collection and TSC mapping
-- [ ] COMPLIANCE_VIOLATION finding type for compliance-specific findings
-
-**FastAPI Server**
-- [ ] REST API for project management, pipeline control, agent monitoring
-- [ ] WebSocket for real-time updates
-- [ ] Authentication & authorization
-- [ ] Pipeline configuration endpoints (full, quick, review-only presets)
-
-**React Dashboard**
-- [ ] Real-time pipeline visualization (React Flow)
-- [ ] Agent monitoring and status
-- [ ] Code editor integration (Monaco Editor)
-- [ ] Terminal emulator (xterm.js)
-- [ ] CRDT-based real-time collaboration (Yjs)
-- [ ] Socket.IO live updates
-
-**CLI Application**
-- [ ] TypeScript CLI for project management
-- [ ] Pipeline execution and monitoring
-- [ ] Agent interaction interface
-
-**Event System**
-- [ ] NATS JetStream pub/sub for inter-agent messaging
-- [ ] Event-driven architecture (no direct agent-to-agent calls)
-- [ ] Event replay and audit trail
+- [ ] Cross-phase integration wiring (agents→LLM, agents→context, API→Temporal, activities→registry, worktree→agent)
+- [ ] Dashboard event name alignment with server-side emitter
+- [ ] SonarQube integration for deeper static analysis
+- [ ] S10 Cloud Deployment stage (optional, opt-in)
 
 ### Out of Scope
 
@@ -119,19 +57,18 @@ A user can describe an idea in natural language and get working, tested, securit
 
 ## Context
 
-**Documentation state:** Comprehensive PRD v2.5, Architecture v2.5, System Design v2.5, Agent Catalog v2.5, and Agent Workflows documentation exists in `docs/`. These describe the complete system design and serve as the implementation blueprint.
+**Current state:** v1.0 shipped (2026-03-20). 44,509 LOC across Python and TypeScript. 12 phases, 36 plans executed. All subsystems built and individually tested. Cross-phase integration seams identified in audit — next milestone addresses runtime wiring.
 
-**Existing code:**
-- Monorepo scaffolding with Turborepo (`apps/server`, `apps/dashboard`, `apps/cli`, `libs/agent-sdk`, `libs/shared-types`, `libs/graph-engine`)
-- Shared Pydantic models in `libs/agent-sdk/src/agent_sdk/models/` (agent, task, events, enums, pipeline, project)
-- TypeScript type definitions in `libs/shared-types/src/` (mirroring Python models)
-- Docker Compose stack for local development
-- NATS JetStream event bus with integration tests
-- Python virtual environment configured with uv
+**Codebase:**
+- `apps/server/src/codebot/` — Full Python backend: agents (30), graph engine, LLM abstraction, context, pipeline, security, worktree, CLI agents, API, WebSocket
+- `apps/dashboard/src/` — React dashboard with React Flow, Monaco, xterm.js, Socket.IO
+- `apps/cli/src/` — TypeScript CLI with Commander.js
+- `libs/agent-sdk/`, `libs/graph-engine/` — Shared agent and graph libraries
+- `configs/` — YAML configs for agents, pipelines, stages, security
 
-**Architecture paradigm:** MASFactory-inspired graph-centric multi-agent system. Workflows modeled as directed computation graphs. LangGraph for graph execution, Temporal for durable orchestration.
+**Architecture paradigm:** MASFactory-inspired graph-centric multi-agent system. LangGraph for graph execution, Temporal for durable orchestration.
 
-**Agent cognitive model:** All agents follow Perception-Reasoning-Action (PRA) cycle — perceive context, reason about approach, act on decisions, then self-review.
+**Agent cognitive model:** All 30 agents follow Perception-Reasoning-Action (PRA) cycle with YAML configuration.
 
 ## Constraints
 
@@ -149,14 +86,16 @@ A user can describe an idea in natural language and get working, tested, securit
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| LangGraph as graph engine | ~24.6K stars, MIT, native agent graph support, composable | — Pending |
-| Temporal for durable workflows | ~18.9K stars, MIT, retry/checkpoint/resume built-in | — Pending |
+| LangGraph as graph engine | ~24.6K stars, MIT, native agent graph support, composable | ✓ Good |
+| Temporal for durable workflows | ~18.9K stars, MIT, retry/checkpoint/resume built-in | ✓ Good |
 | NATS JetStream for events | Lightweight, high-throughput, JetStream for persistence | ✓ Good |
 | Turborepo for monorepo | Fast builds, good Python/Node hybrid support | ✓ Good |
-| Defer S10 deployment | Reduces v1 scope significantly, deployment is opt-in anyway | — Pending |
-| All 4 LLM providers in v1 | Core differentiator is provider flexibility | — Pending |
-| Full React dashboard in v1 | Real-time visualization critical for monitoring 30 agents | — Pending |
-| PRA cognitive cycle for agents | Structured perception-reasoning-action loop improves agent reliability | — Pending |
+| Defer S10 deployment | Reduces v1 scope significantly, deployment is opt-in anyway | ✓ Good |
+| All 4 LLM providers in v1 | Core differentiator is provider flexibility | ✓ Good |
+| Full React dashboard in v1 | Real-time visualization critical for monitoring 30 agents | ✓ Good |
+| PRA cognitive cycle for agents | Structured perception-reasoning-action loop improves agent reliability | ✓ Good |
+| Component-first build order | Foundation→vertical slice→breadth. Integration seams expected | ⚠️ Revisit |
+| instructor + LiteLLM for structured output | Used in vertical slice agents; remaining agents need wiring | ⚠️ Revisit |
 
 ---
-*Last updated: 2026-03-18 after reinitialization from updated docs v2.5*
+*Last updated: 2026-03-20 after v1.0 milestone completion*
