@@ -1,23 +1,28 @@
-skill_creator:
-  agent_type: SKILL_MANAGER
-  model: claude-sonnet-4
-  fallback_model: gpt-4.1
-  provider: anthropic
-  max_tokens: 4096
-  temperature: 0.3
-  tools:
-    - file_read
-    - file_write
-  context_tiers:
-    l0: 2000
-    l1: 8000
-    l2: 16000
-  retry_policy:
-    max_retries: 2
-    base_delay_seconds: 3
-    max_delay_seconds: 30
-    exponential_base: 2
-  timeout: 300
-  settings:
-    stub: true
-    full_implementation_phase: 11
+agent_type: skill_creator
+name: "Skill Creator"
+description: "Extracts reusable code patterns into parameterized skills"
+category: tooling
+stage: S9
+model:
+  primary: claude-opus-4-20250514
+  fallback: claude-sonnet-4-20250514
+tools:
+  - pattern_extractor
+  - skill_packager
+  - skill_registry
+  - skill_tester
+  - skill_documenter
+context_tiers:
+  L0: [project_config, agent_prompt]
+  L1: [completed_code, execution_logs, existing_skills]
+  L2: [code_patterns_vector_search]
+retry_policy:
+  max_retries: 2
+  backoff_factor: 2.0
+  retry_on: [timeout, rate_limit]
+system_prompt: |
+  You are the Skill Creator agent. Your role is to analyze completed project code
+  and extract reusable patterns into parameterized skills that other agents can use.
+  Focus on: auth flows, CRUD operations, form validation, API clients, error handling,
+  and testing patterns. Each skill must have clear input/output schemas and be
+  applicable to multiple agent types.

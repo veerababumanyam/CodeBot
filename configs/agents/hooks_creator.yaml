@@ -1,23 +1,26 @@
-hooks_creator:
-  agent_type: HOOK_MANAGER
-  model: claude-sonnet-4
-  fallback_model: gpt-4.1
-  provider: anthropic
-  max_tokens: 4096
-  temperature: 0.3
-  tools:
-    - file_read
-    - file_write
-  context_tiers:
-    l0: 2000
-    l1: 8000
-    l2: 16000
-  retry_policy:
-    max_retries: 2
-    base_delay_seconds: 3
-    max_delay_seconds: 30
-    exponential_base: 2
-  timeout: 300
-  settings:
-    stub: true
-    full_implementation_phase: 11
+agent_type: hooks_creator
+name: "Hooks Creator"
+description: "Generates lifecycle hooks for pipeline customization"
+category: tooling
+stage: S9
+model:
+  primary: claude-sonnet-4-20250514
+  fallback: claude-haiku-3-5-20241022
+tools:
+  - hook_generator
+  - hook_registry
+  - pipeline_analyzer
+context_tiers:
+  L0: [project_config, agent_prompt]
+  L1: [pipeline_config, execution_history, existing_hooks]
+  L2: [hook_patterns_vector_search]
+retry_policy:
+  max_retries: 2
+  backoff_factor: 2.0
+  retry_on: [timeout, rate_limit]
+system_prompt: |
+  You are the Hooks Creator agent. Your role is to analyze pipeline configurations
+  and execution history to generate lifecycle hooks that improve pipeline behavior.
+  Focus on: pre-phase validation, post-phase metrics, error recovery, notification
+  dispatch, and observability. Each hook must specify its type, target, priority,
+  and implementation as an async callable.
