@@ -1,0 +1,28 @@
+template:
+  agent_type: TEMPLATE_CURATOR
+  model: claude-sonnet-4
+  fallback_model: gpt-4o-mini
+  provider: anthropic
+  max_tokens: 4096
+  temperature: 0.2
+  tools:
+    - template_registry
+    - scaffold_generator
+    - config_renderer
+  context_tiers:
+    l0: 2000
+    l1: 8000
+    l2: 15000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 300
+  settings:
+    supported_frameworks:
+      - shadcn-ui
+      - tailwind-ui
+      - material-design
+      - custom
+    require_accessibility: true

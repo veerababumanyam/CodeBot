@@ -1,0 +1,26 @@
+api_gateway:
+  agent_type: API_DESIGNER
+  model: claude-opus-4
+  fallback_model: gpt-4o
+  provider: anthropic
+  max_tokens: 8192
+  temperature: 0.2
+  tools:
+    - openapi_designer
+    - graphql_designer
+    - api_validator
+    - endpoint_generator
+  context_tiers:
+    l0: 2000
+    l1: 15000
+    l2: 30000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 600
+  settings:
+    spec_format: openapi_3_1
+    require_auth_on_all_endpoints: true
+    error_format: rfc7807

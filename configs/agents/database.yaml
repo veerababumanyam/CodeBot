@@ -1,0 +1,26 @@
+database:
+  agent_type: ARCHITECT
+  model: claude-opus-4
+  fallback_model: gpt-4o
+  provider: anthropic
+  max_tokens: 8192
+  temperature: 0.2
+  tools:
+    - schema_generator
+    - migration_generator
+    - erd_generator
+    - sql_validator
+  context_tiers:
+    l0: 2000
+    l1: 15000
+    l2: 30000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 600
+  settings:
+    target_database: postgresql
+    require_reversible_migrations: true
+    normalization_level: 3NF
