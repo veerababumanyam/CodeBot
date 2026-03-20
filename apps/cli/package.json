@@ -2,22 +2,30 @@
   "name": "@codebot/cli",
   "version": "0.1.0",
   "private": true,
-  "description": "CodeBot command-line interface",
+  "description": "CodeBot CLI - command-line interface for the CodeBot platform",
   "type": "module",
   "bin": {
     "codebot": "./dist/index.js"
   },
   "scripts": {
+    "dev": "tsx src/index.ts",
     "build": "tsc",
-    "dev": "tsc --watch",
-    "typecheck": "tsc --noEmit",
-    "lint": "echo 'Lint handled by biome (coming in plan 01-03)'"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "commander": "^12.1.0"
+    "commander": "^13.0.0",
+    "@inquirer/prompts": "^7.0.0",
+    "chalk": "^5.4.0",
+    "ora": "^8.0.0",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "typescript": "^5.6.0"
+    "@types/ws": "^8.5.0",
+    "typescript": "^5.5.0",
+    "tsx": "^4.0.0",
+    "vitest": "^3.0.0"
   }
 }
