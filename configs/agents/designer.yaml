@@ -1,0 +1,26 @@
+designer:
+  agent_type: DESIGNER
+  model: claude-opus-4
+  fallback_model: gpt-4o
+  provider: anthropic
+  max_tokens: 8192
+  temperature: 0.5
+  tools:
+    - wireframe_generator
+    - component_tree_builder
+    - color_palette
+    - layout_designer
+  context_tiers:
+    l0: 2000
+    l1: 10000
+    l2: 20000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 600
+  settings:
+    min_wireframes: 3
+    require_responsive_specs: true
+    wcag_level: AA

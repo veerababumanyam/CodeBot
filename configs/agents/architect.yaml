@@ -1,0 +1,26 @@
+architect:
+  agent_type: ARCHITECT
+  model: claude-opus-4
+  fallback_model: gpt-4o
+  provider: anthropic
+  max_tokens: 8192
+  temperature: 0.3
+  tools:
+    - diagram_generator
+    - pattern_library
+    - adr_writer
+    - component_designer
+  context_tiers:
+    l0: 2000
+    l1: 15000
+    l2: 30000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 600
+  settings:
+    min_adr_records: 1
+    require_c4_diagrams: true
+    require_data_flow: true
