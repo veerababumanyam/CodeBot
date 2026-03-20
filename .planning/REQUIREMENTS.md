@@ -182,10 +182,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### CLI Application
 
-- [ ] **CLI-01**: TypeScript CLI for project creation with interactive prompts
-- [ ] **CLI-02**: Pipeline execution commands (start, pause, resume, stop)
-- [ ] **CLI-03**: Agent status and log streaming from terminal
-- [ ] **CLI-04**: Pipeline preset selection (full, quick, review-only)
+- [x] **CLI-01**: TypeScript CLI for project creation with interactive prompts
+- [x] **CLI-02**: Pipeline execution commands (start, pause, resume, stop)
+- [x] **CLI-03**: Agent status and log streaming from terminal
+- [x] **CLI-04**: Pipeline preset selection (full, quick, review-only)
 
 ### Event System
 
@@ -362,10 +362,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DASH-06 | Phase 11 | Pending |
 | DASH-07 | Phase 11 | Pending |
 | DASH-08 | Phase 11 | Pending |
-| CLI-01 | Phase 11 | Pending |
-| CLI-02 | Phase 11 | Pending |
-| CLI-03 | Phase 11 | Pending |
-| CLI-04 | Phase 11 | Pending |
+| CLI-01 | Phase 11 | Complete |
+| CLI-02 | Phase 11 | Complete |
+| CLI-03 | Phase 11 | Complete |
+| CLI-04 | Phase 11 | Complete |
 | EVNT-01 | Phase 7 | Complete |
 | EVNT-02 | Phase 9 | Complete |
 | EVNT-03 | Phase 9 | Complete |
