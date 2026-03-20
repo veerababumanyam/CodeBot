@@ -1,21 +1,30 @@
-agent:
-  type: ORCHESTRATOR
-  model: anthropic/claude-sonnet-4
-  fallback_model: openai/gpt-4.1
-  max_tokens: 4096
-  temperature: 0.2
+orchestrator:
+  agent_type: ORCHESTRATOR
+  model: claude-opus-4
+  fallback_model: o3
+  provider: anthropic
+  max_tokens: 8192
+  temperature: 0.3
   tools:
-    - file_read
+    - pipeline_controller
+    - agent_monitor
+    - task_router
+    - checkpoint_manager
+    - multimodal_input_processor
+    - git_importer
+    - local_codebase_loader
   context_tiers:
     l0: 2000
-    l1: 8000
-    l2: 16000
+    l1: 12000
+    l2: 24000
   retry_policy:
     max_retries: 3
-    base_delay_seconds: 2
+    base_delay_seconds: 3
     max_delay_seconds: 60
     exponential_base: 2
-  timeout: 300
+  timeout: 1200
   settings:
     confidence_threshold: 0.7
     auto_infer_on_ambiguity: true
+    multimodal_input: true
+    codebase_import: true

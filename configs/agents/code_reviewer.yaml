@@ -1,12 +1,16 @@
-agent:
-  type: CODE_REVIEWER
-  model: anthropic/claude-sonnet-4
-  fallback_model: openai/gpt-4.1
-  max_tokens: 4096
+code_reviewer:
+  agent_type: CODE_REVIEWER
+  model: claude-opus-4
+  fallback_model: o3
+  provider: anthropic
+  max_tokens: 8192
   temperature: 0.2
   tools:
     - file_read
-    - search_code
+    - code_analyzer
+    - pattern_detector
+    - complexity_analyzer
+    - review_comment_writer
   context_tiers:
     l0: 2000
     l1: 16000
@@ -16,7 +20,7 @@ agent:
     base_delay_seconds: 2
     max_delay_seconds: 30
     exponential_base: 2
-  timeout: 300
+  timeout: 600
   settings:
     gate_on_critical: true
     gate_on_high: true

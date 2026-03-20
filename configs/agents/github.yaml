@@ -1,0 +1,26 @@
+github:
+  agent_type: GITHUB_INTEGRATOR
+  model: claude-sonnet-4
+  fallback_model: gpt-4.1
+  provider: anthropic
+  max_tokens: 4096
+  temperature: 0.2
+  tools:
+    - github_api
+    - pr_creator
+    - issue_tracker
+    - webhook_manager
+    - release_manager
+  context_tiers:
+    l0: 2000
+    l1: 8000
+    l2: 16000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 300
+  settings:
+    pr_format: conventional_commits
+    release_versioning: semver

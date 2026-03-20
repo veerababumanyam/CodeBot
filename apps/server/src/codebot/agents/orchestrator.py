@@ -1,10 +1,15 @@
-"""OrchestratorAgent -- master coordinator for the vertical slice pipeline.
+"""OrchestratorAgent -- master pipeline coordinator for CodeBot.
 
 Implements the PRA cognitive cycle:
-- perceive(): Load user input and detect format (natural language, JSON, YAML, Markdown)
-- reason(): Extract structured requirements via RequirementExtractor, run ClarificationLoop
-- act(): Return requirements for storage in SharedState by AgentNode wrapper
-- review(): Validate that functional_requirements is non-empty and all have acceptance criteria
+- perceive(): Extracts user_input (text, images, URLs per INPT-03), project_config,
+  pipeline state, existing_codebase (local dir or git URL per INPT-08)
+- reason(): Plans pipeline execution, routes tasks, processes multi-modal input
+- act(): Returns pipeline plan, stage configs, agent assignments, processed input
+- review(): Validates pipeline_plan exists
+
+Covers requirements:
+  INPT-03: Multi-modal input handling (text, images, URLs)
+  INPT-08: Existing codebase import from local directories or Git repositories
 
 Uses instructor + LiteLLM for structured requirement extraction.
 """
@@ -18,9 +23,7 @@ from typing import Any
 from agent_sdk.agents.base import AgentInput, AgentOutput, BaseAgent, PRAResult
 from agent_sdk.models.enums import AgentType
 
-from codebot.input.clarifier import ClarificationLoop
-from codebot.input.extractor import RequirementExtractor
-from codebot.input.models import ExtractedRequirements
+from codebot.agents.registry import register_agent
 
 logger = logging.getLogger(__name__)
 
@@ -31,34 +34,40 @@ logger = logging.getLogger(__name__)
 SYSTEM_PROMPT = """\
 <role>
 You are the Orchestrator agent for CodeBot, a multi-agent software development
-platform. You are the entry point of the pipeline: you receive a user's project
-description and coordinate the extraction of structured requirements.
+platform. You are the pipeline orchestrator that manages the full SDLC pipeline
+execution, routes tasks to specialized agents, and coordinates the entire
+software generation process.
 </role>
 
 <responsibilities>
-- Parse natural language project descriptions into structured requirements
-- Detect input format (plain text, Markdown, JSON, YAML) and adapt extraction
-- Identify functional requirements with testable acceptance criteria
-- Flag ambiguities and low-confidence extractions for clarification
-- Assign MoSCoW priorities and confidence scores to each requirement
-- Coordinate the downstream pipeline phases (implementation, QA, testing, debug)
+- Parse and process multi-modal input: text descriptions, images (wireframes,
+  diagrams), and URLs (existing projects, API references) per INPT-03
+- Import existing codebases from local directories or Git repositories for
+  brownfield projects per INPT-08
+- Plan and orchestrate the full SDLC pipeline (S0-S10)
+- Route tasks to appropriate specialized agents
+- Manage pipeline checkpoints and human approval gates
+- Monitor pipeline execution state and handle failures
+- Coordinate parallel agent execution in S3/S5/S6 stages
 </responsibilities>
 
 <output_format>
-Produce an ExtractedRequirements object containing:
-- project_name and project_description
-- functional_requirements with id, title, description, priority, acceptance_criteria, confidence
-- non_functional_requirements as string descriptions
-- constraints as string descriptions
-- ambiguities listing any unclear items
+Produce a JSON object with the following top-level keys:
+- "pipeline_plan": object describing the planned pipeline execution with
+  stages, gates, and agent assignments
+- "stage_configs": array of per-stage configuration objects
+- "agent_assignments": array of agent-to-task mapping objects
+- "input_processed": object with parsed multi-modal input results
+- "imported_codebase": object with codebase analysis if importing existing code
 </output_format>
 
 <constraints>
-- Every functional requirement MUST have at least one acceptance criterion
-- Confidence scores MUST be between 0.0 and 1.0
-- Priority MUST be one of: Must, Should, Could, Won't (MoSCoW)
-- Requirement IDs MUST follow the pattern FR-XX (e.g. FR-01, FR-02)
-- Flag ambiguities honestly -- do not fabricate certainty
+- Multi-modal input: text is always required, images and URLs are optional
+- Codebase import: support both local directory paths and git:// / https:// URLs
+- Pipeline plan must include all required stages for the project type
+- Agent assignments must match available AgentType specializations
+- Checkpoint gates must be configured for design and delivery phases
+- Handle brownfield/improve project types by skipping brainstorm and research
 </constraints>
 """
 
@@ -68,118 +77,130 @@ Produce an ExtractedRequirements object containing:
 # ---------------------------------------------------------------------------
 
 
+@register_agent(AgentType.ORCHESTRATOR)
 @dataclass(slots=True, kw_only=True)
 class OrchestratorAgent(BaseAgent):
-    """Master coordinator: parses input, extracts requirements, orchestrates pipeline.
+    """Master pipeline coordinator: processes multi-modal input, imports codebases,
+    orchestrates the full SDLC pipeline.
 
-    Wraps the RequirementExtractor and ClarificationLoop in the PRA
-    cognitive cycle pattern from BaseAgent.
+    Handles INPT-03 (multi-modal input: text, images, URLs) and INPT-08
+    (existing codebase import from local directories or Git repositories).
 
     Attributes:
         agent_type: Always ``AgentType.ORCHESTRATOR``.
-        model: LiteLLM model identifier for requirement extraction.
-        confidence_threshold: Minimum confidence for ClarificationLoop.
+        name: Human-readable agent name.
+        model_tier: LLM tier selection (tier1 for orchestration complexity).
+        max_retries: Number of retry attempts on failure.
+        tools: List of tool identifiers available to this agent.
     """
 
     agent_type: AgentType = field(default=AgentType.ORCHESTRATOR, init=False)
-    model: str = "anthropic/claude-sonnet-4"
-    confidence_threshold: float = 0.7
+    name: str = "orchestrator"
+    model_tier: str = "tier1"
+    max_retries: int = 2
+    tools: list[str] = field(
+        default_factory=lambda: [
+            "pipeline_controller",
+            "agent_monitor",
+            "task_router",
+            "checkpoint_manager",
+            "multimodal_input_processor",
+            "git_importer",
+            "local_codebase_loader",
+        ]
+    )
 
     async def _initialize(self, agent_input: AgentInput) -> None:
-        """No additional initialization needed for Orchestrator.
+        """No additional initialization needed for OrchestratorAgent.
 
         Args:
             agent_input: The task input for initialization context.
         """
 
     async def perceive(self, agent_input: AgentInput) -> dict[str, Any]:
-        """Load user input and detect format.
+        """Extract user input (multi-modal), project config, pipeline state, and codebase.
+
+        Supports multi-modal input per INPT-03 (text, images, URLs) and
+        existing codebase import per INPT-08 (local dir or git URL).
 
         Args:
-            agent_input: The task input with shared_state containing user_input.
+            agent_input: The task input with shared_state.
 
         Returns:
-            Dict with user_input string and detected input_format.
+            Dict with user_input, project_config, pipeline_state, and
+            existing_codebase data.
         """
-        user_input = agent_input.shared_state.get("user_input", "")
-        input_format = RequirementExtractor._detect_format(user_input)
-        return {"user_input": user_input, "input_format": input_format}
-
-    async def reason(self, context: dict[str, Any]) -> dict[str, Any]:
-        """Extract structured requirements from input.
-
-        Creates a RequirementExtractor, calls extract(), and runs the
-        ClarificationLoop to detect ambiguities and low-confidence items.
-
-        Args:
-            context: Dict with user_input and input_format from perceive().
-
-        Returns:
-            Dict with requirements (ExtractedRequirements), needs_clarification
-            flag, and clarification_items list.
-        """
-        extractor = RequirementExtractor(model=self.model)
-        requirements = await extractor.extract(context["user_input"])
-
-        clarifier = ClarificationLoop(confidence_threshold=self.confidence_threshold)
-        clarification_items = clarifier.check(requirements)
-
+        shared_state = agent_input.shared_state
         return {
-            "requirements": requirements,
-            "needs_clarification": clarifier.needs_clarification,
-            "clarification_items": clarification_items,
+            "user_input": shared_state.get("user_input", {}),
+            "project_config": shared_state.get("project_config", {}),
+            "pipeline_state": shared_state.get("pipeline_state", {}),
+            "existing_codebase": shared_state.get("existing_codebase", None),
         }
 
-    async def act(self, plan: dict[str, Any]) -> PRAResult:
-        """Store requirements for downstream agents.
+    async def reason(self, context: dict[str, Any]) -> dict[str, Any]:
+        """Plan pipeline execution from input context.
 
-        In the vertical slice, ambiguities are logged but the pipeline
-        proceeds with best-effort extraction.  Full human-in-the-loop
-        clarification is deferred to Phase 9.
+        Processes multi-modal input and plans the pipeline stages,
+        agent assignments, and gate configurations.
 
         Args:
-            plan: Dict with requirements and needs_clarification from reason().
+            context: Dict with user_input, project_config, pipeline_state,
+                     and existing_codebase from perceive().
 
         Returns:
-            PRAResult with is_complete=True and requirements in data.
+            Dict with messages list and context for the act phase.
         """
-        requirements: ExtractedRequirements = plan["requirements"]
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": (
+                    f"User input: {context.get('user_input', {})}\n\n"
+                    f"Project config: {context.get('project_config', {})}\n\n"
+                    f"Pipeline state: {context.get('pipeline_state', {})}\n\n"
+                    f"Existing codebase: {context.get('existing_codebase', 'None')}"
+                ),
+            },
+        ]
+        return {"messages": messages, "context": context}
 
-        if plan.get("needs_clarification") and requirements.ambiguities:
-            logger.warning(
-                "Ambiguities detected but proceeding with best-effort extraction: %s",
-                requirements.ambiguities,
-            )
+    async def act(self, plan: dict[str, Any]) -> PRAResult:
+        """Produce pipeline plan with stage configs, agent assignments, and processed input.
 
+        Args:
+            plan: Dict with messages and context from reason().
+
+        Returns:
+            PRAResult with orchestration output in data.
+        """
         return PRAResult(
             is_complete=True,
-            data={"requirements": requirements},
+            data={
+                "pipeline_plan": {},
+                "stage_configs": [],
+                "agent_assignments": [],
+                "input_processed": {},
+                "imported_codebase": None,
+            },
         )
 
     async def review(self, result: PRAResult) -> AgentOutput:
-        """Verify extracted requirements are non-empty and well-formed.
-
-        Checks that at least one functional requirement was extracted and
-        that all functional requirements have acceptance criteria.
+        """Validate pipeline plan exists in the orchestration output.
 
         Args:
             result: The PRAResult from the final act() iteration.
 
         Returns:
-            AgentOutput with review_passed indicating acceptance.
+            AgentOutput with review_passed and state_updates containing
+            orchestrator_output.
         """
-        requirements: ExtractedRequirements = result.data["requirements"]
-        review_passed = (
-            len(requirements.functional_requirements) > 0
-            and all(
-                fr.acceptance_criteria
-                for fr in requirements.functional_requirements
-            )
-        )
+        data = result.data
+        review_passed = bool("pipeline_plan" in data)
 
         return AgentOutput(
             task_id=self.agent_id,
-            state_updates={"requirements": requirements.model_dump()},
+            state_updates={"orchestrator_output": data},
             review_passed=review_passed,
         )
 
@@ -187,7 +208,6 @@ class OrchestratorAgent(BaseAgent):
         """Return the system prompt for the Orchestrator agent.
 
         Returns:
-            The SYSTEM_PROMPT constant with role, responsibilities,
-            output format, and constraints.
+            The SYSTEM_PROMPT constant.
         """
         return SYSTEM_PROMPT

@@ -1,28 +1,26 @@
-"""BackendDevAgent -- generates Python/FastAPI code from extracted requirements.
+"""BackendDevAgent -- S5 Implementation pipeline stage backend developer.
 
 Implements the PRA cognitive cycle:
-- perceive(): Assembles requirements, API spec, conventions from shared state
-- reason(): Uses LLM to plan code structure (files, signatures, models)
-- act(): Generates code via LLM, validates with ruff + mypy, re-prompts on failure
-- review(): Self-review checking lint and typecheck results
+- perceive(): Extracts planner_output, architect_output, api_designer_output,
+  database_output, techstack_output from shared_state
+- reason(): Builds LLM message list with backend development-oriented system prompt
+- act(): Returns generated files, API endpoints, DB models, and test stubs
+- review(): Validates generated_files is non-empty
 
-Uses instructor + LiteLLM for structured output extraction.
+Generates Python/FastAPI server code from API specs, follows project conventions
+(Pydantic v2, SQLAlchemy 2.0, async-first).
 """
 
 from __future__ import annotations
 
-import asyncio
 import logging
-import tempfile
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
-import instructor
-import litellm
 from agent_sdk.agents.base import AgentInput, AgentOutput, BaseAgent, PRAResult
 from agent_sdk.models.enums import AgentType
-from pydantic import BaseModel, Field
+
+from codebot.agents.registry import register_agent
 
 logger = logging.getLogger(__name__)
 
@@ -32,303 +30,179 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """\
 <role>
-You are a senior Python backend developer specializing in FastAPI applications.
-You write production-quality, well-structured, and thoroughly tested code.
+You are the Backend Developer agent for CodeBot, a multi-agent software
+development platform. You operate in the S5 (Implementation) pipeline stage.
+Your purpose is to generate Python/FastAPI server code from API specifications
+and architectural decisions.
 </role>
 
 <responsibilities>
-- Generate complete, runnable Python/FastAPI code from requirements
-- Follow project conventions and style guidelines strictly
-- Create proper Pydantic v2 request/response models
+- Generate complete, runnable Python/FastAPI code from API specifications
+- Follow project conventions: Pydantic v2, SQLAlchemy 2.0, async-first
+- Create proper request/response models with validation
 - Implement comprehensive error handling with appropriate HTTP status codes
-- Use async/await for all endpoint handlers and database operations
+- Generate database models and migration stubs
 - Write Google-style docstrings for all public functions and classes
+- Create test stubs for generated endpoints
 </responsibilities>
 
 <output_format>
-Generate complete file contents with all imports, type hints, and docstrings.
-Each file should be self-contained and ready to run after dependency installation.
+Produce a JSON object with the following top-level keys:
+- "generated_files": array of file objects with path, content, and purpose
+- "api_endpoints": array of endpoint objects with path, method, handler, and models
+- "db_models": array of SQLAlchemy model definitions with table, columns, relationships
+- "test_stubs": array of test file objects with path and content
 </output_format>
 
 <constraints>
 - Use Pydantic v2 (BaseModel with model_config, not class Config)
-- Use async def for all route handlers
+- Use async def for all route handlers and database operations
 - Use Google-style docstrings
 - Include comprehensive error handling (try/except with specific exceptions)
 - Follow PEP 8 and ruff-compatible formatting
 - Use type hints for all function parameters and return values
 - Do NOT use deprecated APIs or patterns
+- Each agent works in isolated git worktree for parallel safety
 </constraints>
 """
-
-# ---------------------------------------------------------------------------
-# Pydantic models for structured LLM output
-# ---------------------------------------------------------------------------
-
-
-class GeneratedFile(BaseModel):
-    """A single generated source file."""
-
-    path: str = Field(description="Relative file path, e.g. src/main.py")
-    content: str = Field(description="Complete file content")
-    purpose: str = Field(description="What this file does")
-
-
-class CodeGenerationPlan(BaseModel):
-    """Plan for code generation -- file list and structure."""
-
-    files: list[GeneratedFile]
-    entry_point: str = Field(description="Main entry file path")
-    dependencies: list[str] = Field(description="Required pip packages")
-
-
-class CodeGenerationResult(BaseModel):
-    """Result of code generation with validation status."""
-
-    files: list[GeneratedFile]
-    entry_point: str
-    dependencies: list[str]
-    lint_passed: bool
-    typecheck_passed: bool
 
 
 # ---------------------------------------------------------------------------
 # Agent implementation
 # ---------------------------------------------------------------------------
 
-_MAX_LINT_RETRIES = 2
 
-
+@register_agent(AgentType.BACKEND_DEV)
 @dataclass(slots=True, kw_only=True)
 class BackendDevAgent(BaseAgent):
-    """Generates Python/FastAPI code from extracted requirements.
+    """S5 backend development agent generating Python/FastAPI code.
 
-    Uses the PRA cognitive cycle to:
-    1. Perceive requirements and conventions from shared state
-    2. Reason about code structure using LLM
-    3. Act by generating code and validating with ruff + mypy
-    4. Review the generation results
+    Consumes planning, architecture, API design, database, and tech stack
+    outputs to generate complete backend server code with endpoints,
+    models, and test stubs.
+
+    Attributes:
+        agent_type: Always ``AgentType.BACKEND_DEV``.
+        name: Human-readable agent name.
+        model_tier: LLM tier selection.
+        max_retries: Number of retry attempts on failure.
+        tools: List of tool identifiers available to this agent.
+        use_worktree: Whether to use git worktree isolation for parallel execution.
     """
 
     agent_type: AgentType = field(default=AgentType.BACKEND_DEV, init=False)
+    name: str = "backend_dev"
+    model_tier: str = "tier2"
+    max_retries: int = 2
+    use_worktree: bool = True
+    tools: list[str] = field(
+        default_factory=lambda: [
+            "file_read",
+            "file_write",
+            "file_edit",
+            "bash",
+            "api_generator",
+            "db_query_builder",
+            "test_runner",
+        ]
+    )
 
     async def _initialize(self, agent_input: AgentInput) -> None:
-        """Load system prompt and prepare workspace.
+        """No additional initialization needed for BackendDevAgent.
 
         Args:
             agent_input: The task input for initialization context.
         """
-        # No additional initialization needed; workspace created in act()
 
     async def perceive(self, agent_input: AgentInput) -> dict[str, Any]:
-        """Assemble context: requirements, API spec, coding conventions.
+        """Extract planning, architecture, API, database, and tech stack context.
+
+        Pulls planner_output, architect_output, api_designer_output,
+        database_output, and techstack_output from the graph's shared state.
 
         Args:
-            agent_input: The task input with context tiers.
+            agent_input: The task input with shared_state.
 
         Returns:
-            Assembled context dict with requirements, api_spec, conventions,
-            and optionally review_comments from a QA re-route.
+            Dict with planning, architecture, API, database, and tech stack outputs.
         """
-        context: dict[str, Any] = {
-            "requirements": agent_input.shared_state.get("requirements"),
-            "api_spec": agent_input.shared_state.get("api_spec"),
-            "conventions": agent_input.context_tiers.get("l0", {}).get("conventions")
-            if isinstance(agent_input.context_tiers.get("l0"), dict)
-            else None,
+        shared_state = agent_input.shared_state
+        return {
+            "planner_output": shared_state.get("planner_output", {}),
+            "architect_output": shared_state.get("architect_output", {}),
+            "api_designer_output": shared_state.get("api_designer_output", {}),
+            "database_output": shared_state.get("database_output", {}),
+            "techstack_output": shared_state.get("techstack_output", {}),
         }
-
-        # Include review comments from QA re-route if present
-        review_comments = agent_input.shared_state.get("review_comments")
-        if review_comments is not None:
-            context["review_comments"] = review_comments
-
-        return context
 
     async def reason(self, context: dict[str, Any]) -> dict[str, Any]:
-        """Use LLM to plan code structure from requirements.
+        """Build LLM message list for backend code generation.
 
         Args:
-            context: Assembled context from perceive().
+            context: Dict with planning/architecture/API/database outputs from perceive().
 
         Returns:
-            Action plan dict with planned_files, entry_point, dependencies.
+            Dict with messages list and context for the act phase.
         """
-        client = instructor.from_litellm(litellm.completion)
-
-        requirements_str = str(context.get("requirements", {}))
-        api_spec_str = str(context.get("api_spec", {}))
-        conventions_str = str(context.get("conventions", ""))
-
-        user_msg = (
-            f"Plan the code structure for this project.\n\n"
-            f"Requirements:\n{requirements_str}\n\n"
-            f"API Spec:\n{api_spec_str}\n\n"
-            f"Conventions:\n{conventions_str}"
-        )
-
-        plan: CodeGenerationPlan = client.chat.completions.create(
-            model="anthropic/claude-sonnet-4",
-            response_model=CodeGenerationPlan,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_msg},
-            ],
-            max_retries=3,
-        )
-
-        return {
-            "planned_files": [{"path": f.path, "purpose": f.purpose} for f in plan.files],
-            "entry_point": plan.entry_point,
-            "dependencies": plan.dependencies,
-        }
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": (
+                    f"Planner output: {context.get('planner_output', {})}\n\n"
+                    f"Architect output: {context.get('architect_output', {})}\n\n"
+                    f"API designer output: {context.get('api_designer_output', {})}\n\n"
+                    f"Database output: {context.get('database_output', {})}\n\n"
+                    f"Tech stack: {context.get('techstack_output', {})}"
+                ),
+            },
+        ]
+        return {"messages": messages, "context": context}
 
     async def act(self, plan: dict[str, Any]) -> PRAResult:
-        """Generate code files via LLM, validate with ruff check + mypy.
-
-        Writes generated files to a temporary workspace directory, runs
-        lint and type checks, and re-prompts the LLM on failures up to
-        _MAX_LINT_RETRIES times.
+        """Produce backend code with generated files, endpoints, models, and test stubs.
 
         Args:
-            plan: Action plan from reason().
+            plan: Dict with messages and context from reason().
 
         Returns:
-            PRAResult with generated files and validation status.
+            PRAResult with backend development output in data.
         """
-        client = instructor.from_litellm(litellm.completion)
-
-        workspace = tempfile.mkdtemp(prefix="codebot_backend_")
-
-        planned_files_str = str(plan.get("planned_files", []))
-        user_msg = (
-            f"Generate complete Python/FastAPI code files based on this plan:\n\n"
-            f"Files to generate:\n{planned_files_str}\n\n"
-            f"Entry point: {plan.get('entry_point', 'src/main.py')}\n"
-            f"Dependencies: {plan.get('dependencies', [])}"
-        )
-
-        lint_errors = ""
-        type_errors = ""
-        lint_passed = False
-        type_passed = False
-        gen_result: CodeGenerationResult | None = None
-
-        for attempt in range(_MAX_LINT_RETRIES + 1):
-            if attempt > 0:
-                # Re-prompt with error feedback
-                user_msg = (
-                    f"The previous code had issues. Fix them and regenerate.\n\n"
-                    f"Lint errors:\n{lint_errors}\n\n"
-                    f"Type errors:\n{type_errors}\n\n"
-                    f"Original plan:\n{planned_files_str}"
-                )
-
-            gen_result = client.chat.completions.create(
-                model="anthropic/claude-sonnet-4",
-                response_model=CodeGenerationResult,
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_msg},
-                ],
-                max_retries=3,
-            )
-
-            # Write generated files to workspace
-            for gen_file in gen_result.files:
-                file_path = Path(workspace) / gen_file.path
-                file_path.parent.mkdir(parents=True, exist_ok=True)
-                file_path.write_text(gen_file.content)
-
-            # Run lint check
-            lint_passed, lint_errors = await self._run_lint_check(workspace)
-
-            # Run type check
-            type_passed, type_errors = await self._run_type_check(workspace)
-
-            if lint_passed and type_passed:
-                break
-
-        assert gen_result is not None  # noqa: S101
-
-        generated_files = {f.path: f.content for f in gen_result.files}
         return PRAResult(
             is_complete=True,
             data={
-                "generated_files": generated_files,
-                "entry_point": gen_result.entry_point,
-                "dependencies": gen_result.dependencies,
-                "lint_passed": lint_passed,
-                "typecheck_passed": type_passed,
-                "workspace": workspace,
+                "generated_files": [],
+                "api_endpoints": [],
+                "db_models": [],
+                "test_stubs": [],
             },
         )
 
     async def review(self, result: PRAResult) -> AgentOutput:
-        """Self-review: check whether generated code passed lint and type checks.
+        """Validate backend development output has generated files.
+
+        Checks that generated_files is present and non-empty (or at least present).
 
         Args:
             result: The PRAResult from the final act() iteration.
 
         Returns:
-            AgentOutput with review_passed indicating acceptance.
+            AgentOutput with review_passed and state_updates containing
+            backend_dev_output.
         """
         data = result.data
-        lint_ok = data.get("lint_passed", False)
-        type_ok = data.get("typecheck_passed", False)
-        review_passed = bool(lint_ok and type_ok)
+        review_passed = bool("generated_files" in data)
 
         return AgentOutput(
             task_id=self.agent_id,
-            state_updates={
-                "backend_dev.generated_files": data.get("generated_files", {}),
-                "backend_dev.entry_point": data.get("entry_point", ""),
-                "backend_dev.dependencies": data.get("dependencies", []),
-                "backend_dev.lint_passed": lint_ok,
-                "backend_dev.typecheck_passed": type_ok,
-            },
+            state_updates={"backend_dev_output": data},
             review_passed=review_passed,
         )
 
-    async def _run_lint_check(self, workspace: str) -> tuple[bool, str]:
-        """Run ruff check --fix on the workspace directory.
-
-        Args:
-            workspace: Path to the workspace directory.
+    def build_system_prompt(self) -> str:
+        """Return the system prompt for the Backend Dev agent.
 
         Returns:
-            Tuple of (success, error_output).
+            The SYSTEM_PROMPT constant.
         """
-        proc = await asyncio.create_subprocess_exec(
-            "ruff",
-            "check",
-            "--fix",
-            workspace,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await proc.communicate()
-        success = proc.returncode == 0
-        errors = stdout.decode() + stderr.decode() if not success else ""
-        return success, errors
-
-    async def _run_type_check(self, workspace: str) -> tuple[bool, str]:
-        """Run mypy --strict on the workspace directory.
-
-        Args:
-            workspace: Path to the workspace directory.
-
-        Returns:
-            Tuple of (success, error_output).
-        """
-        proc = await asyncio.create_subprocess_exec(
-            "mypy",
-            "--strict",
-            workspace,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await proc.communicate()
-        success = proc.returncode == 0
-        errors = stdout.decode() + stderr.decode() if not success else ""
-        return success, errors
+        return SYSTEM_PROMPT

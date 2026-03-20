@@ -1,0 +1,28 @@
+devops:
+  agent_type: DEPLOYER
+  model: claude-sonnet-4
+  fallback_model: gpt-4.1
+  provider: anthropic
+  max_tokens: 8192
+  temperature: 0.2
+  tools:
+    - file_read
+    - file_write
+    - bash
+    - docker_build
+    - helm_template
+    - ci_cd_validator
+  context_tiers:
+    l0: 2000
+    l1: 10000
+    l2: 20000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 600
+  settings:
+    container_runtime: docker
+    orchestration: kubernetes
+    ci_provider: github_actions

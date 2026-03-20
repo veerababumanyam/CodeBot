@@ -1,0 +1,25 @@
+project_manager:
+  agent_type: PROJECT_MANAGER
+  model: claude-sonnet-4
+  fallback_model: gpt-4.1
+  provider: anthropic
+  max_tokens: 4096
+  temperature: 0.3
+  tools:
+    - status_reporter
+    - timeline_tracker
+    - risk_monitor
+    - resource_allocator
+  context_tiers:
+    l0: 2000
+    l1: 10000
+    l2: 16000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 300
+  settings:
+    report_format: structured
+    risk_threshold: medium

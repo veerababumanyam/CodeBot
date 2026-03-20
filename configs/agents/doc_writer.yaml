@@ -1,0 +1,32 @@
+doc_writer:
+  agent_type: DOC_WRITER
+  model: claude-sonnet-4
+  fallback_model: gpt-4.1
+  provider: anthropic
+  max_tokens: 8192
+  temperature: 0.3
+  tools:
+    - file_read
+    - file_write
+    - openapi_renderer
+    - docstring_generator
+    - readme_generator
+    - diagram_renderer
+    - adr_formatter
+    - deployment_guide_generator
+  context_tiers:
+    l0: 2000
+    l1: 12000
+    l2: 20000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 600
+  settings:
+    output_format: markdown
+    include_api_docs: true
+    include_user_guide: true
+    include_adrs: true
+    include_deployment_guide: true
