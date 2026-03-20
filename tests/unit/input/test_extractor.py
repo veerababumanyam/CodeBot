@@ -8,14 +8,12 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
+from codebot.input.extractor import RequirementExtractor
 from codebot.input.models import (
     AcceptanceCriterion,
     ExtractedRequirements,
     FunctionalRequirement,
 )
-from codebot.input.extractor import RequirementExtractor
-
 
 # ---------------------------------------------------------------------------
 # Model validation tests
