@@ -30,9 +30,13 @@ export function useChat() {
     };
   }, [socket, activeProjectId, addMessage, setTyping]);
 
-  const sendMessage = (content: string) => {
+  const sendMessage = (content: string, attachments?: any[]) => {
     if (!socket || !activeProjectId) return;
-    socket.emit("chat.send", { project_id: activeProjectId, content });
+    socket.emit("chat.send", { 
+      project_id: activeProjectId, 
+      content,
+      attachments 
+    });
   };
 
   const approveGate = (gateId: string, approved: boolean) => {

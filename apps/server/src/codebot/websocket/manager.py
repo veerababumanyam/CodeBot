@@ -156,8 +156,9 @@ async def chat_send(sid: str, data: dict) -> None:
     session = await sio.get_session(sid)
     project_id = data.get("project_id") or session.get("project_id")
     content = data.get("content")
+    attachments = data.get("attachments", [])
 
-    if not project_id or not content:
+    if not project_id or (not content and not attachments):
         return
 
     room = f"project:{project_id}"
@@ -165,6 +166,7 @@ async def chat_send(sid: str, data: dict) -> None:
         "id": f"msg_{int(datetime.now(UTC).timestamp() * 1000)}",
         "type": "user",
         "content": content,
+        "attachments": attachments,
         "timestamp": datetime.now(UTC).isoformat(),
         "user_id": session.get("user_id"),
     }
@@ -172,12 +174,20 @@ async def chat_send(sid: str, data: dict) -> None:
     # 1. Echo back to the project room
     await sio.emit("chat.message", message, room=room)
 
+    import json
+    
     # 2. Publish to NATS for persistence and agent processing
     bus = await get_event_bus()
+    payload_data = {
+        "project_id": project_id,
+        "content": content, 
+        "attachments": attachments,
+        "source": "chat", 
+        "message_id": message["id"]
+    }
     envelope = EventEnvelope(
         event_type=EventType.USER_INPUT_RECEIVED,
-        project_id=project_id,
-        payload={"content": content, "source": "chat", "message_id": message["id"]},
+        payload=json.dumps(payload_data).encode("utf-8"),
     )
     await publish_event(bus, envelope)
 

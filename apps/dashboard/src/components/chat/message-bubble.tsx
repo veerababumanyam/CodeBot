@@ -1,7 +1,7 @@
 import React from "react";
 import type { Message } from "@/stores/chat-store";
 import { cn } from "@/lib/utils";
-import { Bot, User, ShieldCheck, AlertCircle, HelpCircle } from "lucide-react";
+import { Bot, User, ShieldCheck, AlertCircle, HelpCircle, FileText } from "lucide-react";
 
 interface MessageBubbleProps {
   message: Message;
@@ -52,6 +52,38 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                   : "bg-gray-800/60 text-gray-200"
           )}>
             <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+
+            {/* Attachments */}
+            {message.attachments && message.attachments.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {message.attachments.map((att, i) => (
+                  <div key={i} className="max-w-full">
+                    {att.type === "image" ? (
+                      <div className="rounded-xl overflow-hidden border border-white/10 bg-black/20 backdrop-blur-sm group/img cursor-pointer relative shadow-inner">
+                        <img src={att.url} alt={att.name} className="max-h-60 object-contain transition-transform hover:scale-[1.02]" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="text-[10px] text-white px-2 py-1 bg-black/40 rounded-full backdrop-blur-md">View Original</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <a 
+                        href={att.url} 
+                        download={att.name}
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 transition-all group/file"
+                      >
+                        <div className="p-1.5 bg-blue-500/20 rounded-lg text-blue-400 group-hover/file:bg-blue-500/30 transition-colors">
+                          <FileText size={16} />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs font-medium truncate max-w-[150px]">{att.name}</span>
+                          {att.size && <span className="text-[10px] text-gray-400">{(att.size / 1024).toFixed(1)} KB</span>}
+                        </div>
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
             
             {/* Interactive Cards */}
             {(isClarification || isApproval) && (

@@ -2,6 +2,13 @@ import { create } from "zustand";
 
 export type MessageType = "user" | "agent" | "system" | "clarification" | "approval" | "error";
 
+export interface Attachment {
+  type: "image" | "file";
+  url: string;
+  name: string;
+  size?: number;
+}
+
 export interface Message {
   id: string;
   type: MessageType;
@@ -9,6 +16,7 @@ export interface Message {
   agent?: string;
   timestamp: string;
   meta?: any;
+  attachments?: Attachment[];
 }
 
 interface ChatState {
