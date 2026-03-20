@@ -102,10 +102,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Implementation (S5)
 
-- [ ] **IMPL-01**: Frontend agent generates React/TypeScript UI code from design specs
+- [x] **IMPL-01**: Frontend agent generates React/TypeScript UI code from design specs
 - [x] **IMPL-02**: Backend agent generates Python/FastAPI server code from API specs
-- [ ] **IMPL-03**: Mobile agent generates cross-platform or native mobile code
-- [ ] **IMPL-04**: Infrastructure agent generates Docker, CI/CD, and config files
+- [x] **IMPL-03**: Mobile agent generates cross-platform or native mobile code
+- [x] **IMPL-04**: Infrastructure agent generates Docker, CI/CD, and config files
 - [x] **IMPL-05**: S5 agents execute in parallel in isolated git worktrees
 - [x] **IMPL-06**: CLI agent integration delegates coding to Claude Code, Codex CLI, or Gemini CLI
 - [x] **IMPL-07**: Generated code follows project style conventions and linting rules
@@ -309,10 +309,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLAN-01 | Phase 9 | Pending |
 | PLAN-02 | Phase 9 | Pending |
 | PLAN-03 | Phase 9 | Pending |
-| IMPL-01 | Phase 9 | Pending |
+| IMPL-01 | Phase 9 | Complete |
 | IMPL-02 | Phase 7 | Complete |
-| IMPL-03 | Phase 9 | Pending |
-| IMPL-04 | Phase 9 | Pending |
+| IMPL-03 | Phase 9 | Complete |
+| IMPL-04 | Phase 9 | Complete |
 | IMPL-05 | Phase 8 | Complete |
 | IMPL-06 | Phase 8 | Complete |
 | IMPL-07 | Phase 7 | Complete |
