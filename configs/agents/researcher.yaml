@@ -1,0 +1,27 @@
+researcher:
+  agent_type: RESEARCHER
+  model: claude-opus-4
+  fallback_model: gpt-4o
+  provider: anthropic
+  max_tokens: 8192
+  temperature: 0.3
+  tools:
+    - web_search
+    - github_search
+    - package_registry
+    - docs_reader
+    - reference_finder
+    - dependency_analyzer
+  context_tiers:
+    l0: 2000
+    l1: 15000
+    l2: 30000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 600
+  settings:
+    min_alternatives_per_choice: 2
+    check_cve_database: true
