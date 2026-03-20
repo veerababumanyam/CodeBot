@@ -1,0 +1,23 @@
+hooks_creator:
+  agent_type: HOOK_MANAGER
+  model: claude-sonnet-4
+  fallback_model: gpt-4.1
+  provider: anthropic
+  max_tokens: 4096
+  temperature: 0.3
+  tools:
+    - file_read
+    - file_write
+  context_tiers:
+    l0: 2000
+    l1: 8000
+    l2: 16000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 300
+  settings:
+    stub: true
+    full_implementation_phase: 11
