@@ -171,10 +171,10 @@ Plans:
   7. Audit logs are immutable with content hashing for tamper detection
 **Plans**: 5 plans
 
-Plans:
-- [ ] 08-01-PLAN.md — Security scanner adapters (Semgrep, Trivy, Gitleaks), gate, allowlist, and Pydantic models
-- [ ] 08-02-PLAN.md — WorktreePool, PortAllocator, BranchStrategy, and CommitManager
-- [ ] 08-03-PLAN.md — SecurityOrchestrator with parallel fan-out and integration test scaffold
+Plans: 3/5 complete
+- [x] 08-01-PLAN.md — Security scanner adapters (Semgrep, Trivy, Gitleaks), gate, allowlist, and Pydantic models
+- [x] 08-02-PLAN.md — WorktreePool, PortAllocator, BranchStrategy, and CommitManager
+- [x] 08-03-PLAN.md — SecurityOrchestrator with parallel fan-out and integration test scaffold
 - [ ] 08-04-PLAN.md — CLI agent adapters (Claude Code, Codex, Gemini), CLIAgentRunner, and Docker profiles
 - [ ] 08-05-PLAN.md — SOC 2 compliance checker, immutable audit logger, evidence collection, TSC rule configuration
 

@@ -158,7 +158,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **SECP-02**: Trivy scans container images and dependencies for known vulnerabilities
 - [x] **SECP-03**: Gitleaks detects secrets, API keys, and credentials in generated code
 - [x] **SECP-04**: Quality gates block advancement when critical/high vulnerabilities found
-- [ ] **SECP-05**: Security scanning runs after every code generation step, not just at S6 gate
+- [x] **SECP-05**: Security scanning runs after every code generation step, not just at S6 gate
 - [x] **SECP-06**: Dependency allowlist prevents hallucinated/malicious package installation
 
 ### FastAPI Server
@@ -347,7 +347,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SECP-02 | Phase 8 | Complete |
 | SECP-03 | Phase 8 | Complete |
 | SECP-04 | Phase 8 | Complete |
-| SECP-05 | Phase 8 | Pending |
+| SECP-05 | Phase 8 | Complete |
 | SECP-06 | Phase 8 | Complete |
 | SRVR-01 | Phase 10 | Pending |
 | SRVR-02 | Phase 10 | Pending |
