@@ -1,0 +1,26 @@
+brainstorming:
+  agent_type: BRAINSTORM_FACILITATOR
+  model: claude-opus-4
+  fallback_model: o3
+  provider: anthropic
+  max_tokens: 8192
+  temperature: 0.7
+  tools:
+    - web_search
+    - idea_matrix
+    - user_dialog
+    - reference_finder
+  context_tiers:
+    l0: 2000
+    l1: 10000
+    l2: 20000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 300
+  settings:
+    min_alternatives: 3
+    max_alternatives: 5
+    require_user_confirmation: true
