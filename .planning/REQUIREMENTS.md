@@ -59,11 +59,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Input Processing (S0)
 
-- [ ] **INPT-01**: User can describe project idea in natural language
-- [ ] **INPT-02**: System accepts structured PRDs in Markdown, JSON, or YAML
+- [x] **INPT-01**: User can describe project idea in natural language
+- [x] **INPT-02**: System accepts structured PRDs in Markdown, JSON, or YAML
 - [ ] **INPT-03**: System accepts multi-modal input: text, images (wireframes, screenshots), and reference URLs
-- [ ] **INPT-04**: System extracts functional requirements, non-functional requirements, constraints, and acceptance criteria via NLP
-- [ ] **INPT-05**: System initiates clarification loop when requirements are ambiguous or incomplete
+- [x] **INPT-04**: System extracts functional requirements, non-functional requirements, constraints, and acceptance criteria via NLP
+- [x] **INPT-05**: System initiates clarification loop when requirements are ambiguous or incomplete
 - [ ] **INPT-06**: User can select UI/UX template (Shadcn/ui, Tailwind UI, Material Design, custom)
 - [ ] **INPT-07**: User can select or auto-recommend tech stack (language, framework, database, hosting)
 - [ ] **INPT-08**: System imports existing codebases from local directories or Git repositories for brownfield projects
@@ -281,11 +281,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PIPE-06 | Phase 6 | Complete |
 | PIPE-07 | Phase 6 | Complete |
 | PIPE-08 | Phase 6 | Complete |
-| INPT-01 | Phase 7 | Pending |
-| INPT-02 | Phase 7 | Pending |
+| INPT-01 | Phase 7 | Complete |
+| INPT-02 | Phase 7 | Complete |
 | INPT-03 | Phase 9 | Pending |
-| INPT-04 | Phase 7 | Pending |
-| INPT-05 | Phase 7 | Pending |
+| INPT-04 | Phase 7 | Complete |
+| INPT-05 | Phase 7 | Complete |
 | INPT-06 | Phase 9 | Pending |
 | INPT-07 | Phase 9 | Pending |
 | INPT-08 | Phase 9 | Pending |
