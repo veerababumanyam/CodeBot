@@ -196,10 +196,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Worktree Management
 
-- [ ] **WORK-01**: Worktree lifecycle manager creates/cleans git worktrees per coding agent
+- [x] **WORK-01**: Worktree lifecycle manager creates/cleans git worktrees per coding agent
 - [ ] **WORK-02**: Per-worktree Docker Compose profiles for runtime isolation
-- [ ] **WORK-03**: Dynamic port allocation prevents conflicts between parallel agents
-- [ ] **WORK-04**: Sequential merge strategy with conflict detection for worktree results
+- [x] **WORK-03**: Dynamic port allocation prevents conflicts between parallel agents
+- [x] **WORK-04**: Sequential merge strategy with conflict detection for worktree results
 
 ## v2 Requirements
 
@@ -370,10 +370,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EVNT-02 | Phase 9 | Pending |
 | EVNT-03 | Phase 9 | Pending |
 | EVNT-04 | Phase 9 | Pending |
-| WORK-01 | Phase 8 | Pending |
+| WORK-01 | Phase 8 | Complete |
 | WORK-02 | Phase 8 | Pending |
-| WORK-03 | Phase 8 | Pending |
-| WORK-04 | Phase 8 | Pending |
+| WORK-03 | Phase 8 | Complete |
+| WORK-04 | Phase 8 | Complete |
 
 **Coverage:**
 - v1 requirements: 131 total
