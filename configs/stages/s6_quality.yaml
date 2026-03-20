@@ -1,0 +1,33 @@
+stage:
+  name: quality_assurance
+  pipeline_stage: S6
+  type: subgraph
+  execution: fan_out_fan_in
+  entry_gate:
+    type: automatic
+    check: implementation_output_completeness
+  agents:
+    - id: code_reviewer
+      type: CODE_REVIEWER
+      parallel_group: quality
+    - id: security_auditor
+      type: SECURITY_AUDITOR
+      parallel_group: quality
+    - id: accessibility
+      type: ACCESSIBILITY_AUDITOR
+      parallel_group: quality
+    - id: performance
+      type: PERFORMANCE_TESTER
+      parallel_group: quality
+    - id: i18n
+      type: I18N_SPECIALIST
+      parallel_group: quality
+  merge_strategy:
+    type: state_merge
+    conflict_resolution: gate_aggregation
+  exit_gate:
+    type: quality_gate
+    gate_id: G6
+    blocking_severity:
+      - critical
+      - high

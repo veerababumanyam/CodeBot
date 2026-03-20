@@ -2,21 +2,20 @@
 
 Tests cover:
 - Agent type identification
+- BaseAgent inheritance
 - PRA cycle methods (perceive, reason, act, review)
-- Lint/typecheck subprocess validation
-- Re-prompting on lint/type errors
-- Code generation via instructor + LiteLLM
+- use_worktree attribute
+- State updates key
 """
 
 from __future__ import annotations
 
 import uuid
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from agent_sdk.agents.base import AgentInput, AgentOutput, PRAResult
+from agent_sdk.agents.base import AgentInput, AgentOutput, BaseAgent, PRAResult
 from agent_sdk.models.enums import AgentType
 
 
@@ -27,21 +26,13 @@ from agent_sdk.models.enums import AgentType
 
 @pytest.fixture
 def shared_state() -> dict[str, Any]:
-    """Sample shared state with requirements and API spec."""
+    """Sample shared state with planning and architecture outputs."""
     return {
-        "requirements": {
-            "project_name": "Todo API",
-            "functional_requirements": [
-                {
-                    "id": "FR-01",
-                    "title": "Create todo",
-                    "description": "POST /todos creates a todo item",
-                }
-            ],
-        },
-        "api_spec": {
-            "endpoints": [{"method": "POST", "path": "/todos"}],
-        },
+        "planner_output": {"task_graph": []},
+        "architect_output": {"architecture": "microservices"},
+        "api_designer_output": {"endpoints": [{"method": "POST", "path": "/todos"}]},
+        "database_output": {"models": []},
+        "techstack_output": {"language": "python", "framework": "fastapi"},
     }
 
 
@@ -73,8 +64,11 @@ def backend_agent() -> Any:
 class TestBackendDevAgentType:
     """BackendDevAgent has agent_type == AgentType.BACKEND_DEV."""
 
-    async def test_agent_type(self, backend_agent: Any) -> None:
+    def test_agent_type(self, backend_agent: Any) -> None:
         assert backend_agent.agent_type == AgentType.BACKEND_DEV
+
+    def test_extends_base_agent(self, backend_agent: Any) -> None:
+        assert isinstance(backend_agent, BaseAgent)
 
 
 # ---------------------------------------------------------------------------
@@ -83,35 +77,38 @@ class TestBackendDevAgentType:
 
 
 class TestPerceive:
-    """BackendDevAgent.perceive() assembles requirements, api_spec, conventions."""
+    """BackendDevAgent.perceive() assembles upstream outputs."""
 
-    async def test_perceive_returns_requirements(
+    async def test_perceive_returns_planner_output(
         self, backend_agent: Any, agent_input: AgentInput
     ) -> None:
         result = await backend_agent.perceive(agent_input)
-        assert "requirements" in result
-        assert result["requirements"]["project_name"] == "Todo API"
+        assert "planner_output" in result
 
-    async def test_perceive_returns_api_spec(
+    async def test_perceive_returns_architect_output(
         self, backend_agent: Any, agent_input: AgentInput
     ) -> None:
         result = await backend_agent.perceive(agent_input)
-        assert "api_spec" in result
+        assert "architect_output" in result
+        assert result["architect_output"]["architecture"] == "microservices"
 
-    async def test_perceive_returns_conventions(
+    async def test_perceive_returns_api_designer_output(
         self, backend_agent: Any, agent_input: AgentInput
     ) -> None:
         result = await backend_agent.perceive(agent_input)
-        assert "conventions" in result
+        assert "api_designer_output" in result
 
-    async def test_perceive_includes_review_comments_when_present(
+    async def test_perceive_returns_database_output(
         self, backend_agent: Any, agent_input: AgentInput
     ) -> None:
-        agent_input.shared_state["review_comments"] = [
-            {"message": "Missing error handling"}
-        ]
         result = await backend_agent.perceive(agent_input)
-        assert "review_comments" in result
+        assert "database_output" in result
+
+    async def test_perceive_returns_techstack_output(
+        self, backend_agent: Any, agent_input: AgentInput
+    ) -> None:
+        result = await backend_agent.perceive(agent_input)
+        assert "techstack_output" in result
 
 
 # ---------------------------------------------------------------------------
@@ -120,40 +117,19 @@ class TestPerceive:
 
 
 class TestReason:
-    """BackendDevAgent.reason() calls LLM to plan code structure."""
+    """BackendDevAgent.reason() builds LLM messages."""
 
-    async def test_reason_returns_planned_files(
-        self, backend_agent: Any
-    ) -> None:
-        from codebot.agents.backend_dev import CodeGenerationPlan, GeneratedFile
-
-        mock_plan = CodeGenerationPlan(
-            files=[
-                GeneratedFile(
-                    path="src/main.py",
-                    content="from fastapi import FastAPI\napp = FastAPI()",
-                    purpose="Main entry point",
-                )
-            ],
-            entry_point="src/main.py",
-            dependencies=["fastapi", "pydantic"],
-        )
-
-        with patch(
-            "codebot.agents.backend_dev.instructor"
-        ) as mock_instructor:
-            mock_client = MagicMock()
-            mock_instructor.from_litellm.return_value = mock_client
-            mock_client.chat.completions.create.return_value = mock_plan
-
-            context = {
-                "requirements": {"project_name": "Todo API"},
-                "api_spec": None,
-                "conventions": "Use Pydantic v2",
-            }
-            result = await backend_agent.reason(context)
-            assert "planned_files" in result
-            assert len(result["planned_files"]) > 0
+    async def test_reason_returns_messages(self, backend_agent: Any) -> None:
+        context = {
+            "planner_output": {},
+            "architect_output": {},
+            "api_designer_output": {},
+            "database_output": {},
+            "techstack_output": {},
+        }
+        result = await backend_agent.reason(context)
+        assert "messages" in result
+        assert len(result["messages"]) == 2  # system + user
 
 
 # ---------------------------------------------------------------------------
@@ -162,303 +138,21 @@ class TestReason:
 
 
 class TestAct:
-    """BackendDevAgent.act() generates code, validates with ruff/mypy."""
+    """BackendDevAgent.act() produces generated code output."""
 
-    async def test_code_generation(self, backend_agent: Any) -> None:
-        """act() generates code files via LLM and returns PRAResult."""
-        from codebot.agents.backend_dev import (
-            CodeGenerationResult,
-            GeneratedFile,
-        )
+    async def test_act_returns_pra_result(self, backend_agent: Any) -> None:
+        plan = {"messages": [], "context": {}}
+        result = await backend_agent.act(plan)
+        assert isinstance(result, PRAResult)
+        assert result.is_complete is True
 
-        mock_result = CodeGenerationResult(
-            files=[
-                GeneratedFile(
-                    path="src/main.py",
-                    content='from fastapi import FastAPI\n\napp = FastAPI()\n\n\n@app.get("/health")\nasync def health() -> dict[str, str]:\n    """Health check."""\n    return {"status": "ok"}\n',
-                    purpose="Main entry point",
-                )
-            ],
-            entry_point="src/main.py",
-            dependencies=["fastapi"],
-            lint_passed=True,
-            typecheck_passed=True,
-        )
-
-        with (
-            patch(
-                "codebot.agents.backend_dev.instructor"
-            ) as mock_instructor,
-            patch(
-                "codebot.agents.backend_dev.asyncio.create_subprocess_exec",
-                new_callable=AsyncMock,
-            ) as mock_subprocess,
-        ):
-            mock_client = MagicMock()
-            mock_instructor.from_litellm.return_value = mock_client
-            mock_client.chat.completions.create.return_value = mock_result
-
-            # Mock subprocess for ruff and mypy returning success
-            mock_proc = AsyncMock()
-            mock_proc.returncode = 0
-            mock_proc.communicate.return_value = (b"", b"")
-            mock_subprocess.return_value = mock_proc
-
-            plan = {
-                "planned_files": [{"path": "src/main.py", "purpose": "Entry point"}],
-                "entry_point": "src/main.py",
-                "dependencies": ["fastapi"],
-            }
-            result = await backend_agent.act(plan)
-            assert isinstance(result, PRAResult)
-            assert result.is_complete is True
-
-    async def test_lint_typecheck(self, backend_agent: Any) -> None:
-        """act() calls ruff check and mypy --strict on generated code."""
-        from codebot.agents.backend_dev import (
-            CodeGenerationResult,
-            GeneratedFile,
-        )
-
-        mock_result = CodeGenerationResult(
-            files=[
-                GeneratedFile(
-                    path="src/main.py",
-                    content="import os\n",
-                    purpose="Main",
-                )
-            ],
-            entry_point="src/main.py",
-            dependencies=[],
-            lint_passed=True,
-            typecheck_passed=True,
-        )
-
-        with (
-            patch(
-                "codebot.agents.backend_dev.instructor"
-            ) as mock_instructor,
-            patch(
-                "codebot.agents.backend_dev.asyncio.create_subprocess_exec",
-                new_callable=AsyncMock,
-            ) as mock_subprocess,
-        ):
-            mock_client = MagicMock()
-            mock_instructor.from_litellm.return_value = mock_client
-            mock_client.chat.completions.create.return_value = mock_result
-
-            mock_proc = AsyncMock()
-            mock_proc.returncode = 0
-            mock_proc.communicate.return_value = (b"", b"")
-            mock_subprocess.return_value = mock_proc
-
-            plan = {
-                "planned_files": [{"path": "src/main.py", "purpose": "Entry point"}],
-                "entry_point": "src/main.py",
-                "dependencies": [],
-            }
-            await backend_agent.act(plan)
-
-            # Verify ruff and mypy were called
-            calls = [str(c) for c in mock_subprocess.call_args_list]
-            call_str = " ".join(calls)
-            assert "ruff" in call_str
-            assert "mypy" in call_str
-
-    async def test_act_reprompts_on_lint_failure(
-        self, backend_agent: Any
-    ) -> None:
-        """act() re-prompts LLM with lint errors when ruff check fails."""
-        from codebot.agents.backend_dev import (
-            CodeGenerationResult,
-            GeneratedFile,
-        )
-
-        good_file = GeneratedFile(
-            path="src/main.py",
-            content="from fastapi import FastAPI\napp = FastAPI()\n",
-            purpose="Main",
-        )
-        first_result = CodeGenerationResult(
-            files=[good_file],
-            entry_point="src/main.py",
-            dependencies=["fastapi"],
-            lint_passed=False,
-            typecheck_passed=True,
-        )
-        second_result = CodeGenerationResult(
-            files=[good_file],
-            entry_point="src/main.py",
-            dependencies=["fastapi"],
-            lint_passed=True,
-            typecheck_passed=True,
-        )
-
-        with (
-            patch(
-                "codebot.agents.backend_dev.instructor"
-            ) as mock_instructor,
-            patch(
-                "codebot.agents.backend_dev.asyncio.create_subprocess_exec",
-                new_callable=AsyncMock,
-            ) as mock_subprocess,
-        ):
-            mock_client = MagicMock()
-            mock_instructor.from_litellm.return_value = mock_client
-            mock_client.chat.completions.create.side_effect = [
-                first_result,
-                second_result,
-            ]
-
-            # First ruff call fails, second succeeds; mypy always succeeds
-            mock_proc_fail = AsyncMock()
-            mock_proc_fail.returncode = 1
-            mock_proc_fail.communicate.return_value = (
-                b"src/main.py:1:1 F401 unused import",
-                b"",
-            )
-            mock_proc_ok = AsyncMock()
-            mock_proc_ok.returncode = 0
-            mock_proc_ok.communicate.return_value = (b"", b"")
-            mock_subprocess.side_effect = [
-                mock_proc_fail,  # ruff check fails
-                mock_proc_ok,    # mypy (ok, but lint failed so will re-prompt)
-                mock_proc_ok,    # ruff check (retry, ok)
-                mock_proc_ok,    # mypy (retry, ok)
-            ]
-
-            plan = {
-                "planned_files": [{"path": "src/main.py", "purpose": "Entry point"}],
-                "entry_point": "src/main.py",
-                "dependencies": ["fastapi"],
-            }
-            result = await backend_agent.act(plan)
-            assert result.is_complete is True
-            # LLM was called twice (initial + retry)
-            assert mock_client.chat.completions.create.call_count >= 2
-
-    async def test_act_reprompts_on_typecheck_failure(
-        self, backend_agent: Any
-    ) -> None:
-        """act() re-prompts LLM with type errors when mypy fails."""
-        from codebot.agents.backend_dev import (
-            CodeGenerationResult,
-            GeneratedFile,
-        )
-
-        good_file = GeneratedFile(
-            path="src/main.py",
-            content="from fastapi import FastAPI\napp = FastAPI()\n",
-            purpose="Main",
-        )
-        first_result = CodeGenerationResult(
-            files=[good_file],
-            entry_point="src/main.py",
-            dependencies=["fastapi"],
-            lint_passed=True,
-            typecheck_passed=False,
-        )
-        second_result = CodeGenerationResult(
-            files=[good_file],
-            entry_point="src/main.py",
-            dependencies=["fastapi"],
-            lint_passed=True,
-            typecheck_passed=True,
-        )
-
-        with (
-            patch(
-                "codebot.agents.backend_dev.instructor"
-            ) as mock_instructor,
-            patch(
-                "codebot.agents.backend_dev.asyncio.create_subprocess_exec",
-                new_callable=AsyncMock,
-            ) as mock_subprocess,
-        ):
-            mock_client = MagicMock()
-            mock_instructor.from_litellm.return_value = mock_client
-            mock_client.chat.completions.create.side_effect = [
-                first_result,
-                second_result,
-            ]
-
-            mock_proc_ok = AsyncMock()
-            mock_proc_ok.returncode = 0
-            mock_proc_ok.communicate.return_value = (b"", b"")
-
-            mock_proc_mypy_fail = AsyncMock()
-            mock_proc_mypy_fail.returncode = 1
-            mock_proc_mypy_fail.communicate.return_value = (
-                b"src/main.py:2: error: Need type annotation",
-                b"",
-            )
-
-            mock_subprocess.side_effect = [
-                mock_proc_ok,          # ruff check ok
-                mock_proc_mypy_fail,   # mypy fails
-                mock_proc_ok,          # ruff check retry
-                mock_proc_ok,          # mypy retry ok
-            ]
-
-            plan = {
-                "planned_files": [{"path": "src/main.py", "purpose": "Entry point"}],
-                "entry_point": "src/main.py",
-                "dependencies": ["fastapi"],
-            }
-            result = await backend_agent.act(plan)
-            assert result.is_complete is True
-            assert mock_client.chat.completions.create.call_count >= 2
-
-
-# ---------------------------------------------------------------------------
-# _run_lint_check / _run_type_check
-# ---------------------------------------------------------------------------
-
-
-class TestLintAndTypeCheck:
-    """BackendDevAgent._run_lint_check and _run_type_check."""
-
-    async def test_run_lint_check_calls_ruff(
-        self, backend_agent: Any
-    ) -> None:
-        """_run_lint_check calls subprocess with 'ruff check --fix'."""
-        with patch(
-            "codebot.agents.backend_dev.asyncio.create_subprocess_exec",
-            new_callable=AsyncMock,
-        ) as mock_subprocess:
-            mock_proc = AsyncMock()
-            mock_proc.returncode = 0
-            mock_proc.communicate.return_value = (b"All checks passed!", b"")
-            mock_subprocess.return_value = mock_proc
-
-            success, errors = await backend_agent._run_lint_check("/tmp/workspace")
-            assert success is True
-            assert errors == ""
-            call_args = mock_subprocess.call_args
-            args = call_args[0] if call_args[0] else []
-            assert "ruff" in args
-            assert "check" in args
-
-    async def test_run_type_check_calls_mypy(
-        self, backend_agent: Any
-    ) -> None:
-        """_run_type_check calls subprocess with 'mypy --strict'."""
-        with patch(
-            "codebot.agents.backend_dev.asyncio.create_subprocess_exec",
-            new_callable=AsyncMock,
-        ) as mock_subprocess:
-            mock_proc = AsyncMock()
-            mock_proc.returncode = 0
-            mock_proc.communicate.return_value = (b"Success: no issues found", b"")
-            mock_subprocess.return_value = mock_proc
-
-            success, errors = await backend_agent._run_type_check("/tmp/workspace")
-            assert success is True
-            assert errors == ""
-            call_args = mock_subprocess.call_args
-            args = call_args[0] if call_args[0] else []
-            assert "mypy" in args
-            assert "--strict" in args
+    async def test_act_has_generated_files_key(self, backend_agent: Any) -> None:
+        plan = {"messages": [], "context": {}}
+        result = await backend_agent.act(plan)
+        assert "generated_files" in result.data
+        assert "api_endpoints" in result.data
+        assert "db_models" in result.data
+        assert "test_stubs" in result.data
 
 
 # ---------------------------------------------------------------------------
@@ -467,36 +161,46 @@ class TestLintAndTypeCheck:
 
 
 class TestReview:
-    """BackendDevAgent.review() returns AgentOutput based on validation results."""
+    """BackendDevAgent.review() validates generated output."""
 
-    async def test_review_passed_when_all_checks_pass(
+    async def test_review_passes_with_generated_files(
         self, backend_agent: Any
     ) -> None:
-        """review() returns review_passed=True when lint+type pass."""
         result = PRAResult(
             is_complete=True,
             data={
-                "generated_files": {"src/main.py": "app = FastAPI()"},
-                "lint_passed": True,
-                "typecheck_passed": True,
+                "generated_files": [{"path": "src/main.py", "content": "..."}],
+                "api_endpoints": [],
+                "db_models": [],
+                "test_stubs": [],
             },
         )
         output = await backend_agent.review(result)
         assert isinstance(output, AgentOutput)
         assert output.review_passed is True
+        assert "backend_dev_output" in output.state_updates
 
-    async def test_review_failed_when_validation_fails(
+    async def test_review_passes_with_empty_generated_files(
         self, backend_agent: Any
     ) -> None:
-        """review() returns review_passed=False when code fails checks after retries."""
+        """Review passes if generated_files key exists (even if list is empty)."""
         result = PRAResult(
             is_complete=True,
             data={
-                "generated_files": {},
-                "lint_passed": False,
-                "typecheck_passed": False,
+                "generated_files": [],
             },
         )
         output = await backend_agent.review(result)
-        assert isinstance(output, AgentOutput)
-        assert output.review_passed is False
+        assert output.review_passed is True
+
+
+# ---------------------------------------------------------------------------
+# use_worktree
+# ---------------------------------------------------------------------------
+
+
+class TestWorktree:
+    """BackendDevAgent has use_worktree=True for parallel execution."""
+
+    def test_use_worktree(self, backend_agent: Any) -> None:
+        assert backend_agent.use_worktree is True

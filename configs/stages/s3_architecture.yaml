@@ -1,0 +1,29 @@
+stage:
+  name: architecture_and_design
+  pipeline_stage: S3
+  type: subgraph
+  execution: fan_out_fan_in
+  entry_gate:
+    type: automatic
+    check: research_output_completeness
+  agents:
+    - id: architect
+      type: ARCHITECT
+      parallel_group: design
+    - id: designer
+      type: DESIGNER
+      parallel_group: design
+    - id: template_curator
+      type: TEMPLATE_CURATOR
+      parallel_group: design
+    - id: api_designer
+      type: API_DESIGNER
+      parallel_group: design
+  merge_strategy:
+    type: state_merge
+    conflict_resolution: architect_authority
+  exit_gate:
+    type: approval
+    gate_id: G3
+    timeout_minutes: 30
+    auto_approve_on_timeout: false

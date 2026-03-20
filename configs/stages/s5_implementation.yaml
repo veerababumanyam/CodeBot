@@ -1,0 +1,35 @@
+stage:
+  name: implementation
+  pipeline_stage: S5
+  type: subgraph
+  execution: fan_out_fan_in
+  entry_gate:
+    type: automatic
+    check: planning_output_completeness
+  agents:
+    - id: frontend_dev
+      type: FRONTEND_DEV
+      parallel_group: implementation
+      use_worktree: true
+    - id: backend_dev
+      type: BACKEND_DEV
+      parallel_group: implementation
+      use_worktree: true
+    - id: middleware_dev
+      type: MIDDLEWARE_DEV
+      parallel_group: implementation
+      use_worktree: true
+    - id: mobile_dev
+      type: MOBILE_DEV
+      parallel_group: implementation
+      use_worktree: true
+    - id: infra_engineer
+      type: INFRA_ENGINEER
+      parallel_group: implementation
+      use_worktree: true
+  merge_strategy:
+    type: worktree_merge
+    conflict_resolution: sequential
+  exit_gate:
+    type: automatic
+    check: all_agents_completed

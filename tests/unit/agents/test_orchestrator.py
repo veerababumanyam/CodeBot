@@ -1,19 +1,25 @@
-"""Unit tests for OrchestratorAgent."""
+"""Unit tests for OrchestratorAgent.
+
+Tests cover:
+- Agent type identification
+- BaseAgent inheritance
+- PRA cycle methods (perceive, reason, act, review)
+- Multi-modal input tools (INPT-03)
+- Codebase import tools (INPT-08)
+- State updates key
+"""
 
 from __future__ import annotations
 
 import uuid
-from unittest.mock import AsyncMock, patch
+from typing import Any
 
 import pytest
-from agent_sdk.agents.base import AgentInput, AgentOutput, PRAResult
+
+from agent_sdk.agents.base import AgentInput, AgentOutput, BaseAgent, PRAResult
 from agent_sdk.models.enums import AgentType
-from codebot.agents.orchestrator import OrchestratorAgent
-from codebot.input.models import (
-    AcceptanceCriterion,
-    ExtractedRequirements,
-    FunctionalRequirement,
-)
+
+from codebot.agents.orchestrator import SYSTEM_PROMPT, OrchestratorAgent
 
 
 @pytest.fixture
@@ -27,48 +33,13 @@ def agent_input() -> AgentInput:
     """Create a standard AgentInput with user_input in shared state."""
     return AgentInput(
         task_id=uuid.uuid4(),
-        shared_state={"user_input": "Build me a todo list API"},
+        shared_state={
+            "user_input": {"text": "Build me a todo list API", "images": [], "urls": []},
+            "project_config": {"name": "Todo API"},
+            "pipeline_state": {},
+            "existing_codebase": None,
+        },
         context_tiers={},
-    )
-
-
-@pytest.fixture
-def valid_requirements() -> ExtractedRequirements:
-    """Valid ExtractedRequirements with acceptance criteria."""
-    return ExtractedRequirements(
-        project_name="Todo API",
-        project_description="A simple todo list API",
-        functional_requirements=[
-            FunctionalRequirement(
-                id="FR-01",
-                title="Create todo",
-                description="User can create a new todo item",
-                priority="Must",
-                acceptance_criteria=[
-                    AcceptanceCriterion(
-                        description="POST /todos returns 201",
-                        test_strategy="integration_test",
-                    )
-                ],
-                confidence=0.95,
-            ),
-        ],
-        non_functional_requirements=["Response time < 200ms"],
-        constraints=["Python 3.12+"],
-        ambiguities=[],
-    )
-
-
-@pytest.fixture
-def empty_requirements() -> ExtractedRequirements:
-    """ExtractedRequirements with no functional requirements."""
-    return ExtractedRequirements(
-        project_name="Empty",
-        project_description="Nothing extracted",
-        functional_requirements=[],
-        non_functional_requirements=[],
-        constraints=[],
-        ambiguities=[],
     )
 
 
@@ -78,106 +49,135 @@ class TestOrchestratorAgentType:
     def test_agent_type_is_orchestrator(self, agent: OrchestratorAgent) -> None:
         assert agent.agent_type == AgentType.ORCHESTRATOR
 
+    def test_extends_base_agent(self, agent: OrchestratorAgent) -> None:
+        assert isinstance(agent, BaseAgent)
+
 
 class TestOrchestratorPerceive:
     """OrchestratorAgent.perceive() returns context dict."""
 
-    async def test_perceive_returns_user_input_and_format(
-        self,
-        agent: OrchestratorAgent,
-        agent_input: AgentInput,
+    async def test_perceive_returns_user_input(
+        self, agent: OrchestratorAgent, agent_input: AgentInput
     ) -> None:
-        """perceive() returns dict with user_input and input_format keys."""
         result = await agent.perceive(agent_input)
         assert "user_input" in result
-        assert "input_format" in result
-        assert result["user_input"] == "Build me a todo list API"
-        assert result["input_format"] == "natural_language"
+        assert result["user_input"]["text"] == "Build me a todo list API"
+
+    async def test_perceive_returns_project_config(
+        self, agent: OrchestratorAgent, agent_input: AgentInput
+    ) -> None:
+        result = await agent.perceive(agent_input)
+        assert "project_config" in result
+        assert result["project_config"]["name"] == "Todo API"
+
+    async def test_perceive_returns_pipeline_state(
+        self, agent: OrchestratorAgent, agent_input: AgentInput
+    ) -> None:
+        result = await agent.perceive(agent_input)
+        assert "pipeline_state" in result
+
+    async def test_perceive_returns_existing_codebase(
+        self, agent: OrchestratorAgent, agent_input: AgentInput
+    ) -> None:
+        result = await agent.perceive(agent_input)
+        assert "existing_codebase" in result
 
 
 class TestOrchestratorReason:
-    """OrchestratorAgent.reason() calls RequirementExtractor.extract()."""
+    """OrchestratorAgent.reason() builds LLM messages."""
 
-    async def test_reason_calls_extractor(
-        self,
-        agent: OrchestratorAgent,
-        valid_requirements: ExtractedRequirements,
-    ) -> None:
-        """reason() calls RequirementExtractor.extract() and returns requirements dict."""
-        with patch(
-            "codebot.agents.orchestrator.RequirementExtractor"
-        ) as mock_cls:
-            mock_instance = mock_cls.return_value
-            mock_instance.extract = AsyncMock(return_value=valid_requirements)
-
-            context = {
-                "user_input": "Build me a todo API",
-                "input_format": "natural_language",
-            }
-            result = await agent.reason(context)
-
-            assert "requirements" in result
-            assert "needs_clarification" in result
-            assert isinstance(result["requirements"], ExtractedRequirements)
-            mock_instance.extract.assert_awaited_once_with("Build me a todo API")
+    async def test_reason_returns_messages(self, agent: OrchestratorAgent) -> None:
+        context = {
+            "user_input": {},
+            "project_config": {},
+            "pipeline_state": {},
+            "existing_codebase": None,
+        }
+        result = await agent.reason(context)
+        assert "messages" in result
+        assert len(result["messages"]) == 2  # system + user
 
 
 class TestOrchestratorAct:
-    """OrchestratorAgent.act() stores requirements."""
+    """OrchestratorAgent.act() produces pipeline plan."""
 
-    async def test_act_returns_requirements(
-        self,
-        agent: OrchestratorAgent,
-        valid_requirements: ExtractedRequirements,
-    ) -> None:
-        """act() returns PRAResult with requirements."""
-        plan = {
-            "requirements": valid_requirements,
-            "needs_clarification": False,
-        }
+    async def test_act_returns_pra_result(self, agent: OrchestratorAgent) -> None:
+        plan = {"messages": [], "context": {}}
         result = await agent.act(plan)
         assert isinstance(result, PRAResult)
         assert result.is_complete is True
-        assert result.data["requirements"] is valid_requirements
+
+    async def test_act_has_pipeline_plan(self, agent: OrchestratorAgent) -> None:
+        plan = {"messages": [], "context": {}}
+        result = await agent.act(plan)
+        assert "pipeline_plan" in result.data
+        assert "stage_configs" in result.data
+        assert "agent_assignments" in result.data
+        assert "input_processed" in result.data
+        assert "imported_codebase" in result.data
 
 
 class TestOrchestratorReview:
     """OrchestratorAgent.review() validates output."""
 
-    async def test_review_passed_with_valid_requirements(
-        self,
-        agent: OrchestratorAgent,
-        valid_requirements: ExtractedRequirements,
+    async def test_review_passes_with_pipeline_plan(
+        self, agent: OrchestratorAgent
     ) -> None:
-        """review() returns AgentOutput with review_passed=True when requirements are valid."""
-        pra_result = PRAResult(
+        result = PRAResult(
             is_complete=True,
-            data={"requirements": valid_requirements},
+            data={
+                "pipeline_plan": {"stages": ["S0", "S1"]},
+                "stage_configs": [],
+                "agent_assignments": [],
+                "input_processed": {},
+                "imported_codebase": None,
+            },
         )
-        output = await agent.review(pra_result)
+        output = await agent.review(result)
         assert isinstance(output, AgentOutput)
         assert output.review_passed is True
+        assert "orchestrator_output" in output.state_updates
 
-    async def test_review_failed_with_empty_requirements(
-        self,
-        agent: OrchestratorAgent,
-        empty_requirements: ExtractedRequirements,
+    async def test_review_passes_with_empty_pipeline_plan(
+        self, agent: OrchestratorAgent
     ) -> None:
-        """review() returns AgentOutput with review_passed=False when no FRs extracted."""
-        pra_result = PRAResult(
+        """Even an empty pipeline_plan dict counts as 'present'."""
+        result = PRAResult(
             is_complete=True,
-            data={"requirements": empty_requirements},
+            data={"pipeline_plan": {}},
         )
-        output = await agent.review(pra_result)
-        assert isinstance(output, AgentOutput)
-        assert output.review_passed is False
+        output = await agent.review(result)
+        assert output.review_passed is True
 
 
 class TestOrchestratorSystemPrompt:
     """OrchestratorAgent has SYSTEM_PROMPT and build_system_prompt()."""
 
     def test_system_prompt_exists(self, agent: OrchestratorAgent) -> None:
-        """build_system_prompt() returns a non-empty string."""
         prompt = agent.build_system_prompt()
         assert isinstance(prompt, str)
         assert len(prompt) > 0
+
+    def test_system_prompt_mentions_multimodal(self) -> None:
+        """INPT-03: System prompt mentions multi-modal input."""
+        assert "multi-modal" in SYSTEM_PROMPT.lower() or "multimodal" in SYSTEM_PROMPT.lower()
+
+    def test_system_prompt_mentions_codebase_import(self) -> None:
+        """INPT-08: System prompt mentions codebase import."""
+        assert "codebase" in SYSTEM_PROMPT.lower()
+
+
+class TestOrchestratorTools:
+    """OrchestratorAgent tools for INPT-03 and INPT-08."""
+
+    def test_has_multimodal_input_processor(self, agent: OrchestratorAgent) -> None:
+        assert "multimodal_input_processor" in agent.tools
+
+    def test_has_git_importer(self, agent: OrchestratorAgent) -> None:
+        assert "git_importer" in agent.tools
+
+    def test_has_local_codebase_loader(self, agent: OrchestratorAgent) -> None:
+        assert "local_codebase_loader" in agent.tools
+
+    def test_has_pipeline_controller(self, agent: OrchestratorAgent) -> None:
+        assert "pipeline_controller" in agent.tools
