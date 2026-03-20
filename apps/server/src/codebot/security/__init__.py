@@ -12,6 +12,7 @@ from codebot.security.models import (
     SecurityReport,
     SecurityThresholds,
 )
+from codebot.security.orchestrator import SecurityOrchestrator
 from codebot.security.scanners.base import BaseScanner
 
 __all__ = [
@@ -20,6 +21,7 @@ __all__ = [
     "GateResult",
     "ScanResult",
     "SecurityGate",
+    "SecurityOrchestrator",
     "SecurityReport",
     "SecurityThresholds",
 ]
