@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import textwrap
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
-
 from codebot.security.compliance.models import (
     ComplianceCheckResult,
     ComplianceFramework,
@@ -150,18 +148,15 @@ class TestSOC2ComplianceChecker:
     @pytest.fixture()
     def project_with_auth(self, tmp_path: Path) -> Path:
         """Create a project directory with auth patterns present."""
-        src = tmp_path / "src"
+        project = tmp_path / "project_good"
+        project.mkdir()
+        src = project / "src"
         src.mkdir()
         (src / "auth.py").write_text(
-            "from flask import request\n"
-            "@require_auth\n"
-            "def protected_route():\n"
-            "    pass\n"
+            "from flask import request\n@require_auth\ndef protected_route():\n    pass\n"
         )
         (src / "app.py").write_text(
-            "import logging\n"
-            "logger = logging.getLogger(__name__)\n"
-            "from pydantic import BaseModel\n"
+            "import logging\nlogger = logging.getLogger(__name__)\nfrom pydantic import BaseModel\n"
         )
         (src / "migrations").mkdir()
         (src / "migrations" / "001.sql").write_text("ALTER TABLE users ADD COLUMN role TEXT;")
@@ -171,19 +166,21 @@ class TestSOC2ComplianceChecker:
             "@router.get('/health')\n"
             "def health(): return {'status': 'ok'}\n"
         )
-        return tmp_path
+        return project
 
     @pytest.fixture()
     def project_without_auth(self, tmp_path: Path) -> Path:
         """Create a project directory with no security patterns."""
-        src = tmp_path / "src"
+        project = tmp_path / "project_bad"
+        project.mkdir()
+        src = project / "src"
         src.mkdir()
         (src / "app.py").write_text("print('hello world')\n")
-        return tmp_path
+        return project
 
     @pytest.fixture()
     def soc2_yaml(self, tmp_path: Path) -> Path:
-        """Create a minimal SOC2 rules YAML file."""
+        """Create a minimal SOC2 rules YAML file outside project dirs."""
         yaml_content = textwrap.dedent("""\
             framework: SOC2
             rules:
@@ -238,9 +235,7 @@ class TestSOC2ComplianceChecker:
         assert result.scanner == "soc2-compliance"
 
     @pytest.mark.asyncio()
-    async def test_produces_scan_findings(
-        self, project_with_auth: Path, soc2_yaml: Path
-    ) -> None:
+    async def test_produces_scan_findings(self, project_with_auth: Path, soc2_yaml: Path) -> None:
         from codebot.security.compliance.checker import SOC2ComplianceChecker
 
         checker = SOC2ComplianceChecker(config_path=str(soc2_yaml))
@@ -294,8 +289,8 @@ class TestSOC2ComplianceChecker:
     async def test_findings_have_correct_severity(
         self, project_without_auth: Path, soc2_yaml: Path
     ) -> None:
-        from codebot.security.compliance.checker import SOC2ComplianceChecker
         from codebot.db.models.security import Severity
+        from codebot.security.compliance.checker import SOC2ComplianceChecker
 
         checker = SOC2ComplianceChecker(config_path=str(soc2_yaml))
         result = await checker.scan(str(project_without_auth))

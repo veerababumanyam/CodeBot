@@ -1,0 +1,201 @@
+# SOC 2 Trust Service Criteria compliance rules.
+#
+# Each rule maps to a TSC category and defines either:
+#   - pattern: string patterns to search for in source files
+#   - file_exists: glob patterns for file existence checks
+#
+# Used by SOC2ComplianceChecker to evaluate generated code.
+
+framework: SOC2
+
+rules:
+  # -- CC6: Logical Access Controls --
+  - id: CC6-001
+    category: CC6
+    description: "Authentication middleware required"
+    check_type: pattern
+    patterns:
+      - "@require_auth"
+      - "authenticate"
+      - "Depends(get_current_user)"
+      - "login_required"
+      - "@auth_required"
+    severity: HIGH
+
+  - id: CC6-002
+    category: CC6
+    description: "Role-based access control (RBAC) enforcement"
+    check_type: pattern
+    patterns:
+      - "role_required"
+      - "has_permission"
+      - "check_permission"
+      - "rbac"
+      - "UserRole"
+    severity: HIGH
+
+  # -- CC7: System Operations --
+  - id: CC7-001
+    category: CC7
+    description: "Structured logging required"
+    check_type: pattern
+    patterns:
+      - "import logging"
+      - "import structlog"
+      - "getLogger"
+      - "logging.config"
+    severity: MEDIUM
+
+  - id: CC7-002
+    category: CC7
+    description: "Error monitoring and alerting configuration"
+    check_type: pattern
+    patterns:
+      - "sentry_sdk"
+      - "error_handler"
+      - "exception_handler"
+      - "error_reporting"
+    severity: MEDIUM
+
+  # -- CC8: Change Management --
+  - id: CC8-001
+    category: CC8
+    description: "Database migrations present"
+    check_type: file_exists
+    file_patterns:
+      - "**/migrations/**"
+      - "**/alembic/**"
+      - "**/migrate/**"
+    severity: MEDIUM
+
+  - id: CC8-002
+    category: CC8
+    description: "Version control configuration present"
+    check_type: file_exists
+    file_patterns:
+      - ".gitignore"
+      - "**/.gitignore"
+    severity: LOW
+
+  # -- CC9: Risk Mitigation --
+  - id: CC9-001
+    category: CC9
+    description: "Input validation present"
+    check_type: pattern
+    patterns:
+      - "BaseModel"
+      - "validator"
+      - "field_validator"
+      - "ValidationError"
+      - "@validate"
+    severity: HIGH
+
+  - id: CC9-002
+    category: CC9
+    description: "Rate limiting configured"
+    check_type: pattern
+    patterns:
+      - "rate_limit"
+      - "RateLimiter"
+      - "slowapi"
+      - "throttle"
+    severity: MEDIUM
+
+  - id: CC9-003
+    category: CC9
+    description: "Dependency versions pinned"
+    check_type: file_exists
+    file_patterns:
+      - "requirements*.txt"
+      - "pyproject.toml"
+      - "package-lock.json"
+      - "pnpm-lock.yaml"
+      - "uv.lock"
+    severity: MEDIUM
+
+  # -- A1: Availability --
+  - id: A1-001
+    category: A1
+    description: "Health check endpoint required"
+    check_type: pattern
+    patterns:
+      - "/health"
+      - "health_check"
+      - "healthz"
+      - "readiness"
+    severity: HIGH
+
+  - id: A1-002
+    category: A1
+    description: "Error handling and recovery"
+    check_type: pattern
+    patterns:
+      - "try:"
+      - "except "
+      - "catch"
+      - "error_handler"
+    severity: MEDIUM
+
+  # -- PI1: Processing Integrity --
+  - id: PI1-001
+    category: PI1
+    description: "Data validation on input"
+    check_type: pattern
+    patterns:
+      - "BaseModel"
+      - "pydantic"
+      - "marshmallow"
+      - "Schema"
+      - "validate"
+    severity: HIGH
+
+  # -- C1: Confidentiality --
+  - id: C1-001
+    category: C1
+    description: "Secrets externalized from source code"
+    check_type: pattern
+    patterns:
+      - "os.environ"
+      - "os.getenv"
+      - "environ.get"
+      - "dotenv"
+      - "settings."
+    severity: HIGH
+
+  - id: C1-002
+    category: C1
+    description: "TLS/HTTPS configuration present"
+    check_type: pattern
+    patterns:
+      - "https://"
+      - "ssl_context"
+      - "TLS"
+      - "HTTPS"
+      - "certfile"
+    severity: MEDIUM
+
+  # -- P1: Privacy --
+  - id: P1-001
+    category: P1
+    description: "Data retention policy defined"
+    check_type: pattern
+    patterns:
+      - "retention"
+      - "purge"
+      - "data_retention"
+      - "ttl"
+      - "expires_at"
+    severity: MEDIUM
+
+  - id: P1-002
+    category: P1
+    description: "PII handling awareness"
+    check_type: pattern
+    patterns:
+      - "pii"
+      - "personal_data"
+      - "gdpr"
+      - "anonymize"
+      - "pseudonymize"
+      - "encrypt"
+    severity: MEDIUM
