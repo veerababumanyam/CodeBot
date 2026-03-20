@@ -1,0 +1,26 @@
+agent:
+  type: INTEGRATION_ADAPTER
+  model: anthropic/claude-sonnet-4
+  fallback_model: openai/gpt-4.1
+  max_tokens: 8192
+  temperature: 0.2
+  tools:
+    - file_read
+    - file_write
+    - bash
+    - api_client_generator
+    - sdk_wrapper
+  context_tiers:
+    l0: 2000
+    l1: 12000
+    l2: 20000
+  retry_policy:
+    max_retries: 3
+    base_delay_seconds: 2
+    max_delay_seconds: 60
+    exponential_base: 2
+  timeout: 600
+  settings:
+    use_worktree: true
+    http_client: httpx
+    enable_self_test: true
