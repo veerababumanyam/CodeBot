@@ -1,0 +1,16 @@
+title = "CodeBot Gitleaks Configuration"
+
+# Suppress false positives on test fixtures and example configs.
+
+[allowlist]
+  description = "CodeBot project-level allowlist"
+  paths = [
+    '''tests/.*''',
+    '''fixtures/.*''',
+    '''.env.example''',
+  ]
+  regexes = [
+    '''codebot_dev_key''',
+    '''test_secret_value''',
+    '''PLACEHOLDER_.*''',
+  ]

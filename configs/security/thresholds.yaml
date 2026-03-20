@@ -1,0 +1,10 @@
+# Security gate thresholds.
+# Findings exceeding critical/high thresholds cause gate failure.
+# Medium/low exceedances produce warnings but still pass.
+
+max_critical: 0
+max_high: 0
+max_medium: 5
+max_low: 20
+require_no_secrets: true
+require_compliance_pass: false

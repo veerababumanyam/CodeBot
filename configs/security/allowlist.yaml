@@ -1,0 +1,33 @@
+# Approved dependency packages for CodeBot-generated projects.
+# Packages not on this list will be flagged by AllowlistValidator.
+
+python_packages:
+  - fastapi
+  - pydantic
+  - pydantic-settings
+  - sqlalchemy
+  - uvicorn
+  - httpx
+  - pytest
+  - ruff
+  - alembic
+  - nats-py
+  - gitpython
+  - semgrep
+  - ephemeral-port-reserve
+  - asyncpg
+  - redis
+  - pyyaml
+
+npm_packages:
+  - react
+  - react-dom
+  - typescript
+  - vite
+  - tailwindcss
+  - zustand
+  - "@tanstack/react-query"
+  - vitest
+
+require_hashes: true
+block_unknown: true
