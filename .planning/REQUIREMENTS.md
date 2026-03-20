@@ -154,12 +154,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Security Pipeline
 
-- [ ] **SECP-01**: Semgrep runs static analysis with custom rules for AI-generated code patterns
-- [ ] **SECP-02**: Trivy scans container images and dependencies for known vulnerabilities
-- [ ] **SECP-03**: Gitleaks detects secrets, API keys, and credentials in generated code
-- [ ] **SECP-04**: Quality gates block advancement when critical/high vulnerabilities found
+- [x] **SECP-01**: Semgrep runs static analysis with custom rules for AI-generated code patterns
+- [x] **SECP-02**: Trivy scans container images and dependencies for known vulnerabilities
+- [x] **SECP-03**: Gitleaks detects secrets, API keys, and credentials in generated code
+- [x] **SECP-04**: Quality gates block advancement when critical/high vulnerabilities found
 - [ ] **SECP-05**: Security scanning runs after every code generation step, not just at S6 gate
-- [ ] **SECP-06**: Dependency allowlist prevents hallucinated/malicious package installation
+- [x] **SECP-06**: Dependency allowlist prevents hallucinated/malicious package installation
 
 ### FastAPI Server
 
@@ -343,12 +343,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CTXT-05 | Phase 5 | Complete |
 | CTXT-06 | Phase 5 | Complete |
 | CTXT-07 | Phase 5 | Complete |
-| SECP-01 | Phase 8 | Pending |
-| SECP-02 | Phase 8 | Pending |
-| SECP-03 | Phase 8 | Pending |
-| SECP-04 | Phase 8 | Pending |
+| SECP-01 | Phase 8 | Complete |
+| SECP-02 | Phase 8 | Complete |
+| SECP-03 | Phase 8 | Complete |
+| SECP-04 | Phase 8 | Complete |
 | SECP-05 | Phase 8 | Pending |
-| SECP-06 | Phase 8 | Pending |
+| SECP-06 | Phase 8 | Complete |
 | SRVR-01 | Phase 10 | Pending |
 | SRVR-02 | Phase 10 | Pending |
 | SRVR-03 | Phase 10 | Pending |
