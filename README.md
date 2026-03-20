@@ -777,6 +777,14 @@ make dev
 | **Langfuse** | http://localhost:3001 |
 | **LiteLLM Proxy** | http://localhost:4000 |
 
+### Default Credentials (Local Development)
+
+For local development with `settings.debug=True`, you can use the following credentials:
+- **Email**: `admin@codebot.io`
+- **Password**: `admin`
+
+The application will automatically create this user if it doesn't exist when you access the API in debug mode.
+
 ### Your First Project
 
 ```bash

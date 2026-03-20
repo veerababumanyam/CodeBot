@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="g" x1="5" y1="3" x2="27" y2="29" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#22D3EE"/>
+    </linearGradient>
+    <linearGradient id="eg" x1="5" y1="3" x2="27" y2="29" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#818CF8" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#22D3EE" stop-opacity="0.55"/>
+    </linearGradient>
+    <radialGradient id="cg" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#C7D2FE"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Dark rounded background -->
+  <rect width="32" height="32" rx="7" fill="#0F172A"/>
+
+  <!-- Hex graph (center=16,16 outer-radius=9.5) -->
+  <!-- V0(16,6.5) V1(23.2,11.25) V2(23.2,20.75) V3(16,25.5) V4(8.8,20.75) V5(8.8,11.25) -->
+  <polyline
+    points="16,6.5 23.2,11.25 23.2,20.75 16,25.5 8.8,20.75 8.8,11.25 16,6.5"
+    stroke="url(#eg)" stroke-width="0.9" stroke-linejoin="round" fill="none"/>
+  <line x1="16" y1="16" x2="16"   y2="6.5"  stroke="url(#eg)" stroke-width="0.7"/>
+  <line x1="16" y1="16" x2="23.2" y2="11.25" stroke="url(#eg)" stroke-width="0.7"/>
+  <line x1="16" y1="16" x2="23.2" y2="20.75" stroke="url(#eg)" stroke-width="0.7"/>
+  <line x1="16" y1="16" x2="16"   y2="25.5"  stroke="url(#eg)" stroke-width="0.7"/>
+  <line x1="16" y1="16" x2="8.8"  y2="20.75" stroke="url(#eg)" stroke-width="0.7"/>
+  <line x1="16" y1="16" x2="8.8"  y2="11.25" stroke="url(#eg)" stroke-width="0.7"/>
+
+  <!-- Outer nodes -->
+  <circle cx="16"  cy="6.5"  r="2"   fill="url(#g)"/>
+  <circle cx="23.2" cy="11.25" r="2" fill="url(#g)"/>
+  <circle cx="23.2" cy="20.75" r="2" fill="url(#g)"/>
+  <circle cx="16"  cy="25.5" r="2"   fill="url(#g)"/>
+  <circle cx="8.8" cy="20.75" r="2"  fill="url(#g)"/>
+  <circle cx="8.8" cy="11.25" r="2"  fill="url(#g)"/>
+
+  <!-- Central node -->
+  <circle cx="16" cy="16" r="3.8" fill="url(#cg)"/>
+  <circle cx="14.8" cy="14.8" r="1.2" fill="white" opacity="0.4"/>
+</svg>

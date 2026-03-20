@@ -19,9 +19,10 @@ export function Sidebar(): React.JSX.Element {
   return (
     <aside className="flex h-full w-64 flex-col border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
       <div className="border-b border-gray-200 p-4 dark:border-gray-700">
-        <h1 className="text-lg font-bold text-gray-900 dark:text-white">
-          CodeBot
-        </h1>
+        <div className="mb-2">
+          <img src="/logo.svg" alt="CodeBot" className="h-8 block dark:hidden" />
+          <img src="/logo-dark.svg" alt="CodeBot" className="h-8 hidden dark:block" />
+        </div>
         <p className="text-xs text-gray-500 dark:text-gray-400">
           AI Development Platform
         </p>

@@ -11,7 +11,7 @@ import { FileTree } from "@/components/editor/file-tree";
 import { TerminalPanel } from "@/components/terminal/terminal-panel";
 import { PreviewFrame } from "@/components/preview/preview-frame";
 import { ProjectHub } from "@/components/projects/project-hub";
-import { ChatDrawer } from "@/components/chat/chat-drawer";
+import { ChatSidebar } from "@/components/chat/chat-sidebar";
 import { useUiStore } from "@/stores/ui-store";
 import { useEditorStore } from "@/stores/editor-store";
 import { useProjectStore } from "@/stores/project-store";
@@ -74,7 +74,7 @@ export function App(): React.JSX.Element {
       <MainLayout>
         <ActivePanel />
       </MainLayout>
-      <ChatDrawer />
+      <ChatSidebar />
     </QueryClientProvider>
   );
 }

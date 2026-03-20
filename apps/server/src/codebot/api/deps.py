@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from codebot.auth.api_key import hash_api_key
 from codebot.auth.jwt import decode_token
+from codebot.config import settings
 from codebot.db.engine import async_session_factory
 from codebot.db.models.user import ApiKey, User
 
@@ -86,6 +87,36 @@ async def get_current_user(
                 detail="API key owner not found",
             )
         return user
+
+    if token is None and api_key is None and settings.debug:
+        # Dev mode: return the first user or create a default one
+        from codebot.db.models.user import UserRole
+        result = await db.execute(select(User).limit(1))
+        user = result.scalar_one_or_none()
+        if user:
+            return user
+            
+        # No users in DB? Create a default dev user
+        from codebot.auth.password import hash_password
+        user = User(
+            email="admin@codebot.io",
+            name="Admin User",
+            password_hash=hash_password("admin"),
+            role=UserRole.ADMIN,
+        )
+        db.add(user)
+        try:
+            await db.commit()
+            await db.refresh(user)
+            return user
+        except Exception:
+            # In case of race condition or other DB error, retry lookup
+            await db.rollback()
+            result = await db.execute(select(User).limit(1))
+            user = result.scalar_one_or_none()
+            if user:
+                return user
+            raise
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

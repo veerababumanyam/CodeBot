@@ -90,7 +90,7 @@ async def connect(
         if not settings.debug:
             raise ConnectionRefusedError("Authentication required")
         # Dev mode: allow unauthenticated connections
-        payload = {"sub": "dev-user"}
+        payload = {"sub": "admin"}
     else:
         try:
             payload = decode_token(token)
