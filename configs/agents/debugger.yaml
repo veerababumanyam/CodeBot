@@ -1,14 +1,19 @@
-agent:
-  type: DEBUGGER
-  model: anthropic/claude-sonnet-4
-  fallback_model: openai/gpt-4.1
+debugger:
+  agent_type: DEBUGGER
+  model: claude-opus-4
+  fallback_model: gpt-4.1
+  provider: anthropic
   max_tokens: 8192
   temperature: 0.2
   tools:
     - file_read
     - file_write
+    - file_edit
     - bash
-    - search_code
+    - test_runner
+    - stack_trace_analyzer
+    - root_cause_analyzer
+    - security_fix_generator
   context_tiers:
     l0: 2000
     l1: 16000
@@ -20,7 +25,6 @@ agent:
     exponential_base: 2
   timeout: 900
   settings:
-    max_experiments: 5
-    time_budget_seconds: 600
-    max_no_improvement: 3
-    improvement_threshold: 0.01
+    use_worktree: true
+    max_fix_iterations: 3
+    security_debugging: true

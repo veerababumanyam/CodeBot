@@ -1,13 +1,19 @@
-agent:
-  type: TESTER
-  model: anthropic/claude-sonnet-4
-  fallback_model: openai/gpt-4.1
+tester:
+  agent_type: TESTER
+  model: claude-sonnet-4
+  fallback_model: gpt-4.1
+  provider: anthropic
   max_tokens: 8192
-  temperature: 0.1
+  temperature: 0.2
   tools:
     - file_read
     - file_write
     - bash
+    - test_runner
+    - playwright
+    - snapshot_tester
+    - coverage_reporter
+    - docker_sandbox
   context_tiers:
     l0: 2000
     l1: 16000
@@ -17,9 +23,9 @@ agent:
     base_delay_seconds: 2
     max_delay_seconds: 30
     exponential_base: 2
-  timeout: 600
+  timeout: 900
   settings:
+    use_worktree: true
     coverage_target: 80
-    max_coverage_retries: 1
-    test_framework: pytest
-    run_twice_on_failure: true
+    sandbox_image: "python:3.12-slim"
+    e2e_framework: "playwright"
