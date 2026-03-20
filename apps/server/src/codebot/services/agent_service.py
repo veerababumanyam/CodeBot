@@ -295,9 +295,9 @@ class AgentService:
             },
             "INFRA_ENGINEER": {
                 "display_name": "Infrastructure Engineer",
-                "description": "Creates infrastructure code, Docker configs, and deployment scripts",
+                "description": "Creates infrastructure code and deployment scripts",
                 "category": "development",
-                "capabilities": ["docker_config", "ci_cd", "infrastructure_as_code"],
+                "capabilities": ["docker_config", "ci_cd", "iac"],
             },
             "CODE_REVIEWER": {
                 "display_name": "Code Reviewer",
@@ -363,19 +363,31 @@ class AgentService:
                 "display_name": "Brainstorm Facilitator",
                 "description": "Facilitates brainstorming sessions and idea generation",
                 "category": "planning",
-                "capabilities": ["idea_generation", "requirement_elicitation", "feasibility_analysis"],
+                "capabilities": [
+                    "idea_generation",
+                    "requirement_elicitation",
+                    "feasibility_analysis",
+                ],
             },
             "TECH_STACK_ADVISOR": {
                 "display_name": "Tech Stack Advisor",
                 "description": "Recommends technology stack based on project requirements",
                 "category": "planning",
-                "capabilities": ["stack_recommendation", "technology_comparison", "compatibility_check"],
+                "capabilities": [
+                    "stack_recommendation",
+                    "technology_comparison",
+                    "compatibility_check",
+                ],
             },
             "TEMPLATE_CURATOR": {
                 "display_name": "Template Curator",
                 "description": "Manages and recommends project templates",
                 "category": "planning",
-                "capabilities": ["template_selection", "template_customization", "scaffold_generation"],
+                "capabilities": [
+                    "template_selection",
+                    "template_customization",
+                    "scaffold_generation",
+                ],
             },
             "DEPLOYER": {
                 "display_name": "Deployer",

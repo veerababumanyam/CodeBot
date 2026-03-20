@@ -10,7 +10,10 @@ class PipelineCreate(BaseModel):
     """Request body for creating a new pipeline."""
 
     name: str | None = Field(default=None, max_length=255)
-    mode: str = Field(default="full", pattern="^(full|incremental|phase_only)$")
+    mode: str = Field(
+        default="full",
+        pattern="^(full|quick|review_only|incremental|phase_only)$",
+    )
     phases: list[str] | None = None
     config: dict | None = None
 
@@ -28,7 +31,6 @@ class PipelineResponse(BaseModel):
     completed_at: datetime | None
     total_tokens_used: int
     total_cost_usd: float
-    created_at: datetime
 
     @field_validator("status", mode="before")
     @classmethod

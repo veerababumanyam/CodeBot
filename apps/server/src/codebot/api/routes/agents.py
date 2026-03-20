@@ -36,11 +36,11 @@ def _get_agent_service(
 async def list_agents(
     current_user: Annotated[User, Depends(get_current_user)],
     service: Annotated[AgentService, Depends(_get_agent_service)],
-    page: int = Query(default=1, ge=1),
-    per_page: int = Query(default=20, ge=1, le=100),
-    project_id: UUID | None = Query(default=None),
-    status_filter: str | None = Query(default=None, alias="status"),
-    agent_type: str | None = Query(default=None, alias="type"),
+    page: Annotated[int, Query(ge=1)] = 1,
+    per_page: Annotated[int, Query(ge=1, le=100)] = 20,
+    project_id: Annotated[UUID | None, Query()] = None,
+    status_filter: Annotated[str | None, Query(alias="status")] = None,
+    agent_type: Annotated[str | None, Query(alias="type")] = None,
 ) -> PaginatedEnvelope[AgentResponse]:
     """List agents with optional filters.
 

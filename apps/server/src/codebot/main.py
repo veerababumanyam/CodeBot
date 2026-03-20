@@ -1,7 +1,8 @@
 """CodeBot FastAPI application entrypoint."""
 
-from contextlib import asynccontextmanager
+import logging
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
@@ -14,17 +15,45 @@ from codebot.api.routes.pipelines import (
     router as pipelines_router,
 )
 from codebot.api.routes.projects import router as projects_router
+from codebot.config import settings
+from codebot.events.bus import create_event_bus
+from codebot.websocket.bridge import start_nats_bridge
+from codebot.websocket.manager import sio, socket_app
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Application lifespan context manager.
 
-    Placeholder for startup/shutdown hooks (NATS, Redis connections, etc.).
+    Connects to NATS event bus and starts the WebSocket bridge on startup.
+    Gracefully shuts down the bridge and disconnects from NATS on shutdown.
     """
     # Startup
+    try:
+        app.state.event_bus = await create_event_bus(settings.nats_url)
+        logger.info("Event bus connected to %s", settings.nats_url)
+    except Exception:
+        logger.warning(
+            "Failed to connect to NATS at %s -- WebSocket bridge disabled",
+            settings.nats_url,
+            exc_info=True,
+        )
+        app.state.event_bus = None
+
+    if app.state.event_bus is not None:
+        app.state.bridge_task = await start_nats_bridge(sio, app.state.event_bus)
+    else:
+        app.state.bridge_task = None
+
     yield
+
     # Shutdown
+    if app.state.bridge_task is not None:
+        app.state.bridge_task.cancel()
+    if app.state.event_bus is not None:
+        await app.state.event_bus.disconnect()
 
 
 app = FastAPI(
@@ -44,3 +73,6 @@ app.include_router(projects_router, prefix="/api/v1")
 app.include_router(pipelines_router, prefix="/api/v1")
 app.include_router(project_pipelines_router, prefix="/api/v1")
 app.include_router(agents_router, prefix="/api/v1")
+
+# Mount Socket.IO ASGI app for WebSocket connections
+app.mount("/ws", socket_app)

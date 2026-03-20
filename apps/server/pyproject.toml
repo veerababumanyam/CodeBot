@@ -43,6 +43,8 @@ dependencies = [
     # Auth
     "pyjwt[crypto]>=2.10.0",
     "bcrypt>=4.2.0",
+    # WebSocket (Socket.IO)
+    "python-socketio>=5.11.0",
     # Rate Limiting
     "slowapi>=0.1.9",
     # Email Validation
