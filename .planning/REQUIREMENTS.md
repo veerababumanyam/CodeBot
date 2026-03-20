@@ -61,12 +61,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **INPT-01**: User can describe project idea in natural language
 - [x] **INPT-02**: System accepts structured PRDs in Markdown, JSON, or YAML
-- [ ] **INPT-03**: System accepts multi-modal input: text, images (wireframes, screenshots), and reference URLs
+- [x] **INPT-03**: System accepts multi-modal input: text, images (wireframes, screenshots), and reference URLs
 - [x] **INPT-04**: System extracts functional requirements, non-functional requirements, constraints, and acceptance criteria via NLP
 - [x] **INPT-05**: System initiates clarification loop when requirements are ambiguous or incomplete
 - [x] **INPT-06**: User can select UI/UX template (Shadcn/ui, Tailwind UI, Material Design, custom)
 - [x] **INPT-07**: User can select or auto-recommend tech stack (language, framework, database, hosting)
-- [ ] **INPT-08**: System imports existing codebases from local directories or Git repositories for brownfield projects
+- [x] **INPT-08**: System imports existing codebases from local directories or Git repositories for brownfield projects
 
 ### Brainstorming (S1)
 
@@ -137,10 +137,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Documentation (S9)
 
-- [ ] **DOCS-01**: Documentation agent generates API documentation from code
-- [ ] **DOCS-02**: Documentation agent creates user guides and setup instructions
-- [ ] **DOCS-03**: Documentation agent produces architecture decision records
-- [ ] **DOCS-04**: Generated docs include deployment guides (Docker, CI/CD configs)
+- [x] **DOCS-01**: Documentation agent generates API documentation from code
+- [x] **DOCS-02**: Documentation agent creates user guides and setup instructions
+- [x] **DOCS-03**: Documentation agent produces architecture decision records
+- [x] **DOCS-04**: Generated docs include deployment guides (Docker, CI/CD configs)
 
 ### Context Management
 
@@ -190,9 +190,9 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Event System
 
 - [x] **EVNT-01**: NATS JetStream pub/sub for all inter-agent messaging
-- [ ] **EVNT-02**: Event replay capability for debugging and audit
-- [ ] **EVNT-03**: Full audit trail: every agent action, gate decision, and state transition persisted
-- [ ] **EVNT-04**: Event-sourced architecture enables complete pipeline reconstruction from events
+- [x] **EVNT-02**: Event replay capability for debugging and audit
+- [x] **EVNT-03**: Full audit trail: every agent action, gate decision, and state transition persisted
+- [x] **EVNT-04**: Event-sourced architecture enables complete pipeline reconstruction from events
 
 ### Worktree Management
 
@@ -283,12 +283,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PIPE-08 | Phase 6 | Complete |
 | INPT-01 | Phase 7 | Complete |
 | INPT-02 | Phase 7 | Complete |
-| INPT-03 | Phase 9 | Pending |
+| INPT-03 | Phase 9 | Complete |
 | INPT-04 | Phase 7 | Complete |
 | INPT-05 | Phase 7 | Complete |
 | INPT-06 | Phase 9 | Complete |
 | INPT-07 | Phase 9 | Complete |
-| INPT-08 | Phase 9 | Pending |
+| INPT-08 | Phase 9 | Complete |
 | BRST-01 | Phase 9 | Complete |
 | BRST-02 | Phase 9 | Complete |
 | BRST-03 | Phase 9 | Complete |
@@ -332,10 +332,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DBUG-02 | Phase 7 | Complete |
 | DBUG-03 | Phase 7 | Complete |
 | DBUG-04 | Phase 9 | Complete |
-| DOCS-01 | Phase 9 | Pending |
-| DOCS-02 | Phase 9 | Pending |
-| DOCS-03 | Phase 9 | Pending |
-| DOCS-04 | Phase 9 | Pending |
+| DOCS-01 | Phase 9 | Complete |
+| DOCS-02 | Phase 9 | Complete |
+| DOCS-03 | Phase 9 | Complete |
+| DOCS-04 | Phase 9 | Complete |
 | CTXT-01 | Phase 5 | Complete |
 | CTXT-02 | Phase 5 | Complete |
 | CTXT-03 | Phase 5 | Complete |
@@ -367,9 +367,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLI-03 | Phase 11 | Pending |
 | CLI-04 | Phase 11 | Pending |
 | EVNT-01 | Phase 7 | Complete |
-| EVNT-02 | Phase 9 | Pending |
-| EVNT-03 | Phase 9 | Pending |
-| EVNT-04 | Phase 9 | Pending |
+| EVNT-02 | Phase 9 | Complete |
+| EVNT-03 | Phase 9 | Complete |
+| EVNT-04 | Phase 9 | Complete |
 | WORK-01 | Phase 8 | Complete |
 | WORK-02 | Phase 8 | Complete |
 | WORK-03 | Phase 8 | Complete |
