@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 07-03-PLAN.md
-last_updated: "2026-03-20T05:56:22.761Z"
-last_activity: 2026-03-20 -- Completed 07-03 (Tester and Debugger agents)
+stopped_at: Completed 07-04-PLAN.md
+last_updated: "2026-03-20T06:07:18.765Z"
+last_activity: 2026-03-20 -- Completed 07-04 (Pipeline composition and E2E integration)
 progress:
   total_phases: 12
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 36
-  completed_plans: 18
+  completed_plans: 19
   percent: 50
 ---
 
@@ -26,18 +26,18 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 7 of 11 (Vertical Slice)
-Plan: 3 of 4 in current phase
+Plan: 4 of 4 in current phase
 Status: In Progress
-Last activity: 2026-03-20 -- Completed 07-03 (Tester and Debugger agents)
+Last activity: 2026-03-20 -- Completed 07-04 (Pipeline composition and E2E integration)
 
-Progress: [█████░░░░░] 50%
+Progress: [█████░░░░░] 53%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 20 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 2, Phase 6: 4, Phase 7: 3)
+- Total plans completed: 21 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 2, Phase 6: 4, Phase 7: 4)
 - Average duration: 7min (Phases 2+3+4+5+6+7)
-- Total execution time: 120min (Phases 2+3+4+5+6+7, Phase 1 pre-GSD)
+- Total execution time: 128min (Phases 2+3+4+5+6+7, Phase 1 pre-GSD)
 
 **By Phase:**
 
@@ -49,10 +49,10 @@ Progress: [█████░░░░░] 50%
 | 4. Multi-LLM Abstraction | 2/3 | 21min | 11min |
 | 5. Context Management | 3/3 | 21min | 7min |
 | 6. Pipeline Orchestration | 4/4 | 27min | 7min |
-| 7. Vertical Slice | 3/4 | 22min | 7min |
+| 7. Vertical Slice | 4/4 | 30min | 8min |
 
 **Recent Trend:**
-- Last 5 plans: 06-03 (5min), 06-04 (12min), 07-01 (6min), 07-02 (8min), 07-03 (8min)
+- Last 5 plans: 06-04 (12min), 07-01 (6min), 07-02 (8min), 07-03 (8min), 07-04 (8min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -61,6 +61,7 @@ Progress: [█████░░░░░] 50%
 | Phase 07 P01 | 6min | 2 tasks | 11 files |
 | Phase 07 P02 | 8min | 2 tasks | 8 files |
 | Phase 07 P03 | 8min | 2 tasks | 17 files |
+| Phase 07 P04 | 8min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -143,6 +144,10 @@ Recent decisions affecting current work:
 - [Phase 07]: instructor.from_litellm(litellm.completion) for sync structured output (consistent with BackendDevAgent/CodeReviewerAgent)
 - [Phase 07]: ExperimentLoopController with 4 circuit breakers (all-pass, max-experiments, time-budget, no-improvement) and KEEP/DISCARD against stable baseline
 - [Phase 07]: DebuggerAgent reverts source_files on DISCARD to prevent cascading breakage (research Pitfall 3)
+- [Phase 07-04]: PipelineEventEmitter wraps EventBus using agent_sdk typed models (EventEnvelope/AgentEvent/PipelineEvent) -- distinct from Phase 6 PipelineEventEmitter
+- [Phase 07-04]: VerticalSlicePipeline as dataclass with _run_phase() helper merging state_updates into shared_state
+- [Phase 07-04]: QA reroute loop: max 2 cycles, injects review_comments into shared_state for BackendDev
+- [Phase 07-04]: patch.object() required for testing slots=True dataclass agents (direct attribute assignment blocked)
 
 ### Pending Todos
 
@@ -156,6 +161,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T05:56:22.758Z
-Stopped at: Completed 07-03-PLAN.md
+Last session: 2026-03-20T06:05:52Z
+Stopped at: Completed 07-04-PLAN.md
 Resume file: None

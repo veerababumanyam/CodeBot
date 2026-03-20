@@ -189,7 +189,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Event System
 
-- [ ] **EVNT-01**: NATS JetStream pub/sub for all inter-agent messaging
+- [x] **EVNT-01**: NATS JetStream pub/sub for all inter-agent messaging
 - [ ] **EVNT-02**: Event replay capability for debugging and audit
 - [ ] **EVNT-03**: Full audit trail: every agent action, gate decision, and state transition persisted
 - [ ] **EVNT-04**: Event-sourced architecture enables complete pipeline reconstruction from events
@@ -366,7 +366,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLI-02 | Phase 11 | Pending |
 | CLI-03 | Phase 11 | Pending |
 | CLI-04 | Phase 11 | Pending |
-| EVNT-01 | Phase 7 | Pending |
+| EVNT-01 | Phase 7 | Complete |
 | EVNT-02 | Phase 9 | Pending |
 | EVNT-03 | Phase 9 | Pending |
 | EVNT-04 | Phase 9 | Pending |
