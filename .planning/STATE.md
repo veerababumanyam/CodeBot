@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Completed 08-05-PLAN.md
-last_updated: "2026-03-20T07:47:44.260Z"
-last_activity: 2026-03-20 -- Completed 08-05 (SOC 2 compliance subsystem)
+status: in-progress
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-03-20T08:36:08Z"
+last_activity: 2026-03-20 -- Completed 09-01 (Agent registry, brainstorming, researcher)
 progress:
   total_phases: 12
   completed_phases: 8
   total_plans: 36
-  completed_plans: 24
-  percent: 72
+  completed_plans: 25
+  percent: 75
 ---
 
 # Project State
@@ -21,21 +21,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** User describes an idea in natural language, gets working, tested, security-scanned code autonomously through a multi-agent pipeline
-**Current focus:** Phase 8 - Security Pipeline + Worktree Manager
+**Current focus:** Phase 9 - Full Agent Roster
 
 ## Current Position
 
-Phase: 8 of 11 (Security Pipeline + Worktree Manager)
-Plan: 5 of 5 in current phase (COMPLETE)
-Status: Phase Complete
-Last activity: 2026-03-20 -- Completed 08-05 (SOC 2 compliance subsystem)
+Phase: 9 of 11 (Full Agent Roster)
+Plan: 1 of 5 in current phase
+Status: In Progress
+Last activity: 2026-03-20 -- Completed 09-01 (Agent registry, brainstorming, researcher)
 
-Progress: [███████░░░] 72%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 26 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 2, Phase 6: 4, Phase 7: 4, Phase 8: 5)
+- Total plans completed: 27 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 2, Phase 6: 4, Phase 7: 4, Phase 8: 5, Phase 9: 1)
 - Average duration: 7min (Phases 2+3+4+5+6+7)
 - Total execution time: 128min (Phases 2+3+4+5+6+7, Phase 1 pre-GSD)
 
@@ -51,8 +51,10 @@ Progress: [███████░░░] 72%
 | 6. Pipeline Orchestration | 4/4 | 27min | 7min |
 | 7. Vertical Slice | 4/4 | 30min | 8min |
 
+| 8. Security Pipeline | 5/5 | 28min | 6min |
+
 **Recent Trend:**
-- Last 5 plans: 08-01 (6min), 08-02 (5min), 08-03 (6min), 08-04 (5min), 08-05 (6min)
+- Last 5 plans: 08-02 (5min), 08-03 (6min), 08-04 (5min), 08-05 (6min), 09-01 (6min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -67,6 +69,7 @@ Progress: [███████░░░] 72%
 | Phase 08 P03 | 6min | 2 tasks | 6 files |
 | Phase 08 P04 | 5min | 2 tasks | 15 files |
 | Phase 08 P05 | 6min | 2 tasks | 9 files |
+| Phase 09 P01 | 6min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -170,6 +173,9 @@ Recent decisions affecting current work:
 - [Phase 08-05]: Deterministic SHA-256 via JSON sorted keys for reproducible tamper detection
 - [Phase 08-05]: Per-framework retention: SOC2=365d, HIPAA=2190d, GDPR=1095d, PCI_DSS=365d
 - [Phase 08-05]: TSCRule as dataclass (mutable loader data) vs Pydantic (API schemas)
+- [Phase 09-01]: AgentRegistry uses module-level dict with decorator registration (no metaclass complexity)
+- [Phase 09-01]: Registry warns on overwrite instead of raising -- allows test fixtures to re-register
+- [Phase 09-01]: BrainstormingAgent and ResearcherAgent follow identical PRA pattern for consistency
 
 ### Pending Todos
 
@@ -183,6 +189,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T07:38:52Z
-Stopped at: Completed 08-05-PLAN.md
+Last session: 2026-03-20T08:36:08Z
+Stopped at: Completed 09-01-PLAN.md
 Resume file: None

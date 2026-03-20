@@ -29,7 +29,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **AGNT-05**: Agent configurations are declarative YAML (system prompt, tools, LLM model, context tiers, retry policy)
 - [x] **AGNT-06**: Agents self-review output against acceptance criteria before marking COMPLETED
 - [x] **AGNT-07**: Failed agents trigger recovery strategy (retry with different prompt, escalate, rollback)
-- [ ] **AGNT-08**: System supports 30 specialized agents across 10 categories
+- [x] **AGNT-08**: System supports 30 specialized agents across 10 categories
 - [ ] **AGNT-09**: Skill Creator agent can generate reusable skills for other agents
 - [ ] **AGNT-10**: Hooks Creator agent can create event-triggered hooks
 - [ ] **AGNT-11**: Tools Creator agent can expose new tool capabilities to the agent ecosystem
@@ -70,20 +70,20 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Brainstorming (S1)
 
-- [ ] **BRST-01**: System facilitates idea exploration sessions with open-ended brainstorming
-- [ ] **BRST-02**: System maps problems to potential solution approaches
-- [ ] **BRST-03**: System performs competitive analysis of existing solutions
-- [ ] **BRST-04**: System prioritizes features using MoSCoW or RICE frameworks
-- [ ] **BRST-05**: System presents trade-off analysis for architectural and feature decisions
-- [ ] **BRST-06**: System generates user personas based on product idea
-- [ ] **BRST-07**: System defines MVP scope vs future iterations
+- [x] **BRST-01**: System facilitates idea exploration sessions with open-ended brainstorming
+- [x] **BRST-02**: System maps problems to potential solution approaches
+- [x] **BRST-03**: System performs competitive analysis of existing solutions
+- [x] **BRST-04**: System prioritizes features using MoSCoW or RICE frameworks
+- [x] **BRST-05**: System presents trade-off analysis for architectural and feature decisions
+- [x] **BRST-06**: System generates user personas based on product idea
+- [x] **BRST-07**: System defines MVP scope vs future iterations
 
 ### Research (S2)
 
-- [ ] **RSRC-01**: Researcher agent evaluates libraries, APIs, and frameworks for the target stack
-- [ ] **RSRC-02**: Researcher discovers best practices and reference implementations
-- [ ] **RSRC-03**: Researcher identifies potential risks and compatibility issues
-- [ ] **RSRC-04**: Research outputs feed into Architecture phase as structured context
+- [x] **RSRC-01**: Researcher agent evaluates libraries, APIs, and frameworks for the target stack
+- [x] **RSRC-02**: Researcher discovers best practices and reference implementations
+- [x] **RSRC-03**: Researcher identifies potential risks and compatibility issues
+- [x] **RSRC-04**: Research outputs feed into Architecture phase as structured context
 
 ### Architecture & Design (S3)
 
@@ -260,7 +260,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGNT-05 | Phase 3 | Complete |
 | AGNT-06 | Phase 3 | Complete |
 | AGNT-07 | Phase 3 | Complete |
-| AGNT-08 | Phase 9 | Pending |
+| AGNT-08 | Phase 9 | Complete |
 | AGNT-09 | Phase 11 | Pending |
 | AGNT-10 | Phase 11 | Pending |
 | AGNT-11 | Phase 11 | Pending |
@@ -289,17 +289,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INPT-06 | Phase 9 | Pending |
 | INPT-07 | Phase 9 | Pending |
 | INPT-08 | Phase 9 | Pending |
-| BRST-01 | Phase 9 | Pending |
-| BRST-02 | Phase 9 | Pending |
-| BRST-03 | Phase 9 | Pending |
-| BRST-04 | Phase 9 | Pending |
-| BRST-05 | Phase 9 | Pending |
-| BRST-06 | Phase 9 | Pending |
-| BRST-07 | Phase 9 | Pending |
-| RSRC-01 | Phase 9 | Pending |
-| RSRC-02 | Phase 9 | Pending |
-| RSRC-03 | Phase 9 | Pending |
-| RSRC-04 | Phase 9 | Pending |
+| BRST-01 | Phase 9 | Complete |
+| BRST-02 | Phase 9 | Complete |
+| BRST-03 | Phase 9 | Complete |
+| BRST-04 | Phase 9 | Complete |
+| BRST-05 | Phase 9 | Complete |
+| BRST-06 | Phase 9 | Complete |
+| BRST-07 | Phase 9 | Complete |
+| RSRC-01 | Phase 9 | Complete |
+| RSRC-02 | Phase 9 | Complete |
+| RSRC-03 | Phase 9 | Complete |
+| RSRC-04 | Phase 9 | Complete |
 | ARCH-01 | Phase 9 | Pending |
 | ARCH-02 | Phase 9 | Pending |
 | ARCH-03 | Phase 9 | Pending |
