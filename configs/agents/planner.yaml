@@ -1,0 +1,28 @@
+planner:
+  agent_type: PLANNER
+  model: claude-opus-4
+  fallback_model: gpt-4o
+  provider: anthropic
+  max_tokens: 8192
+  temperature: 0.2
+  tools:
+    - task_decomposer
+    - dependency_resolver
+    - complexity_estimator
+    - parallel_scheduler
+    - critical_path_analyzer
+  context_tiers:
+    l0: 2000
+    l1: 20000
+    l2: 40000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 600
+  settings:
+    max_task_size_hours: 1
+    require_acceptance_criteria: true
+    require_target_files: true
+    include_test_tasks: true

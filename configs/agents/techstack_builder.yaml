@@ -1,0 +1,26 @@
+techstack_builder:
+  agent_type: TECH_STACK_ADVISOR
+  model: claude-sonnet-4
+  fallback_model: gpt-4o-mini
+  provider: anthropic
+  max_tokens: 4096
+  temperature: 0.3
+  tools:
+    - stack_analyzer
+    - compatibility_checker
+    - version_resolver
+    - benchmark_lookup
+  context_tiers:
+    l0: 2000
+    l1: 10000
+    l2: 20000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 300
+  settings:
+    min_alternatives_per_choice: 1
+    require_compatibility_check: true
+    flag_deprecated_versions: true
