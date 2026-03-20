@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Completed 09-05-PLAN.md
-last_updated: "2026-03-20T09:09:48.108Z"
-last_activity: 2026-03-20 -- Completed 09-05 (Remaining agents, __init__.py bootstrap, stage subgraphs)
+status: in-progress
+stopped_at: Completed 10-01-PLAN.md
+last_updated: "2026-03-20T09:34:44Z"
+last_activity: 2026-03-20 -- Completed 10-01 (Auth, response envelope, project CRUD, API tests)
 progress:
   total_phases: 12
   completed_phases: 9
   total_plans: 36
-  completed_plans: 29
-  percent: 81
+  completed_plans: 30
+  percent: 83
 ---
 
 # Project State
@@ -21,21 +21,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** User describes an idea in natural language, gets working, tested, security-scanned code autonomously through a multi-agent pipeline
-**Current focus:** Phase 9 - Full Agent Roster (COMPLETE)
+**Current focus:** Phase 10 - FastAPI Server API Layer
 
 ## Current Position
 
-Phase: 9 of 11 (Full Agent Roster) -- COMPLETE
-Plan: 5 of 5 in current phase (all complete)
-Status: Phase Complete
-Last activity: 2026-03-20 -- Completed 09-05 (Remaining agents, __init__.py bootstrap, stage subgraphs)
+Phase: 10 of 12 (FastAPI Server API Layer)
+Plan: 1 of 2 in current phase
+Status: In Progress
+Last activity: 2026-03-20 -- Completed 10-01 (Auth, response envelope, project CRUD, API tests)
 
-Progress: [████████░░] 81%
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 30 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 2, Phase 6: 4, Phase 7: 4, Phase 8: 5, Phase 9: 5)
+- Total plans completed: 30 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 2, Phase 6: 4, Phase 7: 4, Phase 8: 5, Phase 9: 5, Phase 10: 1)
 - Average duration: 7min (Phases 2+3+4+5+6+7)
 - Total execution time: 128min (Phases 2+3+4+5+6+7, Phase 1 pre-GSD)
 
@@ -74,6 +74,7 @@ Progress: [████████░░] 81%
 | Phase 09 P02 | 7min | 3 tasks | 16 files |
 | Phase 09 P04 | 8min | 2 tasks | 16 files |
 | Phase 09 P05 | 10min | 3 tasks | 34 files |
+| Phase 10 P01 | 8min | 2 tasks | 30 files |
 
 ## Accumulated Context
 
@@ -192,6 +193,10 @@ Recent decisions affecting current work:
 - [Phase 09]: OrchestratorAgent rewritten with standard PRA pattern, multimodal input (INPT-03), and codebase import (INPT-08)
 - [Phase 09]: Stub agent pattern: @register_agent + act() returns {stub: True} for SkillCreator/HooksCreator/ToolsCreator/CollaborationManager
 - [Phase 09]: Stage subgraph YAML configs use fan_out_fan_in execution with merge strategies (state_merge, worktree_merge, gate_aggregation)
+- [Phase 10-01]: Annotated[T, Depends()] pattern for all FastAPI DI to satisfy ruff B008
+- [Phase 10-01]: Pydantic Generic[T] with noqa UP046 -- Pydantic requires Generic subclass syntax
+- [Phase 10-01]: Savepoint test isolation via after_transaction_end event for clean API test rollback
+- [Phase 10-01]: Service layer pattern (route -> service -> ORM) for all API business logic
 
 ### Pending Todos
 
@@ -205,6 +210,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T09:03:41.490Z
-Stopped at: Completed 09-05-PLAN.md
+Last session: 2026-03-20T09:34:44Z
+Stopped at: Completed 10-01-PLAN.md
 Resume file: None

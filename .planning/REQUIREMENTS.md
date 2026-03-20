@@ -163,9 +163,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### FastAPI Server
 
-- [ ] **SRVR-01**: REST API endpoints for project CRUD, pipeline control, and agent monitoring
+- [x] **SRVR-01**: REST API endpoints for project CRUD, pipeline control, and agent monitoring
 - [ ] **SRVR-02**: WebSocket endpoint for real-time pipeline status and agent output streaming
-- [ ] **SRVR-03**: Authentication and authorization for API access
+- [x] **SRVR-03**: Authentication and authorization for API access
 - [ ] **SRVR-04**: Pipeline configuration endpoints accept YAML preset selection
 - [ ] **SRVR-05**: Agent management endpoints (start, stop, restart, configure)
 
@@ -349,9 +349,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SECP-04 | Phase 8 | Complete |
 | SECP-05 | Phase 8 | Complete |
 | SECP-06 | Phase 8 | Complete |
-| SRVR-01 | Phase 10 | Pending |
+| SRVR-01 | Phase 10 | Complete |
 | SRVR-02 | Phase 10 | Pending |
-| SRVR-03 | Phase 10 | Pending |
+| SRVR-03 | Phase 10 | Complete |
 | SRVR-04 | Phase 10 | Pending |
 | SRVR-05 | Phase 10 | Pending |
 | DASH-01 | Phase 11 | Pending |
