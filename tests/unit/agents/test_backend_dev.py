@@ -322,10 +322,8 @@ class TestAct:
             mock_proc_ok.communicate.return_value = (b"", b"")
             mock_subprocess.side_effect = [
                 mock_proc_fail,  # ruff check fails
-                mock_proc_ok,    # ruff format (ok)
-                mock_proc_ok,    # mypy (ok, but will re-prompt)
+                mock_proc_ok,    # mypy (ok, but lint failed so will re-prompt)
                 mock_proc_ok,    # ruff check (retry, ok)
-                mock_proc_ok,    # ruff format (retry, ok)
                 mock_proc_ok,    # mypy (retry, ok)
             ]
 
@@ -397,10 +395,8 @@ class TestAct:
 
             mock_subprocess.side_effect = [
                 mock_proc_ok,          # ruff check ok
-                mock_proc_ok,          # ruff format ok
                 mock_proc_mypy_fail,   # mypy fails
                 mock_proc_ok,          # ruff check retry
-                mock_proc_ok,          # ruff format retry
                 mock_proc_ok,          # mypy retry ok
             ]
 
