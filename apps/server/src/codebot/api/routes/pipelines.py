@@ -1,5 +1,8 @@
 """Pipeline CRUD and lifecycle endpoints for the CodeBot API."""
 
+import json
+import logging
+
 import math
 from datetime import UTC, datetime
 from typing import Annotated
@@ -18,12 +21,15 @@ from codebot.api.schemas.pipelines import (
     PipelinePhaseResponse,
     PipelineResponse,
 )
-from codebot.db.models.project import PipelineStatus
+from codebot.db.models.project import Pipeline, PipelineStatus
 from codebot.db.models.user import User
 from codebot.services.pipeline_service import PipelineService
+from codebot.websocket.manager import get_event_bus
 
 router = APIRouter(prefix="/pipelines", tags=["pipelines"])
 project_pipelines_router = APIRouter(prefix="/projects", tags=["pipelines"])
+
+logger = logging.getLogger(__name__)
 
 
 def _get_pipeline_service(
@@ -31,6 +37,37 @@ def _get_pipeline_service(
 ) -> PipelineService:
     """Dependency that provides a PipelineService instance."""
     return PipelineService(db)
+
+
+async def _publish_pipeline_update(pipeline: Pipeline) -> None:
+    """Publish a lightweight pipeline:update event for operator UIs.
+
+    The event is forwarded through the existing NATS-to-Socket.IO bridge and
+    scoped to the owning project room via ``project_id``.
+    """
+    payload = {
+        "pipeline_id": str(pipeline.id),
+        "project_id": str(pipeline.project_id),
+        "status": pipeline.status.value.lower(),
+        "current_phase": pipeline.current_phase,
+        "started_at": pipeline.started_at.isoformat() if pipeline.started_at else None,
+        "completed_at": (
+            pipeline.completed_at.isoformat() if pipeline.completed_at else None
+        ),
+        "total_tokens_used": pipeline.total_tokens_used,
+        "total_cost_usd": float(pipeline.total_cost_usd),
+        "error_message": pipeline.error_message,
+    }
+
+    try:
+        bus = await get_event_bus()
+        await bus.publish("pipeline:update", json.dumps(payload).encode("utf-8"))
+    except Exception:
+        logger.debug(
+            "Failed to publish pipeline:update for pipeline %s",
+            pipeline.id,
+            exc_info=True,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -158,6 +195,7 @@ async def start_pipeline(
             status_code=status.HTTP_404_NOT_FOUND, detail="Pipeline not found"
         )
     updated = await service.transition(pipeline, PipelineStatus.RUNNING)
+    await _publish_pipeline_update(updated)
     return ResponseEnvelope(
         data=PipelineActionResponse(
             id=updated.id,
@@ -192,6 +230,7 @@ async def pause_pipeline(
             status_code=status.HTTP_404_NOT_FOUND, detail="Pipeline not found"
         )
     updated = await service.transition(pipeline, PipelineStatus.PAUSED)
+    await _publish_pipeline_update(updated)
     return ResponseEnvelope(
         data=PipelineActionResponse(
             id=updated.id,
@@ -226,6 +265,7 @@ async def resume_pipeline(
             status_code=status.HTTP_404_NOT_FOUND, detail="Pipeline not found"
         )
     updated = await service.transition(pipeline, PipelineStatus.RUNNING)
+    await _publish_pipeline_update(updated)
     return ResponseEnvelope(
         data=PipelineActionResponse(
             id=updated.id,
@@ -260,6 +300,7 @@ async def cancel_pipeline(
             status_code=status.HTTP_404_NOT_FOUND, detail="Pipeline not found"
         )
     updated = await service.transition(pipeline, PipelineStatus.CANCELLED)
+    await _publish_pipeline_update(updated)
     return ResponseEnvelope(
         data=PipelineActionResponse(
             id=updated.id,
@@ -329,4 +370,9 @@ async def approve_phase(
         approved_by=current_user.email if hasattr(current_user, "email") else str(current_user.id),
         comment=body.comment,
     )
+
+    pipeline = await service.get(pipeline_id)
+    if pipeline is not None:
+        await _publish_pipeline_update(pipeline)
+
     return ResponseEnvelope(data=PipelinePhaseResponse.model_validate(updated))

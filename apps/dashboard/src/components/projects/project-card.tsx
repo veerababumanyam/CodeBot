@@ -34,6 +34,7 @@ interface ProjectCardProps {
   activeRunAction: "pause" | "resume" | "cancel" | "retry" | null;
   runActionError: string | undefined;
   onOpen: (id: string) => void;
+  onInspectFailure: (projectId: string, pipelineId: string, stageId: string) => void;
   onDelete: (id: string) => void;
   onRunAction: (projectId: string, pipelineId: string, action: "pause" | "resume" | "cancel" | "retry") => void;
 }
@@ -64,7 +65,7 @@ function getFailureReason(errorMessage: string | null | undefined): string | nul
 
 function getFailedStageSummary(
   pipeline: Pipeline | null,
-): { name: string; errorMessage: string | null } | null {
+): { id: string; name: string; errorMessage: string | null } | null {
   const failedStage = pipeline?.stages.find(
     (stage) => stage.status === "failed" || Boolean(stage.error_message?.trim()),
   );
@@ -74,6 +75,7 @@ function getFailedStageSummary(
   }
 
   return {
+    id: failedStage.id,
     name: formatPhaseName(failedStage.name),
     errorMessage: getFailureReason(failedStage.error_message),
   };
@@ -86,6 +88,7 @@ export function ProjectCard({
   activeRunAction,
   runActionError,
   onOpen,
+  onInspectFailure,
   onDelete,
   onRunAction,
 }: ProjectCardProps): React.JSX.Element {
@@ -217,6 +220,19 @@ export function ProjectCard({
               {activeRunAction === "retry" ? "Retrying..." : "Retry run"}
             </button>
           ) : null}
+        </div>
+      ) : null}
+
+      {latestPipeline && failedStage ? (
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            aria-label={`Inspect failure for ${project.name}`}
+            onClick={() => onInspectFailure(project.id, latestPipeline.id, failedStage.id)}
+            className="rounded-full border border-warning px-3 py-1.5 text-xs font-medium text-warning transition-colors hover:bg-warning-muted"
+          >
+            Inspect failure
+          </button>
         </div>
       ) : null}
 

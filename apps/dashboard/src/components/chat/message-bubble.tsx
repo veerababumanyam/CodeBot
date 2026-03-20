@@ -103,6 +103,94 @@ function getMessageContext(message: Message): {
   }
 }
 
+function formatMetaLabel(value: string): string {
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function getMetaString(meta: unknown, keys: string[]): string | null {
+  if (!meta || typeof meta !== "object") {
+    return null;
+  }
+
+  for (const key of keys) {
+    const value = (meta as Record<string, unknown>)[key];
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+
+  return null;
+}
+
+function getMetaNumber(meta: unknown, keys: string[]): number | null {
+  if (!meta || typeof meta !== "object") {
+    return null;
+  }
+
+  for (const key of keys) {
+    const value = (meta as Record<string, unknown>)[key];
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+function getMetaStringArray(meta: unknown, keys: string[]): string[] {
+  if (!meta || typeof meta !== "object") {
+    return [];
+  }
+
+  for (const key of keys) {
+    const value = (meta as Record<string, unknown>)[key];
+    if (Array.isArray(value)) {
+      return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+    }
+  }
+
+  return [];
+}
+
+function getApprovalDetails(message: Message, gateId: string | null) {
+  if (message.type !== "approval") {
+    return null;
+  }
+
+  const stageName = getMetaString(message.meta, ["stageName", "stage_name", "stage", "name"]);
+  const phaseType = getMetaString(message.meta, ["phaseType", "phase_type"]);
+  const gateType = getMetaString(message.meta, ["gateType", "gate_type"]);
+  const reviewer = getMetaString(message.meta, ["approvedBy", "approved_by", "requestedBy", "requested_by"]);
+  const reviewNote = getMetaString(message.meta, ["reviewNote", "review_note", "comment", "note"]);
+  const stageNumber = getMetaNumber(message.meta, ["stageNumber", "stage_number"]);
+  const agents = getMetaStringArray(message.meta, ["agents"]);
+
+  const stageLabel = stageNumber !== null ? `Stage ${stageNumber + 1}` : null;
+  const title = stageName ? formatMetaLabel(stageName) : "Approval required";
+  const subtitle = [stageLabel, phaseType ? formatMetaLabel(phaseType) : null]
+    .filter((part): part is string => Boolean(part))
+    .join(" • ");
+  const chips = [
+    gateType ? formatMetaLabel(gateType) : null,
+    reviewer ? `Requested by ${reviewer}` : null,
+    agents.length > 0 ? `${agents.length} participating agent${agents.length === 1 ? "" : "s"}` : null,
+    gateId ? `Gate ${gateId}` : null,
+  ].filter((chip): chip is string => Boolean(chip));
+
+  return {
+    title,
+    subtitle: subtitle.length > 0 ? subtitle : null,
+    note: reviewNote,
+    chips,
+    statusLabel: gateId ? "Waiting for decision" : "Awaiting gate metadata",
+    statusClassName: gateId ? "bg-warning-muted text-warning" : "bg-panel text-muted-foreground",
+  };
+}
+
 export function MessageBubble({
   message,
   compact = false,
@@ -110,6 +198,7 @@ export function MessageBubble({
   showTimestamp = true,
 }: MessageBubbleProps) {
   const { approveGate, sendMessage } = useChat();
+  const [copiedTarget, setCopiedTarget] = React.useState<"message" | "gate" | null>(null);
   const isUser = message.type === "user";
   const isSystem = message.type === "system";
   const isAgent = message.type === "agent";
@@ -128,6 +217,7 @@ export function MessageBubble({
   const context = getMessageContext(message);
   const agentInitials = getAgentInitials(message.agent);
   const agentIdentityStyle = getAgentIdentityStyle(message.agent);
+  const approvalDetails = getApprovalDetails(message, gateId);
 
   function handleQuickReply(option: string): void {
     sendMessage(option);
@@ -139,6 +229,15 @@ export function MessageBubble({
     }
 
     approveGate(gateId, approved);
+  }
+
+  async function copyText(value: string, target: "message" | "gate"): Promise<void> {
+    if (!navigator.clipboard?.writeText) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(value);
+    setCopiedTarget(target);
   }
 
   if (isSystem) {
@@ -262,7 +361,51 @@ export function MessageBubble({
             
             {/* Interactive Cards */}
             {(isClarification || isApproval) && (
-              <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-3">
+              <div className="mt-4 border-t border-border pt-3">
+                {isApproval && approvalDetails && (
+                  <div className="mb-3 rounded-xl border border-border bg-panel-muted/80 p-3 shadow-[var(--theme-shadow-panel)]">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">{approvalDetails.title}</p>
+                        {approvalDetails.subtitle && (
+                          <p className="mt-1 text-[11px] text-muted-foreground">{approvalDetails.subtitle}</p>
+                        )}
+                      </div>
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide",
+                          approvalDetails.statusClassName,
+                        )}
+                      >
+                        {approvalDetails.statusLabel}
+                      </span>
+                    </div>
+
+                    {approvalDetails.chips.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {approvalDetails.chips.map((chip) => (
+                          <span
+                            key={chip}
+                            className="inline-flex items-center rounded-full border border-border bg-panel px-2.5 py-1 text-[10px] font-medium text-muted-foreground"
+                          >
+                            {chip}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {approvalDetails.note && (
+                      <div className="mt-3 rounded-lg border border-border bg-panel px-3 py-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Review note
+                        </p>
+                        <p className="mt-1 text-xs text-foreground">{approvalDetails.note}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-2">
                 {isClarification && clarificationOptions.map((opt) => (
                   <button
                     key={opt}
@@ -289,7 +432,7 @@ export function MessageBubble({
                       disabled={!gateId}
                       className="rounded-lg bg-danger px-4 py-1.5 text-xs font-semibold text-white transition-all shadow-[var(--theme-shadow-panel)] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Reject
+                      Request changes
                     </button>
                     {!gateId && (
                       <span className="self-center text-[10px] text-muted-foreground">
@@ -298,6 +441,7 @@ export function MessageBubble({
                     )}
                   </>
                 )}
+                </div>
               </div>
             )}
           </div>
@@ -306,6 +450,26 @@ export function MessageBubble({
               {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </span>
           )}
+          <div className="mt-1 flex items-center gap-2 self-end opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+            <button
+              type="button"
+              onClick={() => void copyText(message.content, "message")}
+              className="rounded-full border border-border bg-panel px-2.5 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:border-border-strong hover:bg-panel-muted hover:text-foreground"
+              aria-label="Copy message text"
+            >
+              {copiedTarget === "message" ? "Copied" : "Copy text"}
+            </button>
+            {gateId && isApproval && (
+              <button
+                type="button"
+                onClick={() => void copyText(gateId, "gate")}
+                className="rounded-full border border-border bg-panel px-2.5 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:border-border-strong hover:bg-panel-muted hover:text-foreground"
+                aria-label="Copy gate ID"
+              >
+                {copiedTarget === "gate" ? "Gate copied" : "Copy gate ID"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

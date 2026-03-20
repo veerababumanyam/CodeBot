@@ -30,6 +30,7 @@ interface ChatState {
   setSidebarWidth: (width: number) => void;
   setTyping: (typing: boolean, agent?: string) => void;
   clearMessages: () => void;
+  setApproval?: (gateId: string, stage: string, description: string) => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -45,4 +46,16 @@ export const useChatStore = create<ChatState>((set) => ({
   setSidebarWidth: (width) => set({ sidebarWidth: width }),
   setTyping: (typing, agent) => set({ isTyping: typing, activeAgent: agent || null }),
   clearMessages: () => set({ messages: [] }),
+  setApproval: (gateId, stage, description) => set((state) => ({
+    messages: [
+      ...state.messages,
+      {
+        id: `approval-${gateId}`,
+        type: "approval",
+        content: description,
+        agent: stage,
+        timestamp: new Date().toISOString(),
+      },
+    ],
+  })),
 }));

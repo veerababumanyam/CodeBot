@@ -18,6 +18,22 @@ from datetime import UTC, datetime
 from nats.aio.client import Client as NATSClient
 from nats.js.api import RetentionPolicy, StreamConfig
 
+EVENT_BUS_STREAM_NAME = "codebot-events"
+EVENT_BUS_SUBJECT_PREFIX = "codebot.events"
+
+
+async def _add_stream_if_missing(js: object, config: StreamConfig) -> None:
+    """Create a JetStream stream if it does not already exist."""
+    try:
+        await js.add_stream(config)  # type: ignore[attr-defined]
+    except Exception as exc:
+        if (
+            "stream name already in use" in str(exc).lower()
+            or "already exists" in str(exc).lower()
+        ):
+            return
+        raise
+
 
 @dataclass(slots=True, kw_only=True)
 class PipelineEvent:
@@ -84,13 +100,23 @@ class PipelineEventEmitter:
         - retention: limits-based
         - max_age: 7 days
         """
-        await self._js.add_stream(
+        await _add_stream_if_missing(
+            self._js,
             StreamConfig(
                 name=self.STREAM_NAME,
                 subjects=["pipeline.>"],
                 retention=RetentionPolicy.LIMITS,
                 max_age=7 * 24 * 3600.0,  # 7 days in seconds
-            )
+            ),
+        )
+        await _add_stream_if_missing(
+            self._js,
+            StreamConfig(
+                name=EVENT_BUS_STREAM_NAME,
+                subjects=[f"{EVENT_BUS_SUBJECT_PREFIX}.>"],
+                retention=RetentionPolicy.LIMITS,
+                max_age=7 * 24 * 3600.0,
+            ),
         )
 
     async def emit(self, event_type: str, data: dict[str, object] | None = None) -> None:
@@ -102,6 +128,10 @@ class PipelineEventEmitter:
         """
         event = PipelineEvent(type=event_type, data=data or {})
         await self._js.publish(event.subject, event.to_json_bytes())
+        await self._js.publish(
+            f"{EVENT_BUS_SUBJECT_PREFIX}.{event_type}",
+            event.to_json_bytes(),
+        )
 
     # ------------------------------------------------------------------
     # Typed helper methods

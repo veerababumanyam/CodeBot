@@ -22,12 +22,14 @@ class PipelineInput:
     """Input to the SDLC pipeline workflow.
 
     Attributes:
+        pipeline_id: Unique identifier for the pipeline run when available.
         project_id: Unique identifier for the project being processed.
         preset_name: Pipeline preset to load (``"full"``, ``"quick"``, ``"review-only"``).
         project_type: Detected project classification (``"greenfield"``, ``"inflight"``, etc.).
         resume_from_phase: If resuming, the phase index to start from.
     """
 
+    pipeline_id: str = ""
     project_id: str
     preset_name: str
     project_type: str

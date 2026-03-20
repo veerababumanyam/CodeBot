@@ -11,22 +11,21 @@ const socketOptions = {
 } as any;
 
 export const socket: Socket = io(BASE_URL, socketOptions);
-export const pipelineSocket: Socket = io(`${BASE_URL}/pipeline`, socketOptions);
-export const agentSocket: Socket = io(`${BASE_URL}/agents`, socketOptions);
+export const pipelineSocket: Socket = socket;
+export const agentSocket: Socket = socket;
 
 export function connectSockets(token?: string): void {
   if (token) {
     socket.auth = { token };
-    pipelineSocket.auth = { token };
-    agentSocket.auth = { token };
   }
-  socket.connect();
-  pipelineSocket.connect();
-  agentSocket.connect();
+
+  if (!socket.connected) {
+    socket.connect();
+  }
 }
 
 export function disconnectSockets(): void {
-  socket.disconnect();
-  pipelineSocket.disconnect();
-  agentSocket.disconnect();
+  if (socket.connected) {
+    socket.disconnect();
+  }
 }

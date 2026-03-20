@@ -8,6 +8,20 @@ import { useUiStore } from "@/stores/ui-store";
 import type { Pipeline } from "@/types/pipeline";
 import { ProjectHub } from "./project-hub";
 
+const { mockSocketOn, mockSocketOff, mockSocketEmit } = vi.hoisted(() => ({
+  mockSocketOn: vi.fn(),
+  mockSocketOff: vi.fn(),
+  mockSocketEmit: vi.fn(),
+}));
+
+vi.mock("@/lib/socket", () => ({
+  pipelineSocket: {
+    on: mockSocketOn,
+    off: mockSocketOff,
+    emit: mockSocketEmit,
+  },
+}));
+
 vi.mock("@/api/projects", () => ({
   projectApi: {
     list: vi.fn(),
@@ -388,6 +402,54 @@ describe("ProjectHub", () => {
     });
   });
 
+  it("inspects a failed run and focuses the failed stage", async () => {
+    vi.mocked(pipelineApi.get).mockResolvedValue({
+      status: "success",
+      data: {
+        id: "pipe-3",
+        project_id: "proj-3",
+        mode: "full",
+        status: "failed",
+        current_phase: "testing",
+        total_stages: 3,
+        stages: [
+          {
+            id: "stage-3",
+            name: "integration_testing",
+            stage_number: 2,
+            status: "failed",
+            started_at: "2026-03-18T08:20:00Z",
+            completed_at: "2026-03-18T08:30:00Z",
+            agents: [],
+            error_message: "Payments integration timed out",
+          },
+        ],
+        config: null,
+        started_at: "2026-03-18T08:00:00Z",
+        completed_at: "2026-03-18T08:30:00Z",
+        total_tokens_used: 2200,
+        total_cost_usd: 0.93,
+        error_message: "Integration tests failed",
+      },
+      meta: { request_id: "req-inspect", timestamp: "2026-03-20T10:05:00Z" },
+    });
+
+    render(<ProjectHub />);
+
+    const inspectButton = await screen.findByRole("button", {
+      name: /inspect failure for charlie ops/i,
+    });
+
+    fireEvent.click(inspectButton);
+
+    await waitFor(() => {
+      expect(pipelineApi.get).toHaveBeenCalledWith("pipe-3");
+      expect(useUiStore.getState().activePanel).toBe("pipeline");
+      expect(usePipelineStore.getState().activePipelineId).toBe("pipe-3");
+      expect(usePipelineStore.getState().focusedStageId).toBe("stage-3");
+    });
+  });
+
   it("refreshes latest run summaries from the hub controls", async () => {
     render(<ProjectHub />);
 
@@ -408,5 +470,50 @@ describe("ProjectHub", () => {
     const alphaCard = alphaCardTitle.closest("div.group");
     expect(alphaCard).not.toBeNull();
     expect(within(alphaCard as HTMLElement).getAllByText("Completed").length).toBeGreaterThan(0);
+  });
+
+  it("subscribes to project rooms and applies live pipeline updates", async () => {
+    render(<ProjectHub />);
+
+    await screen.findByText("Alpha Platform");
+
+    expect(mockSocketEmit).toHaveBeenCalledWith("subscribe", {
+      channels: ["project:proj-1", "project:proj-2", "project:proj-3"],
+    });
+
+    const pipelineUpdateHandler = mockSocketOn.mock.calls.find(
+      (call: unknown[]) => call[0] === "pipeline:update",
+    )?.[1] as ((event: {
+      pipeline_id: string;
+      project_id: string;
+      status: Pipeline["status"];
+      current_phase: string;
+      started_at: string | null;
+      completed_at: string | null;
+      total_tokens_used: number;
+      total_cost_usd: number;
+      error_message: string | null;
+    }) => void) | undefined;
+
+    expect(pipelineUpdateHandler).toBeDefined();
+    pipelineUpdateHandler?.({
+      pipeline_id: "pipe-1",
+      project_id: "proj-1",
+      status: "completed",
+      current_phase: "implementation",
+      started_at: "2026-03-20T09:55:00Z",
+      completed_at: "2026-03-20T10:05:00Z",
+      total_tokens_used: 4800,
+      total_cost_usd: 1.42,
+      error_message: null,
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("button", { name: /pause latest run for alpha platform/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/\$1\.42 · 4,800 tokens/i)).toBeInTheDocument();
   });
 });

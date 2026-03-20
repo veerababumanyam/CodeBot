@@ -6,6 +6,33 @@ import type { Attachment } from "@/stores/chat-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useSocketStore } from "@/stores/socket-store";
 
+const QUICK_COMMANDS = [
+  {
+    command: "/status",
+    label: "Status update",
+    description: "Ask for the latest progress across agents and stages.",
+    prompt: "Give me a concise status update for this project, including active agents, current blockers, and the next expected milestone.",
+  },
+  {
+    command: "/next-step",
+    label: "Next best step",
+    description: "Ask what should happen next in the workflow.",
+    prompt: "What is the single highest-impact next step for this project right now, and why?",
+  },
+  {
+    command: "/risks",
+    label: "Surface risks",
+    description: "Ask for open risks, approvals, and attention areas.",
+    prompt: "List the current risks, approvals, or missing inputs that could slow this project down.",
+  },
+  {
+    command: "/summarize",
+    label: "Summarize thread",
+    description: "Ask for a digest of the current coordination thread.",
+    prompt: "Summarize the latest conversation into decisions made, unresolved questions, and recommended follow-ups.",
+  },
+] as const;
+
 export function ChatInput() {
   const [content, setContent] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -15,6 +42,29 @@ export function ChatInput() {
   const isConnected = useSocketStore((s) => s.isConnected);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const normalizedContent = content.trimStart();
+  const isSlashMode = normalizedContent.startsWith("/");
+  const slashQuery = isSlashMode ? normalizedContent.slice(1).toLowerCase() : "";
+  const filteredCommands = QUICK_COMMANDS.filter((item) => {
+    if (!slashQuery) {
+      return true;
+    }
+
+    const haystack = `${item.command} ${item.label} ${item.description}`.toLowerCase();
+    return haystack.includes(slashQuery);
+  });
+  const showCommandSuggestions = Boolean(activeProjectId && isConnected && isSlashMode);
+  const topCommand = filteredCommands[0] ?? null;
+
+  const applyQuickCommand = (prompt: string) => {
+    setContent(prompt);
+    requestAnimationFrame(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(prompt.length, prompt.length);
+      }
+    });
+  };
 
   const appendFiles = async (files: File[]) => {
     if (!files.length) return;
@@ -61,7 +111,23 @@ export function ChatInput() {
     }
   };
 
+  const commandSuggestion = topCommand?.prompt ?? null;
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (showCommandSuggestions && commandSuggestion) {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        applyQuickCommand(commandSuggestion);
+        return;
+      }
+
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        applyQuickCommand(commandSuggestion);
+        return;
+      }
+    }
+
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -86,7 +152,7 @@ export function ChatInput() {
       return "Chat will resume once the workspace reconnects.";
     }
 
-    return "Press Enter to send, Shift+Enter for a newline, or drop files here.";
+    return "Press Enter to send, Shift+Enter for a newline, type / for quick prompts, or drop files here.";
   }
 
   return (
@@ -193,6 +259,47 @@ export function ChatInput() {
           </button>
         </div>
       </div>
+
+      {showCommandSuggestions && (
+        <div className="mt-3 rounded-2xl border border-border bg-panel px-3 py-3 shadow-[var(--theme-shadow-panel)]">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+              Quick prompts
+            </p>
+            <span className="text-[10px] text-muted-foreground">Press Enter or Tab to use the top match</span>
+          </div>
+
+          {filteredCommands.length > 0 ? (
+            <div className="grid gap-2">
+              {filteredCommands.map((item, index) => (
+                <button
+                  key={item.command}
+                  type="button"
+                  onClick={() => applyQuickCommand(item.prompt)}
+                  className={cn(
+                    "rounded-xl border px-3 py-2 text-left transition-colors",
+                    index === 0
+                      ? "border-accent/30 bg-accent-muted/60"
+                      : "border-border bg-panel-muted hover:border-border-strong hover:bg-panel",
+                  )}
+                  aria-label={`Insert ${item.label} prompt`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full border border-border bg-panel px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {item.command}
+                    </span>
+                    <span className="text-xs font-semibold text-foreground">{item.label}</span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-muted-foreground">{item.description}</p>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">No quick prompt matches that command yet.</p>
+          )}
+        </div>
+      )}
+
       <p className="mt-2 text-[11px] text-muted-foreground">{getHelperText()}</p>
     </div>
   );

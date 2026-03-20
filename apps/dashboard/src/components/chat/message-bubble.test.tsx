@@ -27,6 +27,11 @@ function makeMessage(overrides: Partial<Message> = {}): Message {
 describe("MessageBubble", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: vi.fn().mockResolvedValue(undefined),
+      },
+    });
   });
 
   it("renders system messages as status pills", () => {
@@ -44,7 +49,15 @@ describe("MessageBubble", () => {
       <MessageBubble
         message={makeMessage({
           type: "approval",
-          meta: { gateId: "gate-1" },
+          meta: {
+            gateId: "gate-1",
+            stage_name: "architecture_review",
+            stage_number: 2,
+            phase_type: "design_review",
+            approved_by: "Project Manager",
+            review_note: "Please confirm the API boundaries before implementation.",
+            agents: ["Architect", "Reviewer"],
+          },
           attachments: [
             {
               type: "file",
@@ -59,14 +72,37 @@ describe("MessageBubble", () => {
 
     expect(screen.getByText("Architect")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /notes.txt/i })).toBeInTheDocument();
+  expect(screen.getByText("Architecture Review")).toBeInTheDocument();
+  expect(screen.getByText(/stage 3 • design review/i)).toBeInTheDocument();
+  expect(screen.getByText(/requested by project manager/i)).toBeInTheDocument();
+  expect(screen.getByText(/2 participating agents/i)).toBeInTheDocument();
+  expect(screen.getByText(/please confirm the api boundaries/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Approve" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Reject" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Request changes" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Approve" }));
-    fireEvent.click(screen.getByRole("button", { name: "Reject" }));
+  fireEvent.click(screen.getByRole("button", { name: "Request changes" }));
 
     expect(approveGate).toHaveBeenNthCalledWith(1, "gate-1", true);
     expect(approveGate).toHaveBeenNthCalledWith(2, "gate-1", false);
+  });
+
+  it("copies message text and gate ids from the action strip", async () => {
+    render(
+      <MessageBubble
+        message={makeMessage({
+          type: "approval",
+          meta: { gateId: "gate-1" },
+        })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Copy message text" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy gate ID" }));
+
+    const writeText = vi.mocked(navigator.clipboard.writeText);
+    expect(writeText).toHaveBeenNthCalledWith(1, "Pipeline review is ready.");
+    expect(writeText).toHaveBeenNthCalledWith(2, "gate-1");
   });
 
   it("sends quick replies for clarification options", () => {
@@ -108,6 +144,7 @@ describe("MessageBubble", () => {
     );
 
     expect(screen.getByRole("button", { name: "Approve" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Request changes" })).toBeDisabled();
     expect(screen.getByText(/waiting for gate metadata/i)).toBeInTheDocument();
   });
 

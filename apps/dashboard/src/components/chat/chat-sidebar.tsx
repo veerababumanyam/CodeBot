@@ -2,11 +2,13 @@ import React, { useState, useCallback, useEffect } from "react";
 import { MessageList } from "./message-list";
 import { ChatInput } from "./chat-input";
 import { useChatStore } from "@/stores/chat-store";
+import { useChatSocket } from "@/hooks/use-chat-socket";
 import { useSocketStore } from "@/stores/socket-store";
 import { MessageSquare, RotateCcw, X, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ChatSidebar() {
+  useChatSocket();
   const {
     drawerOpen,
     setDrawerOpen,

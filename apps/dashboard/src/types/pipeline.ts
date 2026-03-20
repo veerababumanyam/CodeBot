@@ -68,6 +68,25 @@ export interface StageErrorEvent {
   error: string;
 }
 
+export interface PipelineUpdateEvent {
+  pipeline_id: string;
+  project_id: string;
+  status: PipelineStatus;
+  current_phase: string;
+  started_at: string | null;
+  completed_at: string | null;
+  total_tokens_used: number;
+  total_cost_usd: number;
+  error_message: string | null;
+}
+
+export interface PipelinePhaseEvent {
+  pipeline_id: string;
+  project_id: string;
+  phase: string;
+  phase_idx: number;
+}
+
 export interface GateEvent {
   pipeline_id: string;
   stage_id: string;

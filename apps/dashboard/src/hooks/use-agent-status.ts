@@ -7,14 +7,21 @@ import type {
   AgentMetricsEvent,
 } from "@/types/agent";
 
-export function useAgentStatus(pipelineId: string | null): void {
+export function useAgentStatus(
+  pipelineId: string | null,
+  projectId: string | null,
+): void {
   useEffect(() => {
     if (!pipelineId) return;
 
     const { updateAgentStatus, appendLog, updateAgentMetrics } =
       useAgentStore.getState();
 
-    agentSocket.emit("subscribe", { pipeline_id: pipelineId });
+    const channel = projectId ? `project:${projectId}` : null;
+
+    if (channel) {
+      agentSocket.emit("subscribe", { channels: [channel] });
+    }
 
     const handleAgentStatus = (event: AgentStatusEvent): void => {
       updateAgentStatus(event.agent_id, event.status);
@@ -36,10 +43,12 @@ export function useAgentStatus(pipelineId: string | null): void {
     agentSocket.on("agent:metrics", handleAgentMetrics);
 
     return () => {
-      agentSocket.emit("unsubscribe", { pipeline_id: pipelineId });
+      if (channel) {
+        agentSocket.emit("unsubscribe", { channels: [channel] });
+      }
       agentSocket.off("agent:status", handleAgentStatus);
       agentSocket.off("agent:log", handleAgentLog);
       agentSocket.off("agent:metrics", handleAgentMetrics);
     };
-  }, [pipelineId]);
+  }, [pipelineId, projectId]);
 }

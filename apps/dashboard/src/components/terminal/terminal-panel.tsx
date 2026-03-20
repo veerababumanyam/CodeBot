@@ -1,13 +1,14 @@
 import { useEffect, useRef } from "react";
+import { useTerminalSocket } from "@/hooks/use-terminal-socket";
 import "xterm/css/xterm.css";
 import { TerminalManager } from "./terminal-manager";
 import { agentSocket } from "@/lib/socket";
 
 const DEFAULT_SESSION_ID = "default";
 
-export function TerminalPanel(): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const managerRef = useRef<TerminalManager | null>(null);
+  useTerminalSocket(DEFAULT_SESSION_ID);
 
   useEffect(() => {
     const container = containerRef.current;

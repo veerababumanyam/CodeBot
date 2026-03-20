@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from httpx import AsyncClient
 
@@ -175,6 +178,36 @@ class TestPipelineLifecycle:
             f"/api/v1/pipelines/{pipeline_id}/start", headers=auth_headers
         )
         assert response.status_code == 400
+
+    async def test_start_pipeline_publishes_pipeline_update(
+        self, async_client: AsyncClient, auth_headers: dict[str, str]
+    ) -> None:
+        """Starting a pipeline emits a pipeline:update event for live dashboards."""
+        project_id = await _create_project(async_client, auth_headers)
+        pipeline_id = await _create_pipeline(async_client, auth_headers, project_id)
+
+        bus_mock = AsyncMock()
+
+        with patch(
+            "codebot.api.routes.pipelines.get_event_bus",
+            AsyncMock(return_value=bus_mock),
+        ):
+            response = await async_client.post(
+                f"/api/v1/pipelines/{pipeline_id}/start",
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        bus_mock.publish.assert_awaited_once()
+        event_name, payload = bus_mock.publish.await_args.args
+        assert event_name == "pipeline:update"
+
+        decoded = json.loads(payload.decode("utf-8"))
+        assert decoded["pipeline_id"] == pipeline_id
+        assert decoded["project_id"] == project_id
+        assert decoded["status"] == "running"
+        assert decoded["error_message"] is None
+        assert decoded["started_at"] is not None
 
 
 @pytest.mark.integration

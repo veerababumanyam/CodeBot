@@ -127,7 +127,22 @@ async def subscribe(sid: str, data: dict | None = None) -> None:
         sid: Socket.IO session ID.
         data: Dict with ``channels`` list.
     """
-    channels = data.get("channels", []) if isinstance(data, dict) else []
+    channels: list[str] = []
+    if isinstance(data, dict):
+        raw_channels = data.get("channels")
+        if isinstance(raw_channels, list):
+            channels.extend(
+                channel for channel in raw_channels if isinstance(channel, str)
+            )
+
+        raw_channel = data.get("channel")
+        if isinstance(raw_channel, str):
+            channels.append(raw_channel)
+
+        project_id = data.get("project_id")
+        if isinstance(project_id, str):
+            channels.append(f"project:{project_id}")
+
     for channel in channels:
         await sio.enter_room(sid, channel)
 
@@ -140,7 +155,22 @@ async def unsubscribe(sid: str, data: dict | None = None) -> None:
         sid: Socket.IO session ID.
         data: Dict with ``channels`` list.
     """
-    channels = data.get("channels", []) if isinstance(data, dict) else []
+    channels: list[str] = []
+    if isinstance(data, dict):
+        raw_channels = data.get("channels")
+        if isinstance(raw_channels, list):
+            channels.extend(
+                channel for channel in raw_channels if isinstance(channel, str)
+            )
+
+        raw_channel = data.get("channel")
+        if isinstance(raw_channel, str):
+            channels.append(raw_channel)
+
+        project_id = data.get("project_id")
+        if isinstance(project_id, str):
+            channels.append(f"project:{project_id}")
+
     for channel in channels:
         await sio.leave_room(sid, channel)
 

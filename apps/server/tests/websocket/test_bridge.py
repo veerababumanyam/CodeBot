@@ -74,6 +74,31 @@ class TestBridge:
         )
         msg.ack.assert_called_once()
 
+    async def test_bridge_preserves_colon_event_names(self) -> None:
+        """Bridge keeps colon-delimited event names for Socket.IO consumers."""
+        sio_mock = AsyncMock()
+        msg = _make_nats_msg(
+            "codebot.events.pipeline:update",
+            {"project_id": "abc", "pipeline_id": "pipe-1", "status": "paused"},
+        )
+
+        sub_mock = AsyncMock()
+        sub_mock.next_msg = AsyncMock(
+            side_effect=[msg, asyncio.TimeoutError, asyncio.CancelledError]
+        )
+
+        try:
+            await _bridge_loop(sio_mock, sub_mock)
+        except asyncio.CancelledError:
+            pass
+
+        sio_mock.emit.assert_called_once_with(
+            "pipeline:update",
+            {"project_id": "abc", "pipeline_id": "pipe-1", "status": "paused"},
+            room="project:abc",
+        )
+        msg.ack.assert_called_once()
+
     async def test_bridge_handles_timeout_gracefully(self) -> None:
         """Bridge continues running on subscription timeout."""
         sio_mock = AsyncMock()

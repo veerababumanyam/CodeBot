@@ -1,5 +1,6 @@
-import { useEffect, useRef, useCallback } from "react";
-import Editor, { type OnMount } from "@monaco-editor/react";
+import { useEffect, useRef, useCallback, Suspense, lazy } from "react";
+// Dynamically import Monaco editor at module scope
+const MonacoEditor = lazy(() => import("@monaco-editor/react"));
 import type { editor as monacoEditor } from "monaco-editor";
 import { MonacoBinding } from "y-monaco";
 import { useEditorStore } from "@/stores/editor-store";
@@ -27,12 +28,10 @@ export function CodeEditor({
 
   const { doc, provider } = useYjs(filePath);
 
-  const handleMount: OnMount = useCallback(
-    (editor) => {
-      editorRef.current = editor;
-    },
-    [],
-  );
+  // Use any for OnMount to avoid type import from monaco-editor
+  const handleMount = useCallback((editor: any) => {
+    editorRef.current = editor;
+  }, []);
 
   // Yjs binding lifecycle
   useEffect(() => {
@@ -67,23 +66,25 @@ export function CodeEditor({
   }
 
   return (
-    <Editor
-      height="100%"
-      language={language ?? file?.language ?? "plaintext"}
-      value={file?.content ?? ""}
-      theme={theme === "dark" ? "vs-dark" : "vs-light"}
-      onMount={handleMount}
-      onChange={handleChange}
-      options={{
-        readOnly,
-        minimap: { enabled: false },
-        fontSize: 14,
-        lineNumbers: "on",
-        scrollBeyondLastLine: false,
-        automaticLayout: true,
-        wordWrap: "on",
-        tabSize: 2,
-      }}
-    />
+    <Suspense fallback={<div className="flex h-full items-center justify-center text-sm text-gray-400">Loading editor…</div>}>
+      <MonacoEditor
+        height="100%"
+        language={language ?? file?.language ?? "plaintext"}
+        value={file?.content ?? ""}
+        theme={theme === "dark" ? "vs-dark" : "vs-light"}
+        onMount={handleMount}
+        onChange={handleChange}
+        options={{
+          readOnly,
+          minimap: { enabled: false },
+          fontSize: 14,
+          lineNumbers: "on",
+          scrollBeyondLastLine: false,
+          automaticLayout: true,
+          wordWrap: "on",
+          tabSize: 2,
+        }}
+      />
+    </Suspense>
   );
 }

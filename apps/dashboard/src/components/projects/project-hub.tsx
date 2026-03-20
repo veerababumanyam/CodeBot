@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { pipelineApi } from "@/api/pipelines";
 import { projectApi } from "@/api/projects";
+import { pipelineSocket } from "@/lib/socket";
 import { usePipelineStore } from "@/stores/pipeline-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUiStore } from "@/stores/ui-store";
 import type { Project } from "@/types/project";
-import type { Pipeline } from "@/types/pipeline";
+import type { Pipeline, PipelineUpdateEvent } from "@/types/pipeline";
 import { ImportProjectWizard } from "./import-project-wizard";
 import { NewProjectWizard } from "./new-project-wizard";
 import { ProjectCard } from "./project-card";
@@ -55,6 +56,7 @@ export function ProjectHub(): React.JSX.Element {
   const setActivePanel = useUiStore((s) => s.setActivePanel);
   const upsertPipeline = usePipelineStore((s) => s.upsertPipeline);
   const setActivePipeline = usePipelineStore((s) => s.setActivePipeline);
+  const setFocusedStage = usePipelineStore((s) => s.setFocusedStage);
 
   const filteredProjects = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -180,6 +182,66 @@ export function ProjectHub(): React.JSX.Element {
     };
   }, [loadLatestPipelines, projects, view]);
 
+  useEffect(() => {
+    if (view !== "list" || projects.length === 0) {
+      return;
+    }
+
+    const channels = projects.map((project) => `project:${project.id}`);
+    if (channels.length === 0) {
+      return;
+    }
+
+    const refreshProjectLatest = async (projectId: string): Promise<void> => {
+      try {
+        const response = await pipelineApi.list(projectId);
+        setLatestPipelinesByProject((current) => ({
+          ...current,
+          [projectId]: response.data[0] ?? null,
+        }));
+      } catch {
+        // Silent refresh miss; manual refresh remains available.
+      }
+    };
+
+    const handlePipelineUpdate = (event: PipelineUpdateEvent): void => {
+      setLatestPipelinesByProject((current) => {
+        const existing = current[event.project_id];
+        if (!existing) {
+          void refreshProjectLatest(event.project_id);
+          return current;
+        }
+
+        if (existing.id !== event.pipeline_id) {
+          void refreshProjectLatest(event.project_id);
+          return current;
+        }
+
+        return {
+          ...current,
+          [event.project_id]: {
+            ...existing,
+            status: event.status,
+            current_phase: event.current_phase,
+            started_at: event.started_at,
+            completed_at: event.completed_at,
+            total_tokens_used: event.total_tokens_used,
+            total_cost_usd: event.total_cost_usd,
+            error_message: event.error_message,
+          },
+        };
+      });
+    };
+
+    pipelineSocket.emit("subscribe", { channels });
+    pipelineSocket.on("pipeline:update", handlePipelineUpdate);
+
+    return () => {
+      pipelineSocket.emit("unsubscribe", { channels });
+      pipelineSocket.off("pipeline:update", handlePipelineUpdate);
+    };
+  }, [projects, view]);
+
   function handleProjectCreated(project: Project): void {
     openProject(project.id);
     setActivePanel(project.status === "brainstorming" ? "brainstorm" : "pipeline");
@@ -188,6 +250,7 @@ export function ProjectHub(): React.JSX.Element {
   async function handleOpenProject(projectId: string): Promise<void> {
     const project = projects.find((item) => item.id === projectId);
     openProject(projectId);
+    setFocusedStage(null);
 
     if (project?.status === "brainstorming") {
       setActivePanel("brainstorm");
@@ -207,6 +270,26 @@ export function ProjectHub(): React.JSX.Element {
       }
     } catch {
       setActivePipeline(null);
+    }
+
+    setActivePanel("pipeline");
+  }
+
+  async function handleInspectFailure(
+    projectId: string,
+    pipelineId: string,
+    stageId: string,
+  ): Promise<void> {
+    openProject(projectId);
+
+    try {
+      const detailedPipeline = await pipelineApi.get(pipelineId);
+      upsertPipeline(detailedPipeline.data);
+      setActivePipeline(detailedPipeline.data.id);
+      setFocusedStage(stageId);
+    } catch {
+      setActivePipeline(null);
+      setFocusedStage(null);
     }
 
     setActivePanel("pipeline");
@@ -514,6 +597,9 @@ export function ProjectHub(): React.JSX.Element {
                     runActionError={runActionErrors[project.id]}
                     onOpen={(projectId) => {
                       void handleOpenProject(projectId);
+                    }}
+                    onInspectFailure={(projectId, pipelineId, stageId) => {
+                      void handleInspectFailure(projectId, pipelineId, stageId);
                     }}
                     onDelete={handleDelete}
                     onRunAction={(projectId, pipelineId, action) => {

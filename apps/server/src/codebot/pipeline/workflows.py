@@ -196,6 +196,8 @@ class SDLCPipelineWorkflow:
                 emit_pipeline_event,
                 {
                     "type": "phase.started",
+                    "pipeline_id": pipeline_input.pipeline_id,
+                    "project_id": pipeline_input.project_id,
                     "phase": phase["name"],
                     "phase_idx": idx,
                 },
@@ -237,6 +239,8 @@ class SDLCPipelineWorkflow:
                     emit_pipeline_event,
                     {
                         "type": "gate.decided",
+                        "pipeline_id": pipeline_input.pipeline_id,
+                        "project_id": pipeline_input.project_id,
                         "gate_id": gate_id,
                         "decision": gate_result,
                     },
@@ -249,6 +253,8 @@ class SDLCPipelineWorkflow:
                 emit_pipeline_event,
                 {
                     "type": "phase.completed",
+                    "pipeline_id": pipeline_input.pipeline_id,
+                    "project_id": pipeline_input.project_id,
                     "phase": phase["name"],
                     "phase_idx": idx,
                 },
@@ -261,6 +267,7 @@ class SDLCPipelineWorkflow:
                 await workflow.wait_condition(workflow.all_handlers_finished)
                 workflow.continue_as_new(
                     PipelineInput(
+                        pipeline_id=pipeline_input.pipeline_id,
                         project_id=pipeline_input.project_id,
                         preset_name=pipeline_input.preset_name,
                         project_type=pipeline_input.project_type,
@@ -381,7 +388,12 @@ class SDLCPipelineWorkflow:
         """
         await workflow.execute_activity(
             emit_pipeline_event,
-            {"type": "gate.waiting", "gate_id": gate_id},
+            {
+                "type": "gate.waiting",
+                "pipeline_id": pipeline_input.pipeline_id,
+                "project_id": pipeline_input.project_id,
+                "gate_id": gate_id,
+            },
             start_to_close_timeout=timedelta(seconds=10),
             retry_policy=FAST_RETRY,
         )
