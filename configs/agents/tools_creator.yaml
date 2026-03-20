@@ -1,23 +1,28 @@
-tools_creator:
-  agent_type: TOOL_BUILDER
-  model: claude-sonnet-4
-  fallback_model: gpt-4.1
-  provider: anthropic
-  max_tokens: 4096
-  temperature: 0.3
-  tools:
-    - file_read
-    - file_write
-  context_tiers:
-    l0: 2000
-    l1: 8000
-    l2: 16000
-  retry_policy:
-    max_retries: 2
-    base_delay_seconds: 3
-    max_delay_seconds: 30
-    exponential_base: 2
-  timeout: 300
-  settings:
-    stub: true
-    full_implementation_phase: 11
+agent_type: tools_creator
+name: "Tools Creator"
+description: "Generates custom tools and MCP server configurations"
+category: tooling
+stage: S9
+model:
+  primary: claude-sonnet-4-20250514
+  fallback: claude-haiku-3-5-20241022
+tools:
+  - tool_generator
+  - schema_validator
+  - tool_registry
+  - mcp_config_builder
+context_tiers:
+  L0: [project_config, agent_prompt]
+  L1: [tool_requests, existing_tools, project_structure]
+  L2: [tool_patterns_vector_search]
+retry_policy:
+  max_retries: 2
+  backoff_factor: 2.0
+  retry_on: [timeout, rate_limit]
+system_prompt: |
+  You are the Tools Creator agent. Your role is to generate custom tools that extend
+  the agent ecosystem. Given a natural-language description of a desired capability,
+  you design the tool interface (JSON Schema parameters), generate the async
+  implementation, register it in the tool registry, and produce MCP server configuration
+  so the tool can be exposed to external clients. Ensure all parameter schemas are
+  valid JSON Schema draft 2020-12.
