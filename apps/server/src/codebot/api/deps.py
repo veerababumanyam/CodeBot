@@ -14,9 +14,7 @@ from codebot.auth.jwt import decode_token
 from codebot.db.engine import async_session_factory
 from codebot.db.models.user import ApiKey, User
 
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/api/v1/auth/login", auto_error=False
-)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
@@ -32,7 +30,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 async def get_current_user(
     token: Annotated[str | None, Depends(oauth2_scheme)] = None,
     api_key: Annotated[str | None, Depends(api_key_header)] = None,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)] = None,  # type: ignore[assignment]
 ) -> User:
     """Resolve the current user from a JWT token or API key.
 
@@ -55,7 +53,7 @@ async def get_current_user(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid or expired token",
                 headers={"WWW-Authenticate": "Bearer"},
-            )
+            ) from None
         user_id = payload.get("sub")
         if user_id is None:
             raise HTTPException(
@@ -74,9 +72,7 @@ async def get_current_user(
 
     if api_key is not None:
         key_hash = hash_api_key(api_key)
-        result = await db.execute(
-            select(ApiKey).where(ApiKey.key_hash == key_hash)
-        )
+        result = await db.execute(select(ApiKey).where(ApiKey.key_hash == key_hash))
         api_key_obj = result.scalar_one_or_none()
         if api_key_obj is None:
             raise HTTPException(

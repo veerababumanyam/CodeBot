@@ -1,6 +1,6 @@
 """JWT token creation and verification for CodeBot authentication."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import jwt
@@ -18,7 +18,7 @@ def create_access_token(user_id: UUID, role: str) -> str:
     Returns:
         Encoded JWT string.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload = {
         "sub": str(user_id),
         "role": role,
@@ -38,7 +38,7 @@ def create_refresh_token(user_id: UUID) -> str:
     Returns:
         Encoded JWT string.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload = {
         "sub": str(user_id),
         "exp": now + timedelta(days=settings.jwt_refresh_token_expire_days),
@@ -61,6 +61,4 @@ def decode_token(token: str) -> dict:
         jwt.ExpiredSignatureError: If the token has expired.
         jwt.InvalidTokenError: If the token is invalid.
     """
-    return jwt.decode(
-        token, settings.jwt_secret, algorithms=[settings.jwt_algorithm]
-    )
+    return jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])

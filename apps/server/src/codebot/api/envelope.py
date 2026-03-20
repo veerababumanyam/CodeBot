@@ -5,7 +5,7 @@ a ``status`` field, metadata (request ID, timestamp), and either ``data``
 or ``error`` payloads.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Generic, TypeVar
 from uuid import uuid4
 
@@ -18,7 +18,7 @@ class Meta(BaseModel):
     """Response metadata included in every API response."""
 
     request_id: str = Field(default_factory=lambda: f"req_{uuid4().hex[:12]}")
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class PaginationMeta(BaseModel):
@@ -30,7 +30,7 @@ class PaginationMeta(BaseModel):
     total_pages: int
 
 
-class ResponseEnvelope(BaseModel, Generic[T]):
+class ResponseEnvelope(BaseModel, Generic[T]):  # noqa: UP046
     """Standard success response wrapper."""
 
     status: str = "success"
@@ -38,7 +38,7 @@ class ResponseEnvelope(BaseModel, Generic[T]):
     meta: Meta = Field(default_factory=Meta)
 
 
-class PaginatedEnvelope(BaseModel, Generic[T]):
+class PaginatedEnvelope(BaseModel, Generic[T]):  # noqa: UP046
     """Paginated success response wrapper for list endpoints."""
 
     status: str = "success"
