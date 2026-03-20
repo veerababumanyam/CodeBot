@@ -106,8 +106,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **IMPL-02**: Backend agent generates Python/FastAPI server code from API specs
 - [ ] **IMPL-03**: Mobile agent generates cross-platform or native mobile code
 - [ ] **IMPL-04**: Infrastructure agent generates Docker, CI/CD, and config files
-- [ ] **IMPL-05**: S5 agents execute in parallel in isolated git worktrees
-- [ ] **IMPL-06**: CLI agent integration delegates coding to Claude Code, Codex CLI, or Gemini CLI
+- [x] **IMPL-05**: S5 agents execute in parallel in isolated git worktrees
+- [x] **IMPL-06**: CLI agent integration delegates coding to Claude Code, Codex CLI, or Gemini CLI
 - [x] **IMPL-07**: Generated code follows project style conventions and linting rules
 
 ### Quality Assurance (S6)
@@ -197,7 +197,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Worktree Management
 
 - [x] **WORK-01**: Worktree lifecycle manager creates/cleans git worktrees per coding agent
-- [ ] **WORK-02**: Per-worktree Docker Compose profiles for runtime isolation
+- [x] **WORK-02**: Per-worktree Docker Compose profiles for runtime isolation
 - [x] **WORK-03**: Dynamic port allocation prevents conflicts between parallel agents
 - [x] **WORK-04**: Sequential merge strategy with conflict detection for worktree results
 
@@ -313,8 +313,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | IMPL-02 | Phase 7 | Complete |
 | IMPL-03 | Phase 9 | Pending |
 | IMPL-04 | Phase 9 | Pending |
-| IMPL-05 | Phase 8 | Pending |
-| IMPL-06 | Phase 8 | Pending |
+| IMPL-05 | Phase 8 | Complete |
+| IMPL-06 | Phase 8 | Complete |
 | IMPL-07 | Phase 7 | Complete |
 | QA-01 | Phase 7 | Complete |
 | QA-02 | Phase 9 | Pending |
@@ -371,7 +371,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EVNT-03 | Phase 9 | Pending |
 | EVNT-04 | Phase 9 | Pending |
 | WORK-01 | Phase 8 | Complete |
-| WORK-02 | Phase 8 | Pending |
+| WORK-02 | Phase 8 | Complete |
 | WORK-03 | Phase 8 | Complete |
 | WORK-04 | Phase 8 | Complete |
 
