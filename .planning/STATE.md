@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in-progress
-stopped_at: Completed 10-01-PLAN.md
-last_updated: "2026-03-20T09:34:44Z"
-last_activity: 2026-03-20 -- Completed 10-01 (Auth, response envelope, project CRUD, API tests)
+status: completed
+stopped_at: Completed 10-02-PLAN.md
+last_updated: "2026-03-20T09:53:07.711Z"
+last_activity: 2026-03-20 -- Completed 10-02 (Pipeline/Agent endpoints, WebSocket streaming)
 progress:
   total_phases: 12
-  completed_phases: 9
+  completed_phases: 10
   total_plans: 36
-  completed_plans: 30
-  percent: 83
+  completed_plans: 31
+  percent: 86
 ---
 
 # Project State
@@ -26,16 +26,16 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 10 of 12 (FastAPI Server API Layer)
-Plan: 1 of 2 in current phase
-Status: In Progress
-Last activity: 2026-03-20 -- Completed 10-01 (Auth, response envelope, project CRUD, API tests)
+Plan: 2 of 2 in current phase
+Status: Phase Complete
+Last activity: 2026-03-20 -- Completed 10-02 (Pipeline/Agent endpoints, WebSocket streaming)
 
-Progress: [████████░░] 83%
+Progress: [████████░░] 86%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 30 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 2, Phase 6: 4, Phase 7: 4, Phase 8: 5, Phase 9: 5, Phase 10: 1)
+- Total plans completed: 31 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 2, Phase 6: 4, Phase 7: 4, Phase 8: 5, Phase 9: 5, Phase 10: 2)
 - Average duration: 7min (Phases 2+3+4+5+6+7)
 - Total execution time: 128min (Phases 2+3+4+5+6+7, Phase 1 pre-GSD)
 
@@ -75,6 +75,7 @@ Progress: [████████░░] 83%
 | Phase 09 P04 | 8min | 2 tasks | 16 files |
 | Phase 09 P05 | 10min | 3 tasks | 34 files |
 | Phase 10 P01 | 8min | 2 tasks | 30 files |
+| Phase 10 P02 | 12min | 2 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -197,6 +198,10 @@ Recent decisions affecting current work:
 - [Phase 10-01]: Pydantic Generic[T] with noqa UP046 -- Pydantic requires Generic subclass syntax
 - [Phase 10-01]: Savepoint test isolation via after_transaction_end event for clean API test rollback
 - [Phase 10-01]: Service layer pattern (route -> service -> ORM) for all API business logic
+- [Phase 10-02]: PipelineCreate.mode extended to include quick/review_only presets alongside full/incremental/phase_only
+- [Phase 10-02]: Module-level _load_preset_phases() for YAML loading at class definition time (classmethod not callable in class body)
+- [Phase 10-02]: Pipeline ORM lacks created_at -- removed from PipelineResponse schema
+- [Phase 10-02]: Dual router pattern: project_pipelines_router for nested /projects/{id}/pipelines URLs
 
 ### Pending Todos
 
@@ -210,6 +215,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T09:34:44Z
-Stopped at: Completed 10-01-PLAN.md
+Last session: 2026-03-20T09:53:07.708Z
+Stopped at: Completed 10-02-PLAN.md
 Resume file: None
