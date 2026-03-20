@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 08-04-PLAN.md
-last_updated: "2026-03-20T07:40:14.406Z"
-last_activity: 2026-03-20 -- Completed 08-04 (CLI agents + SecurityOrchestrator wiring)
+stopped_at: Completed 08-05-PLAN.md
+last_updated: "2026-03-20T07:38:52Z"
+last_activity: 2026-03-20 -- Completed 08-05 (SOC 2 compliance subsystem)
 progress:
   total_phases: 12
   completed_phases: 8
   total_plans: 36
-  completed_plans: 24
-  percent: 67
+  completed_plans: 26
+  percent: 72
 ---
 
 # Project State
@@ -26,16 +26,16 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 8 of 11 (Security Pipeline + Worktree Manager)
-Plan: 5 of 5 in current phase
-Status: In Progress
-Last activity: 2026-03-20 -- Completed 08-04 (CLI agents + SecurityOrchestrator wiring)
+Plan: 5 of 5 in current phase (COMPLETE)
+Status: Phase Complete
+Last activity: 2026-03-20 -- Completed 08-05 (SOC 2 compliance subsystem)
 
-Progress: [██████░░░░] 67%
+Progress: [███████░░░] 72%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 25 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 2, Phase 6: 4, Phase 7: 4, Phase 8: 4)
+- Total plans completed: 26 (Phase 1: 3, Phase 5: 3, Phase 2: 3, Phase 3: 2, Phase 4: 2, Phase 6: 4, Phase 7: 4, Phase 8: 5)
 - Average duration: 7min (Phases 2+3+4+5+6+7)
 - Total execution time: 128min (Phases 2+3+4+5+6+7, Phase 1 pre-GSD)
 
@@ -52,7 +52,7 @@ Progress: [██████░░░░] 67%
 | 7. Vertical Slice | 4/4 | 30min | 8min |
 
 **Recent Trend:**
-- Last 5 plans: 07-04 (8min), 08-01 (6min), 08-02 (5min), 08-03 (6min), 08-04 (5min)
+- Last 5 plans: 08-01 (6min), 08-02 (5min), 08-03 (6min), 08-04 (5min), 08-05 (6min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -66,6 +66,7 @@ Progress: [██████░░░░] 67%
 | Phase 08 P01 | 6min | 2 tasks | 17 files |
 | Phase 08 P03 | 6min | 2 tasks | 6 files |
 | Phase 08 P04 | 5min | 2 tasks | 15 files |
+| Phase 08 P05 | 6min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -164,6 +165,11 @@ Recent decisions affecting current work:
 - [Phase 08]: Secrets identified by tool=='gitleaks' (not severity) since other tools also produce CRITICAL findings
 - [Phase 08-04]: Runtime import of SecurityReport (not TYPE_CHECKING) with noqa TC001 for Pydantic v2 forward reference resolution
 - [Phase 08-04]: Non-fatal security scanning pattern -- SecurityOrchestrator.scan() exceptions caught and logged in CLIAgentRunner
+- [Phase 08-05]: StrEnum for ComplianceFramework and TrustServiceCategory (consistent with ruff UP042)
+- [Phase 08-05]: Pydantic computed_field for ComplianceReport.passed/findings_count -- derived from check results
+- [Phase 08-05]: Deterministic SHA-256 via JSON sorted keys for reproducible tamper detection
+- [Phase 08-05]: Per-framework retention: SOC2=365d, HIPAA=2190d, GDPR=1095d, PCI_DSS=365d
+- [Phase 08-05]: TSCRule as dataclass (mutable loader data) vs Pydantic (API schemas)
 
 ### Pending Todos
 
@@ -177,6 +183,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T07:40:14.402Z
-Stopped at: Completed 08-04-PLAN.md
+Last session: 2026-03-20T07:38:52Z
+Stopped at: Completed 08-05-PLAN.md
 Resume file: None
