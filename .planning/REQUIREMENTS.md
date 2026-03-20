@@ -113,19 +113,19 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Quality Assurance (S6)
 
 - [x] **QA-01**: Code Review agent reviews generated code for correctness, patterns, and maintainability
-- [ ] **QA-02**: Security Scanner agent runs Semgrep, Trivy, and Gitleaks on all generated code
-- [ ] **QA-03**: Accessibility agent audits UI for WCAG 2.1 AA compliance
-- [ ] **QA-04**: Performance agent profiles code for bottlenecks and optimization opportunities
-- [ ] **QA-05**: i18n/L10n agent verifies internationalization completeness
+- [x] **QA-02**: Security Scanner agent runs Semgrep, Trivy, and Gitleaks on all generated code
+- [x] **QA-03**: Accessibility agent audits UI for WCAG 2.1 AA compliance
+- [x] **QA-04**: Performance agent profiles code for bottlenecks and optimization opportunities
+- [x] **QA-05**: i18n/L10n agent verifies internationalization completeness
 - [x] **QA-06**: Quality gates must pass before code advances to Testing phase
-- [ ] **QA-07**: S6 agents execute in parallel
+- [x] **QA-07**: S6 agents execute in parallel
 
 ### Testing (S7)
 
 - [x] **TEST-01**: Test Generator agent creates unit tests with >= 80% line coverage target
 - [x] **TEST-02**: Test Generator creates integration tests for API endpoints and data flows
-- [ ] **TEST-03**: Test Generator creates E2E tests using Playwright/Vitest
-- [ ] **TEST-04**: Tests execute in sandboxed environments (Docker containers)
+- [x] **TEST-03**: Test Generator creates E2E tests using Playwright/Vitest
+- [x] **TEST-04**: Tests execute in sandboxed environments (Docker containers)
 - [x] **TEST-05**: Test results feed back to Debug phase when failures detected
 
 ### Debug & Fix (S8)
@@ -133,7 +133,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **DBUG-01**: Debugger agent performs root cause analysis on test failures
 - [x] **DBUG-02**: Debugger generates fix proposals and applies them
 - [x] **DBUG-03**: Fix-test loop iterates until all tests pass or max retries exceeded
-- [ ] **DBUG-04**: Security-specific debugging addresses vulnerability findings from S6
+- [x] **DBUG-04**: Security-specific debugging addresses vulnerability findings from S6
 
 ### Documentation (S9)
 
@@ -317,21 +317,21 @@ Which phases cover which requirements. Updated during roadmap creation.
 | IMPL-06 | Phase 8 | Complete |
 | IMPL-07 | Phase 7 | Complete |
 | QA-01 | Phase 7 | Complete |
-| QA-02 | Phase 9 | Pending |
-| QA-03 | Phase 9 | Pending |
-| QA-04 | Phase 9 | Pending |
-| QA-05 | Phase 9 | Pending |
+| QA-02 | Phase 9 | Complete |
+| QA-03 | Phase 9 | Complete |
+| QA-04 | Phase 9 | Complete |
+| QA-05 | Phase 9 | Complete |
 | QA-06 | Phase 7 | Complete |
-| QA-07 | Phase 9 | Pending |
+| QA-07 | Phase 9 | Complete |
 | TEST-01 | Phase 7 | Complete |
 | TEST-02 | Phase 7 | Complete |
-| TEST-03 | Phase 9 | Pending |
-| TEST-04 | Phase 9 | Pending |
+| TEST-03 | Phase 9 | Complete |
+| TEST-04 | Phase 9 | Complete |
 | TEST-05 | Phase 7 | Complete |
 | DBUG-01 | Phase 7 | Complete |
 | DBUG-02 | Phase 7 | Complete |
 | DBUG-03 | Phase 7 | Complete |
-| DBUG-04 | Phase 9 | Pending |
+| DBUG-04 | Phase 9 | Complete |
 | DOCS-01 | Phase 9 | Pending |
 | DOCS-02 | Phase 9 | Pending |
 | DOCS-03 | Phase 9 | Pending |
