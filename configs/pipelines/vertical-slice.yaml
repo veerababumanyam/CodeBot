@@ -1,0 +1,44 @@
+pipeline:
+  name: vertical-slice
+  version: "1.0"
+  description: "Minimal 5-agent pipeline proving end-to-end architecture"
+  settings:
+    max_parallel_agents: 1
+    checkpoint_after_each_phase: true
+    cost_limit_usd: 10.0
+    timeout_minutes: 30
+  phases:
+    - name: input_processing
+      agents: [orchestrator]
+      sequential: true
+      human_gate:
+        enabled: true
+        prompt: "Review extracted requirements before proceeding"
+        timeout_minutes: 5
+        timeout_action: auto_approve
+    - name: implementation
+      agents: [backend_dev]
+      sequential: true
+      human_gate:
+        enabled: false
+    - name: quality_assurance
+      agents: [code_reviewer]
+      sequential: true
+      on_failure: reroute_to_implement
+      max_reroutes: 2
+      human_gate:
+        enabled: false
+    - name: testing
+      agents: [tester]
+      sequential: true
+      human_gate:
+        enabled: false
+    - name: debug_fix
+      agents: [debugger]
+      sequential: true
+      loop:
+        max_iterations: 5
+        exit_condition: all_tests_pass
+      on_failure: escalate
+      human_gate:
+        enabled: false
