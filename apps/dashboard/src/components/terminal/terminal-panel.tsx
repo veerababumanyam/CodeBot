@@ -6,6 +6,7 @@ import { agentSocket } from "@/lib/socket";
 
 const DEFAULT_SESSION_ID = "default";
 
+function TerminalPanel() {
   const containerRef = useRef<HTMLDivElement>(null);
   const managerRef = useRef<TerminalManager | null>(null);
   useTerminalSocket(DEFAULT_SESSION_ID);
@@ -67,4 +68,7 @@ const DEFAULT_SESSION_ID = "default";
       <div ref={containerRef} className="flex-1 bg-[#1e1e1e]" />
     </div>
   );
+}
+
+export default TerminalPanel;
 }

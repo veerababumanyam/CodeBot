@@ -40,11 +40,27 @@ Built on the **MASFactory framework** (arXiv:2603.06007), CodeBot models multi-a
 
 <br>
 
-<p align="center">
+<td>React 19, Vite (Monaco chunk optimization), TypeScript 5.5+, Tailwind CSS 4, Zustand 5, TanStack Query, React Flow, <strong>robust real-time event rigor (chat, terminal, operator)</strong></td>
   <img src="assets/pipeline.svg" alt="CodeBot 11-Stage SDLC Pipeline — S0 Init, S1 Brainstorm, S2 Research, S3 Architecture (parallel), S4 Planning, S5 Implementation (parallel), S6 QA Review (parallel), S7 Testing, S8 Debug, S9 Documentation, S10 Deploy (optional)" width="900">
 </p>
 
----
+
+## What's New in v0.2.1
+
+**Operator Event Rigor:**
+  - Dedicated real-time event handling for operator flows (custom Zustand store, event hooks, and UI integration)
+  - Robust event cleanup and modular UI for operator status/actions
+  - Comprehensive test coverage for operator event handling
+
+**Monaco Chunk Optimization:**
+  - Dynamic import of Monaco Editor in dashboard build
+  - Significantly reduces Vite/Monaco chunk warnings and improves build performance
+
+**Real-Time Flow Upgrades:**
+  - Custom hooks and Zustand stores for chat, terminal, and operator events
+  - Improved event rigor, cleanup, and modular UI integration across all real-time flows
+
+All changes are released in [v0.2.1](https://github.com/veerababumanyam/CodeBot/releases/tag/v0.2.1).
 
 ## Key Highlights
 
@@ -858,6 +874,10 @@ uv run mypy --strict apps/server/
 # Dashboard tests
 pnpm -F dashboard test
 ```
+
+---
+
+**Note:** As of v0.2.1, the dashboard test suite includes comprehensive coverage for operator event handling and real-time flows (chat, terminal, operator). See `pipeline-view.test.tsx` for examples.
 
 ---
 
