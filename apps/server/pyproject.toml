@@ -40,6 +40,13 @@ dependencies = [
     # Agent SDK
     "agent-sdk",
     "instructor>=1.14.5",
+    # Auth
+    "pyjwt[crypto]>=2.10.0",
+    "bcrypt>=4.2.0",
+    # Rate Limiting
+    "slowapi>=0.1.9",
+    # Email Validation
+    "email-validator>=2.0.0",
 ]
 
 [project.optional-dependencies]

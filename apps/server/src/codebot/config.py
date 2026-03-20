@@ -33,6 +33,18 @@ class Settings(BaseSettings):
     # LLM Configuration
     llm_config_path: str = "configs/providers/llm.yaml"
 
+    # Auth
+    jwt_secret: str = "CHANGE-ME-IN-PRODUCTION-use-secrets-token-urlsafe-64"
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 60
+    jwt_refresh_token_expire_days: int = 7
+
+    # CORS
+    cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+
+    # Rate Limiting
+    rate_limit_default: str = "60/minute"
+
     # Server
     debug: bool = True
     log_level: str = "INFO"
