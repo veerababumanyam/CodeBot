@@ -77,3 +77,4 @@ data/lancedb/*.idx
 
 # Worktrees
 .worktrees/
+*.tsbuildinfo

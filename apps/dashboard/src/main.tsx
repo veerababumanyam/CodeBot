@@ -1,14 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-
-function App(): JSX.Element {
-  return (
-    <div>
-      <h1>CodeBot Dashboard</h1>
-      <p>Multi-agent autonomous software development platform</p>
-    </div>
-  );
-}
+import "./index.css";
+import { App } from "./app";
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
