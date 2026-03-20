@@ -1,0 +1,26 @@
+agent:
+  type: DEBUGGER
+  model: anthropic/claude-sonnet-4
+  fallback_model: openai/gpt-4.1
+  max_tokens: 8192
+  temperature: 0.2
+  tools:
+    - file_read
+    - file_write
+    - bash
+    - search_code
+  context_tiers:
+    l0: 2000
+    l1: 16000
+    l2: 24000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 2
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 900
+  settings:
+    max_experiments: 5
+    time_budget_seconds: 600
+    max_no_improvement: 3
+    improvement_threshold: 0.01
