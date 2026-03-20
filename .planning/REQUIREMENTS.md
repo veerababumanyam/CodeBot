@@ -172,13 +172,13 @@ Requirements for initial release. Each maps to roadmap phases.
 ### React Dashboard
 
 - [x] **DASH-01**: Real-time pipeline visualization using React Flow with node status indicators
-- [ ] **DASH-02**: Agent monitoring panel showing status, logs, and metrics per agent
-- [ ] **DASH-03**: Code editor integration via Monaco Editor for viewing/editing generated code
-- [ ] **DASH-04**: Terminal emulator via xterm.js for CLI interaction within dashboard
-- [ ] **DASH-05**: CRDT-based real-time collaboration via Yjs for human-AI co-editing
+- [x] **DASH-02**: Agent monitoring panel showing status, logs, and metrics per agent
+- [x] **DASH-03**: Code editor integration via Monaco Editor for viewing/editing generated code
+- [x] **DASH-04**: Terminal emulator via xterm.js for CLI interaction within dashboard
+- [x] **DASH-05**: CRDT-based real-time collaboration via Yjs for human-AI co-editing
 - [x] **DASH-06**: Socket.IO live updates for pipeline progress and agent events
-- [ ] **DASH-07**: Cost dashboard showing token usage and cost breakdown per agent/stage/model
-- [ ] **DASH-08**: Live preview panel showing running application mid-pipeline via sandbox hot-reload
+- [x] **DASH-07**: Cost dashboard showing token usage and cost breakdown per agent/stage/model
+- [x] **DASH-08**: Live preview panel showing running application mid-pipeline via sandbox hot-reload
 
 ### CLI Application
 
@@ -355,13 +355,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SRVR-04 | Phase 10 | Complete |
 | SRVR-05 | Phase 10 | Complete |
 | DASH-01 | Phase 11 | Complete |
-| DASH-02 | Phase 11 | Pending |
-| DASH-03 | Phase 11 | Pending |
-| DASH-04 | Phase 11 | Pending |
-| DASH-05 | Phase 11 | Pending |
+| DASH-02 | Phase 11 | Complete |
+| DASH-03 | Phase 11 | Complete |
+| DASH-04 | Phase 11 | Complete |
+| DASH-05 | Phase 11 | Complete |
 | DASH-06 | Phase 11 | Complete |
-| DASH-07 | Phase 11 | Pending |
-| DASH-08 | Phase 11 | Pending |
+| DASH-07 | Phase 11 | Complete |
+| DASH-08 | Phase 11 | Complete |
 | CLI-01 | Phase 11 | Complete |
 | CLI-02 | Phase 11 | Complete |
 | CLI-03 | Phase 11 | Complete |
