@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
-import uuid
-from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import UTC, datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from codebot.security.compliance.models import (
-    ComplianceCheckResult,
     ComplianceFramework,
     TrustServiceCategory,
 )
@@ -105,7 +101,7 @@ class TestImmutableAuditLogger:
             session=mock_session,
             framework=ComplianceFramework.SOC2,
         )
-        before = datetime.now(timezone.utc)
+        before = datetime.now(UTC)
         entry = logger.log(
             action="access_data",
             resource_type="Data",
