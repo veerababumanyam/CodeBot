@@ -64,8 +64,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **INPT-03**: System accepts multi-modal input: text, images (wireframes, screenshots), and reference URLs
 - [x] **INPT-04**: System extracts functional requirements, non-functional requirements, constraints, and acceptance criteria via NLP
 - [x] **INPT-05**: System initiates clarification loop when requirements are ambiguous or incomplete
-- [ ] **INPT-06**: User can select UI/UX template (Shadcn/ui, Tailwind UI, Material Design, custom)
-- [ ] **INPT-07**: User can select or auto-recommend tech stack (language, framework, database, hosting)
+- [x] **INPT-06**: User can select UI/UX template (Shadcn/ui, Tailwind UI, Material Design, custom)
+- [x] **INPT-07**: User can select or auto-recommend tech stack (language, framework, database, hosting)
 - [ ] **INPT-08**: System imports existing codebases from local directories or Git repositories for brownfield projects
 
 ### Brainstorming (S1)
@@ -87,18 +87,18 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Architecture & Design (S3)
 
-- [ ] **ARCH-01**: Architect agent designs system architecture with component boundaries and data flow
-- [ ] **ARCH-02**: API Designer agent generates REST/GraphQL API specifications
-- [ ] **ARCH-03**: Database Designer agent creates schema with migrations
-- [ ] **ARCH-04**: UI/UX Designer agent generates wireframes and component hierarchy
-- [ ] **ARCH-05**: S3 agents execute in parallel with SharedState for cross-agent data flow
-- [ ] **ARCH-06**: Architecture outputs validated against requirements before advancing
+- [x] **ARCH-01**: Architect agent designs system architecture with component boundaries and data flow
+- [x] **ARCH-02**: API Designer agent generates REST/GraphQL API specifications
+- [x] **ARCH-03**: Database Designer agent creates schema with migrations
+- [x] **ARCH-04**: UI/UX Designer agent generates wireframes and component hierarchy
+- [x] **ARCH-05**: S3 agents execute in parallel with SharedState for cross-agent data flow
+- [x] **ARCH-06**: Architecture outputs validated against requirements before advancing
 
 ### Planning (S4)
 
-- [ ] **PLAN-01**: Planner agent decomposes architecture into implementable tasks with dependencies
-- [ ] **PLAN-02**: Task dependency graph determines execution order and parallelization opportunities
-- [ ] **PLAN-03**: Each task specifies target files, acceptance criteria, and estimated complexity
+- [x] **PLAN-01**: Planner agent decomposes architecture into implementable tasks with dependencies
+- [x] **PLAN-02**: Task dependency graph determines execution order and parallelization opportunities
+- [x] **PLAN-03**: Each task specifies target files, acceptance criteria, and estimated complexity
 
 ### Implementation (S5)
 
@@ -286,8 +286,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INPT-03 | Phase 9 | Pending |
 | INPT-04 | Phase 7 | Complete |
 | INPT-05 | Phase 7 | Complete |
-| INPT-06 | Phase 9 | Pending |
-| INPT-07 | Phase 9 | Pending |
+| INPT-06 | Phase 9 | Complete |
+| INPT-07 | Phase 9 | Complete |
 | INPT-08 | Phase 9 | Pending |
 | BRST-01 | Phase 9 | Complete |
 | BRST-02 | Phase 9 | Complete |
@@ -300,15 +300,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RSRC-02 | Phase 9 | Complete |
 | RSRC-03 | Phase 9 | Complete |
 | RSRC-04 | Phase 9 | Complete |
-| ARCH-01 | Phase 9 | Pending |
-| ARCH-02 | Phase 9 | Pending |
-| ARCH-03 | Phase 9 | Pending |
-| ARCH-04 | Phase 9 | Pending |
-| ARCH-05 | Phase 9 | Pending |
-| ARCH-06 | Phase 9 | Pending |
-| PLAN-01 | Phase 9 | Pending |
-| PLAN-02 | Phase 9 | Pending |
-| PLAN-03 | Phase 9 | Pending |
+| ARCH-01 | Phase 9 | Complete |
+| ARCH-02 | Phase 9 | Complete |
+| ARCH-03 | Phase 9 | Complete |
+| ARCH-04 | Phase 9 | Complete |
+| ARCH-05 | Phase 9 | Complete |
+| ARCH-06 | Phase 9 | Complete |
+| PLAN-01 | Phase 9 | Complete |
+| PLAN-02 | Phase 9 | Complete |
+| PLAN-03 | Phase 9 | Complete |
 | IMPL-01 | Phase 9 | Complete |
 | IMPL-02 | Phase 7 | Complete |
 | IMPL-03 | Phase 9 | Complete |
