@@ -27,13 +27,14 @@
   <img src="https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI">
   <img src="https://img.shields.io/badge/LangGraph-MIT-FF6B35?style=flat-square" alt="LangGraph">
   <img src="https://img.shields.io/badge/License-Apache_2.0-22C55E?style=flat-square" alt="License">
+  <img src="https://img.shields.io/badge/v1.0-Released-22C55E?style=flat-square" alt="v1.0 Released">
 </p>
 
 ---
 
 ## What is CodeBot?
 
-CodeBot is an **fully autonomous, end-to-end software development platform** that transforms a spark of an idea into a fully tested, reviewed, secured, and cloud-deployed application. It orchestrates **30 specialized AI agents** across an **11-stage SDLC pipeline** — covering every phase from brainstorming through production deployment.
+CodeBot is a **fully autonomous, end-to-end software development platform** that transforms a spark of an idea into a fully tested, reviewed, secured, and cloud-deployed application. It orchestrates **30 specialized AI agents** across an **11-stage SDLC pipeline** — covering every phase from brainstorming through production deployment.
 
 Built on the **MASFactory framework** (arXiv:2603.06007), CodeBot models multi-agent workflows as **directed computation graphs** where nodes execute agents and edges encode dependencies and message passing.
 
@@ -704,24 +705,21 @@ CodeBot can deploy your generated application to **10+ platforms**:
 codebot/
 |
 +-- apps/
-|   +-- server/              # FastAPI backend (Python)
-|   +-- dashboard/           # React dashboard (Vite + TypeScript)
-|   +-- cli/                 # CLI application (TypeScript)
+|   +-- server/              # FastAPI backend (Python) — API, agents, pipeline
+|   +-- dashboard/           # React dashboard (Vite + TypeScript) — monitoring UI
+|   +-- cli/                 # CLI application (TypeScript) — Commander-based
 |
 +-- libs/
-|   +-- agent-sdk/           # Agent base classes and tools
-|   +-- graph-engine/        # Graph execution engine
+|   +-- agent-sdk/           # Agent base classes, PRA cycle, tool bindings
+|   +-- graph-engine/        # DAG execution engine, node types, checkpoints
 |   +-- shared-types/        # Shared TypeScript types
 |
-+-- sdks/
-|   +-- python/              # Python client SDK
-|   +-- typescript/          # TypeScript client SDK
-|
-+-- configs/                 # YAML pipeline & agent configs
-+-- docker-compose.yml       # Local dev stack (PG, Redis, NATS)
-+-- pyproject.toml           # Python workspace root
-+-- package.json             # Node.js workspace root
-+-- turbo.json               # Turborepo config
++-- configs/                 # YAML pipeline, agent, and LiteLLM configs
++-- docker-compose.yml       # Local dev stack (PG, Redis, NATS, Temporal, Langfuse, LiteLLM)
++-- pyproject.toml           # Python workspace root (uv)
++-- package.json             # Node.js workspace root (pnpm + Turborepo)
++-- turbo.json               # Turborepo task config
++-- Makefile                 # Common dev commands
 ```
 
 ---
@@ -740,26 +738,44 @@ codebot/
 ```bash
 # Clone the repository
 git clone https://github.com/veerababumanyam/CodeBot.git
-cd codebot
+cd CodeBot
 
-# Start infrastructure (PostgreSQL, Redis, NATS)
-docker-compose up -d
+# Install all dependencies (Python + Node)
+make install
+# Or individually:
+# uv sync        (Python)
+# pnpm install   (Node)
 
-# Install Python dependencies
-uv sync
-
-# Install Node dependencies
-pnpm install
+# Start infrastructure (PostgreSQL, Redis, NATS, Temporal, Langfuse, LiteLLM)
+docker compose up -d
 
 # Apply database migrations
 uv run alembic upgrade head
-
-# Start the server
-uv run uvicorn apps.server.src.codebot.main:app --reload
-
-# Start the dashboard (separate terminal)
-pnpm -F dashboard dev
 ```
+
+### Running the Application
+
+```bash
+# Start everything (server + dashboard + CLI) via Turborepo
+make dev
+
+# Or start individual services:
+# Server  (http://localhost:8000):  pnpm -F @codebot/server dev
+# Dashboard (http://localhost:5173): pnpm -F dashboard dev
+# CLI:                               pnpm -F @codebot/cli dev
+```
+
+### Service URLs
+
+| Service | URL |
+|---------|-----|
+| **API Server** | http://localhost:8000 |
+| **Dashboard** | http://localhost:5173 |
+| **API Docs (Swagger)** | http://localhost:8000/docs |
+| **NATS Monitor** | http://localhost:8222 |
+| **Temporal UI** | http://localhost:8233 |
+| **Langfuse** | http://localhost:3001 |
+| **LiteLLM Proxy** | http://localhost:4000 |
 
 ### Your First Project
 
@@ -818,18 +834,21 @@ codebot start "Build a project management tool with kanban boards,
 
 ## Contributing
 
-We welcome contributions! CodeBot is in active development — check the issues for areas where you can help.
+We welcome contributions! See the issues for areas where you can help.
 
 ```bash
-# Run tests
-uv run pytest
+# Run all tests
+make test
 
-# Lint and format
+# Lint and format (Python)
 uv run ruff check .
 uv run ruff format .
 
-# Type checking
+# Type checking (Python)
 uv run mypy --strict apps/server/
+
+# Dashboard tests
+pnpm -F dashboard test
 ```
 
 ---

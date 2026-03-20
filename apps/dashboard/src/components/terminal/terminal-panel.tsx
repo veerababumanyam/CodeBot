@@ -13,37 +13,46 @@ export function TerminalPanel(): React.JSX.Element {
     const container = containerRef.current;
     if (!container) return;
 
-    const manager = new TerminalManager();
-    managerRef.current = manager;
+    // Defer initialization so React 18 StrictMode's double-invoke cycle
+    // completes before xterm schedules internal async callbacks (setTimeout/rAF).
+    // Without this, StrictMode disposes the terminal while xterm's Viewport
+    // constructor callbacks are still pending, causing a crash.
+    let manager: TerminalManager | null = null;
+    let resizeObserver: ResizeObserver | null = null;
+    let onData: ((data: { data: string }) => void) | null = null;
 
-    const session = manager.createSession(DEFAULT_SESSION_ID);
-    session.terminal.open(container);
-    manager.fit(DEFAULT_SESSION_ID);
+    const initId = setTimeout(() => {
+      manager = new TerminalManager();
+      managerRef.current = manager;
 
-    session.terminal.writeln("CodeBot Terminal v1.0");
-    session.terminal.writeln("Connected to agent runtime.");
-    session.terminal.writeln("");
-
-    // Socket.IO terminal data bridge
-    const onData = (data: { data: string }) => {
-      session.terminal.write(data.data);
-    };
-    agentSocket.on("terminal:data", onData);
-
-    session.terminal.onData((data: string) => {
-      agentSocket.emit("terminal:input", { data });
-    });
-
-    // Resize observer for fitting terminal
-    const resizeObserver = new ResizeObserver(() => {
+      const session = manager.createSession(DEFAULT_SESSION_ID);
+      session.terminal.open(container);
       manager.fit(DEFAULT_SESSION_ID);
-    });
-    resizeObserver.observe(container);
+
+      session.terminal.writeln("CodeBot Terminal v1.0");
+      session.terminal.writeln("Connected to agent runtime.");
+      session.terminal.writeln("");
+
+      onData = (data: { data: string }) => {
+        session.terminal.write(data.data);
+      };
+      agentSocket.on("terminal:data", onData);
+
+      session.terminal.onData((data: string) => {
+        agentSocket.emit("terminal:input", { data });
+      });
+
+      resizeObserver = new ResizeObserver(() => {
+        manager?.fit(DEFAULT_SESSION_ID);
+      });
+      resizeObserver.observe(container);
+    }, 0);
 
     return () => {
-      resizeObserver.disconnect();
-      agentSocket.off("terminal:data", onData);
-      manager.destroyAll();
+      clearTimeout(initId);
+      resizeObserver?.disconnect();
+      if (onData) agentSocket.off("terminal:data", onData);
+      manager?.destroyAll();
       managerRef.current = null;
     };
   }, []);

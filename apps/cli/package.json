@@ -8,7 +8,7 @@
     "codebot": "./dist/index.js"
   },
   "scripts": {
-    "dev": "tsx src/index.ts",
+    "dev": "echo '@codebot/cli: no dev server (use: pnpm -F @codebot/cli build)'",
     "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest",

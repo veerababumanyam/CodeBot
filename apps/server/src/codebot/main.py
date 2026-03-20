@@ -18,7 +18,7 @@ from codebot.api.routes.projects import router as projects_router
 from codebot.config import settings
 from codebot.events.bus import create_event_bus
 from codebot.websocket.bridge import start_nats_bridge
-from codebot.websocket.manager import sio, socket_app
+from codebot.websocket.manager import sio
 
 logger = logging.getLogger(__name__)
 
@@ -74,5 +74,8 @@ app.include_router(pipelines_router, prefix="/api/v1")
 app.include_router(project_pipelines_router, prefix="/api/v1")
 app.include_router(agents_router, prefix="/api/v1")
 
-# Mount Socket.IO ASGI app for WebSocket connections
-app.mount("/ws", socket_app)
+# Wrap FastAPI with Socket.IO ASGI app so both share the same server.
+# Socket.IO handles /socket.io/ path; everything else falls through to FastAPI.
+import socketio as _socketio
+
+app = _socketio.ASGIApp(sio, other_asgi_app=app)

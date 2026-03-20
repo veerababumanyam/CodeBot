@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useAgentStore } from "@/stores/agent-store";
 import type { Agent } from "@/types/agent";
 
@@ -208,7 +209,7 @@ function ModelSummary({ agents }: { agents: Agent[] }): React.JSX.Element {
 }
 
 export function CostBreakdown(): React.JSX.Element {
-  const agents = useAgentStore((s) => Object.values(s.agents));
+  const agents = useAgentStore(useShallow((s) => Object.values(s.agents)));
 
   if (agents.length === 0) {
     return (

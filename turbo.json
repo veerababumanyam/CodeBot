@@ -17,6 +17,10 @@
       "cache": false,
       "persistent": true
     },
+    "@codebot/cli#dev": {
+      "cache": false,
+      "persistent": false
+    },
     "migrate": {
       "cache": false
     },

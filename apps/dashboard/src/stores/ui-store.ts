@@ -8,7 +8,8 @@ type Panel =
   | "editor"
   | "terminal"
   | "cost"
-  | "preview";
+  | "preview"
+  | "projects";
 
 type Theme = "light" | "dark";
 

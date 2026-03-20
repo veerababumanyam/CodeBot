@@ -70,7 +70,18 @@ export class TerminalManager {
   fit(id: string): void {
     const session = this.sessions.get(id);
     if (session) {
-      session.fitAddon.fit();
+      try {
+        session.fitAddon.fit();
+      } catch {
+        // xterm render service not yet initialized — retry next frame
+        requestAnimationFrame(() => {
+          try {
+            session.fitAddon.fit();
+          } catch {
+            // terminal may have been disposed
+          }
+        });
+      }
     }
   }
 }

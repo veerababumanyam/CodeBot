@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useAgentStore } from "@/stores/agent-store";
 import { LogViewer } from "./log-viewer";
 import type { Agent, AgentStatus } from "@/types/agent";
+
+const EMPTY_LOGS: never[] = [];
 
 const STATUS_COLORS: Record<AgentStatus, string> = {
   idle: "bg-gray-400",
@@ -83,7 +86,7 @@ function DetailPanel({
   tab: Tab;
   onTabChange: (t: Tab) => void;
 }): React.JSX.Element {
-  const logs = useAgentStore((s) => s.logs[agent.id] ?? []);
+  const logs = useAgentStore((s) => s.logs[agent.id] ?? EMPTY_LOGS);
 
   const tabs: Tab[] = ["status", "logs", "metrics"];
 
@@ -195,7 +198,7 @@ function DetailPanel({
 }
 
 export function AgentPanel(): React.JSX.Element {
-  const agents = useAgentStore((s) => Object.values(s.agents));
+  const agents = useAgentStore(useShallow((s) => Object.values(s.agents)));
   const selectedAgentId = useAgentStore((s) => s.selectedAgentId);
   const selectAgent = useAgentStore((s) => s.selectAgent);
   const [activeTab, setActiveTab] = useState<Tab>("status");
