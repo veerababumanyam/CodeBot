@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from codebot.api.middleware import setup_middleware
 from codebot.api.routes.agents import router as agents_router
 from codebot.api.routes.auth import router as auth_router
+from codebot.api.routes.brainstorm import router as brainstorm_router
 from codebot.api.routes.health import router as health_router
 from codebot.api.routes.pipelines import (
     project_pipelines_router,
@@ -56,7 +57,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await app.state.event_bus.disconnect()
 
 
-app = FastAPI(
+fastapi_app = FastAPI(
     title="CodeBot",
     description="Multi-agent autonomous software development platform",
     version="0.1.0",
@@ -64,18 +65,19 @@ app = FastAPI(
 )
 
 # Configure middleware (CORS, rate limiting, request-ID)
-setup_middleware(app)
+setup_middleware(fastapi_app)
 
 # Register routers
-app.include_router(health_router)
-app.include_router(auth_router, prefix="/api/v1")
-app.include_router(projects_router, prefix="/api/v1")
-app.include_router(pipelines_router, prefix="/api/v1")
-app.include_router(project_pipelines_router, prefix="/api/v1")
-app.include_router(agents_router, prefix="/api/v1")
+fastapi_app.include_router(health_router)
+fastapi_app.include_router(auth_router, prefix="/api/v1")
+fastapi_app.include_router(projects_router, prefix="/api/v1")
+fastapi_app.include_router(brainstorm_router, prefix="/api/v1")
+fastapi_app.include_router(pipelines_router, prefix="/api/v1")
+fastapi_app.include_router(project_pipelines_router, prefix="/api/v1")
+fastapi_app.include_router(agents_router, prefix="/api/v1")
 
 # Wrap FastAPI with Socket.IO ASGI app so both share the same server.
 # Socket.IO handles /socket.io/ path; everything else falls through to FastAPI.
 import socketio as _socketio
 
-app = _socketio.ASGIApp(sio, other_asgi_app=app)
+app = _socketio.ASGIApp(sio, other_asgi_app=fastapi_app)

@@ -1,6 +1,6 @@
 [project]
 name = "codebot-workspace"
-version = "0.1.0"
+version = "0.2.0"
 description = "CodeBot monorepo root — Python workspace config"
 requires-python = ">=3.12"
 dependencies = [

@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { projectApi } from "@/api/projects";
+import { projectApi, type ProjectCreatePayload } from "@/api/projects";
+import {
+  pickLocalDirectory,
+  supportsDirectoryPicker,
+} from "@/lib/directory-picker";
 import { useProjectStore } from "@/stores/project-store";
 import type { Project } from "@/types/project";
 
@@ -27,6 +31,19 @@ interface ImportProjectWizardProps {
   onCancel: () => void;
 }
 
+const LOCAL_PATH_PATTERN = /^(\/|~\/|[A-Za-z]:[\\/]|\\\\)/;
+
+function inferProjectNameFromPath(rawPath: string): string {
+  const trimmedPath = rawPath.trim();
+
+  if (!trimmedPath) {
+    return "imported-project";
+  }
+
+  const parts = trimmedPath.split(/[\\/]/).filter(Boolean);
+  return parts.at(-1) ?? "imported-project";
+}
+
 export function ImportProjectWizard({
   onComplete,
   onCancel,
@@ -42,8 +59,35 @@ export function ImportProjectWizard({
   const [projectName, setProjectName] = useState("");
   const [detecting, setDetecting] = useState(false);
   const [detected, setDetected] = useState<DetectedStack | null>(null);
+  const [selectedDirectoryName, setSelectedDirectoryName] = useState<
+    string | null
+  >(null);
 
   const stepIdx = STEPS.findIndex((s) => s.key === step);
+  const directoryPickerSupported = supportsDirectoryPicker();
+  const trimmedPath = path.trim();
+  const hasValidLocalPath = LOCAL_PATH_PATTERN.test(trimmedPath);
+  const canAnalyze =
+    sourceType === "local" ? hasValidLocalPath : trimmedPath.length > 0;
+
+  async function handleBrowseDirectory(): Promise<void> {
+    setError(null);
+
+    try {
+      const selectedDirectory = await pickLocalDirectory();
+
+      if (!selectedDirectory) {
+        return;
+      }
+
+      setSelectedDirectoryName(selectedDirectory.name);
+      setProjectName((currentName) => currentName || selectedDirectory.name);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to open folder picker",
+      );
+    }
+  }
 
   async function handleDetect(): Promise<void> {
     setDetecting(true);
@@ -54,7 +98,7 @@ export function ImportProjectWizard({
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      const name = path.split("/").filter(Boolean).pop() ?? "imported-project";
+      const name = inferProjectNameFromPath(path);
       setProjectName(name);
 
       setDetected({
@@ -83,12 +127,45 @@ export function ImportProjectWizard({
     setStep("create");
 
     try {
-      const res = await projectApi.create({
+      const techStack = detected
+        ? {
+            language: detected.language,
+            framework: detected.framework,
+            database: detected.database,
+            package_manager: detected.package_manager,
+            test_framework: detected.test_framework,
+            has_ci: detected.has_ci,
+            has_docker: detected.has_docker,
+          }
+        : null;
+
+      const payload: ProjectCreatePayload = {
         name: projectName,
         description: `Imported from ${path}`,
         project_type: "brownfield",
-        prd_format: "text",
-      });
+        prd_source: "text",
+        prd_content: detected
+          ? `Imported repository analysis for ${projectName}\n\nDetected stack:\n- Language: ${detected.language}\n- Framework: ${detected.framework}\n- Database: ${detected.database}\n- Package manager: ${detected.package_manager}\n- Test framework: ${detected.test_framework}`
+          : `Imported repository from ${path}`,
+        settings: {
+          kickoff_flow: "brainstorm",
+          import_source: sourceType,
+        },
+      };
+
+      if (sourceType === "local") {
+        payload.repository_path = path;
+      }
+
+      if (sourceType === "git") {
+        payload.repository_url = path;
+      }
+
+      if (techStack) {
+        payload.tech_stack = techStack;
+      }
+
+      const res = await projectApi.create(payload);
       const project = res.data;
       addProject(project);
       onComplete(project);
@@ -191,19 +268,58 @@ export function ImportProjectWizard({
               >
                 {sourceType === "local" ? "Project Path" : "Repository URL"}
               </label>
-              <input
-                id="import-path"
-                type="text"
-                value={path}
-                onChange={(e) => setPath(e.target.value)}
-                placeholder={
-                  sourceType === "local"
-                    ? "/Users/you/projects/my-app"
-                    : "https://github.com/org/repo.git"
-                }
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 font-mono text-sm text-gray-900 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                autoFocus
-              />
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <input
+                  id="import-path"
+                  type="text"
+                  value={path}
+                  onChange={(e) => setPath(e.target.value)}
+                  placeholder={
+                    sourceType === "local"
+                      ? "/Users/you/projects/my-app"
+                      : "https://github.com/org/repo.git"
+                  }
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 font-mono text-sm text-gray-900 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  autoFocus
+                />
+                {sourceType === "local" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleBrowseDirectory();
+                    }}
+                    disabled={!directoryPickerSupported || detecting || submitting}
+                    className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                  >
+                    Browse Folder
+                  </button>
+                )}
+              </div>
+
+              {sourceType === "local" && (
+                <div className="mt-2 space-y-2 text-xs text-gray-500 dark:text-gray-400">
+                  <p>
+                    {directoryPickerSupported
+                      ? "Browse to inspect a local folder, then paste the full path above to analyze and import it."
+                      : "Paste the full local path above to continue. Folder browsing is available in supported Chromium-based browsers."}
+                  </p>
+
+                  {selectedDirectoryName && (
+                    <div
+                      className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-purple-700 dark:border-purple-900 dark:bg-purple-950 dark:text-purple-300"
+                      aria-live="polite"
+                    >
+                      Selected folder: <span className="font-medium">{selectedDirectoryName}</span>. Paste the full path above to continue.
+                    </div>
+                  )}
+
+                  {trimmedPath.length > 0 && !hasValidLocalPath && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
+                      Enter an absolute local path such as <span className="font-mono">/Users/you/projects/my-app</span>.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -301,7 +417,7 @@ export function ImportProjectWizard({
           <button
             type="button"
             onClick={handleDetect}
-            disabled={!path.trim()}
+            disabled={!canAnalyze}
             className="rounded-lg bg-purple-600 px-6 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:bg-gray-300 disabled:text-gray-500"
           >
             Analyze Project

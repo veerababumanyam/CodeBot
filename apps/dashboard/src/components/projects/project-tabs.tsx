@@ -1,4 +1,5 @@
 import { useShallow } from "zustand/react/shallow";
+import { cn } from "@/lib/utils";
 import { useProjectStore } from "@/stores/project-store";
 
 export function ProjectTabs(): React.JSX.Element | null {
@@ -17,15 +18,16 @@ export function ProjectTabs(): React.JSX.Element | null {
     .filter((p) => p !== undefined);
 
   return (
-    <div className="flex items-center gap-0.5 border-b border-gray-200 bg-gray-50 px-2 dark:border-gray-700 dark:bg-gray-950">
+    <div className="mt-4 flex items-center gap-1 rounded-3xl border border-border bg-panel px-2 py-1 shadow-[var(--theme-shadow-panel)] backdrop-blur-xl">
       {openProjects.map((project) => (
         <div
           key={project.id}
-          className={`group flex items-center gap-1.5 border-b-2 px-3 py-1.5 text-xs transition-colors ${
+          className={cn(
+            "group flex items-center gap-1.5 rounded-2xl px-3 py-2 text-xs transition-all",
             project.id === activeProjectId
-              ? "border-blue-500 bg-white text-blue-600 dark:bg-gray-900 dark:text-blue-400"
-              : "border-transparent text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
-          }`}
+              ? "bg-accent-muted text-accent shadow-[var(--theme-shadow-panel)]"
+              : "text-muted-foreground hover:bg-panel-muted hover:text-foreground",
+          )}
         >
           <button
             type="button"
@@ -40,7 +42,7 @@ export function ProjectTabs(): React.JSX.Element | null {
               e.stopPropagation();
               closeProject(project.id);
             }}
-            className="ml-0.5 rounded p-0.5 text-gray-400 opacity-0 transition-opacity hover:bg-gray-200 hover:text-gray-600 group-hover:opacity-100 dark:hover:bg-gray-700"
+            className="ml-0.5 rounded-full p-1 text-muted-foreground opacity-0 transition-all hover:bg-panel hover:text-foreground group-hover:opacity-100"
             aria-label={`Close ${project.name}`}
           >
             <svg
@@ -64,7 +66,7 @@ export function ProjectTabs(): React.JSX.Element | null {
       <button
         type="button"
         onClick={() => setActiveProject(null)}
-        className="ml-1 rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700"
+        className="ml-1 rounded-full p-2 text-muted-foreground transition hover:bg-panel-muted hover:text-foreground"
         aria-label="Open project hub"
         title="All Projects"
       >

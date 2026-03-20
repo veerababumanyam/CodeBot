@@ -1,1 +1,161 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+	--theme-color-background: #f4f7fb;
+	--theme-color-foreground: #102033;
+	--theme-color-muted-foreground: #5b6b82;
+	--theme-color-panel: rgba(255, 255, 255, 0.78);
+	--theme-color-panel-strong: rgba(255, 255, 255, 0.92);
+	--theme-color-panel-muted: rgba(244, 248, 252, 0.72);
+	--theme-color-border: rgba(138, 156, 184, 0.24);
+	--theme-color-border-strong: rgba(122, 140, 166, 0.42);
+	--theme-color-accent: #2f6df6;
+	--theme-color-accent-foreground: #f8fbff;
+	--theme-color-accent-muted: rgba(47, 109, 246, 0.14);
+	--theme-color-danger: #d9485f;
+	--theme-color-danger-muted: rgba(217, 72, 95, 0.14);
+	--theme-color-success: #1fa971;
+	--theme-color-success-muted: rgba(31, 169, 113, 0.14);
+	--theme-color-warning: #c98a19;
+	--theme-color-warning-muted: rgba(201, 138, 25, 0.16);
+	--theme-color-input: rgba(255, 255, 255, 0.9);
+	--theme-color-ring: rgba(47, 109, 246, 0.34);
+	--theme-gradient-app:
+		radial-gradient(circle at top left, rgba(47, 109, 246, 0.16), transparent 28%),
+		radial-gradient(circle at top right, rgba(104, 82, 255, 0.1), transparent 24%),
+		linear-gradient(180deg, #f9fbfd 0%, #eef3f9 100%);
+	--theme-shadow-panel: 0 24px 48px -24px rgba(15, 23, 42, 0.26);
+	--theme-shadow-floating: 0 30px 60px -28px rgba(47, 109, 246, 0.28);
+}
+
+@theme inline {
+	--color-background: var(--theme-color-background);
+	--color-foreground: var(--theme-color-foreground);
+	--color-muted-foreground: var(--theme-color-muted-foreground);
+	--color-panel: var(--theme-color-panel);
+	--color-panel-strong: var(--theme-color-panel-strong);
+	--color-panel-muted: var(--theme-color-panel-muted);
+	--color-border: var(--theme-color-border);
+	--color-border-strong: var(--theme-color-border-strong);
+	--color-accent: var(--theme-color-accent);
+	--color-accent-foreground: var(--theme-color-accent-foreground);
+	--color-accent-muted: var(--theme-color-accent-muted);
+	--color-danger: var(--theme-color-danger);
+	--color-danger-muted: var(--theme-color-danger-muted);
+	--color-success: var(--theme-color-success);
+	--color-success-muted: var(--theme-color-success-muted);
+	--color-warning: var(--theme-color-warning);
+	--color-warning-muted: var(--theme-color-warning-muted);
+	--color-input: var(--theme-color-input);
+	--color-ring: var(--theme-color-ring);
+}
+
+@layer base {
+	html,
+	body,
+	#root {
+		height: 100%;
+	}
+
+	body {
+		margin: 0;
+		background: var(--theme-gradient-app);
+		color: var(--theme-color-foreground);
+		font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+		transition:
+			background 180ms ease,
+			color 180ms ease;
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+
+	::selection {
+		background: color-mix(in srgb, var(--theme-color-accent) 24%, transparent);
+	}
+}
+
+@layer components {
+	.app-shell {
+		background: var(--theme-gradient-app);
+	}
+
+	.app-surface {
+		background: var(--theme-color-panel);
+		border: 1px solid var(--theme-color-border);
+		box-shadow: var(--theme-shadow-panel);
+		backdrop-filter: blur(24px) saturate(150%);
+	}
+
+	.app-surface-strong {
+		background: var(--theme-color-panel-strong);
+		border: 1px solid var(--theme-color-border);
+		box-shadow: var(--theme-shadow-panel);
+		backdrop-filter: blur(24px) saturate(150%);
+	}
+
+	.app-surface-muted {
+		background: var(--theme-color-panel-muted);
+		border: 1px solid var(--theme-color-border);
+		backdrop-filter: blur(20px) saturate(135%);
+	}
+
+	.app-button-primary {
+		background: var(--theme-color-accent);
+		color: var(--theme-color-accent-foreground);
+		border: 1px solid transparent;
+		box-shadow: var(--theme-shadow-floating);
+		transition:
+			transform 160ms ease,
+			opacity 160ms ease,
+			filter 160ms ease;
+	}
+
+	.app-button-primary:hover {
+		transform: translateY(-1px);
+		filter: brightness(1.03);
+	}
+
+	.app-button-secondary {
+		background: var(--theme-color-panel);
+		color: var(--theme-color-foreground);
+		border: 1px solid var(--theme-color-border);
+		box-shadow: var(--theme-shadow-panel);
+		backdrop-filter: blur(18px) saturate(140%);
+		transition:
+			transform 160ms ease,
+			border-color 160ms ease,
+			color 160ms ease;
+	}
+
+	.app-button-secondary:hover {
+		transform: translateY(-1px);
+		border-color: var(--theme-color-border-strong);
+	}
+
+	.app-field,
+	.app-select {
+		background: var(--theme-color-input);
+		color: var(--theme-color-foreground);
+		border: 1px solid var(--theme-color-border);
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+		transition:
+			border-color 160ms ease,
+			box-shadow 160ms ease,
+			background 160ms ease;
+	}
+
+	.app-field::placeholder {
+		color: var(--theme-color-muted-foreground);
+	}
+
+	.app-field:focus,
+	.app-select:focus {
+		border-color: var(--theme-color-border-strong);
+		box-shadow: 0 0 0 4px var(--theme-color-ring);
+		outline: none;
+	}
+}

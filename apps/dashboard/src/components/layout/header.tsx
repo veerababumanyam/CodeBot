@@ -1,9 +1,11 @@
 import { useUiStore } from "@/stores/ui-store";
 import { useProjectStore } from "@/stores/project-store";
 import { ProjectTabs } from "@/components/projects/project-tabs";
+import { ThemeSwitcher } from "./theme-switcher";
 
 const PANEL_LABELS: Record<string, string> = {
   pipeline: "Pipeline",
+  brainstorm: "Brainstorm",
   monitoring: "Monitoring",
   editor: "Editor",
   terminal: "Terminal",
@@ -20,33 +22,41 @@ export function Header(): React.JSX.Element {
   return (
     <div>
       <ProjectTabs />
-      <header className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-6 dark:border-gray-700 dark:bg-gray-900">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-          {activeProjectId
-            ? (PANEL_LABELS[activePanel] ?? activePanel)
-            : "Projects"}
-        </h2>
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-          aria-label="Toggle sidebar"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+      <header className="app-surface mt-3 flex h-16 items-center justify-between rounded-3xl border border-border px-5 text-foreground">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+            Workspace view
+          </p>
+          <h2 className="mt-1 text-base font-semibold text-foreground">
+            {activeProjectId
+              ? (PANEL_LABELS[activePanel] ?? activePanel)
+              : "Projects"}
+          </h2>
+        </div>
+        <div className="flex items-center gap-3">
+          <ThemeSwitcher />
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-panel text-muted-foreground transition hover:border-border-strong hover:text-foreground"
+            aria-label="Toggle sidebar"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          </svg>
-        </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </button>
+        </div>
       </header>
     </div>
   );

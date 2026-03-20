@@ -65,6 +65,7 @@ class PipelinePhaseResponse(BaseModel):
     approved_by: str | None
     started_at: datetime | None
     completed_at: datetime | None
+    error_message: str | None = None
 
     @field_validator("phase_type", "status", mode="before")
     @classmethod

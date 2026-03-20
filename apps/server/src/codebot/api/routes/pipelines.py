@@ -325,6 +325,7 @@ async def approve_phase(
         )
     updated = await service.approve_phase(
         phase,
+        approved=body.approved,
         approved_by=current_user.email if hasattr(current_user, "email") else str(current_user.id),
         comment=body.comment,
     )

@@ -1,6 +1,6 @@
 [project]
 name = "codebot-server"
-version = "0.1.0"
+version = "0.2.0"
 description = "CodeBot FastAPI backend server"
 requires-python = ">=3.12"
 
@@ -15,6 +15,7 @@ dependencies = [
     # Validation & Settings
     "pydantic>=2.9.0",
     "pydantic-settings>=2.5.0",
+    "pypdf>=5.4.0",
     # Event Bus
     "nats-py>=2.9.0",
     # Cache

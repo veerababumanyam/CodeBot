@@ -322,6 +322,7 @@ class PipelineService:
     async def approve_phase(
         self,
         phase: PipelinePhase,
+        approved: bool,
         approved_by: str,
         comment: str | None,
     ) -> PipelinePhase:
@@ -329,6 +330,7 @@ class PipelineService:
 
         Args:
             phase: The PipelinePhase ORM object.
+            approved: Whether the phase is approved to continue.
             approved_by: Name/email of the approver.
             comment: Optional approval comment.
 
@@ -344,9 +346,21 @@ class PipelineService:
                 detail=f"Phase is in {phase.status.value} state, not WAITING_APPROVAL",
             )
 
-        phase.status = PhaseStatus.COMPLETED
+        phase.status = PhaseStatus.COMPLETED if approved else PhaseStatus.FAILED
         phase.approved_by = approved_by
         phase.completed_at = datetime.now(UTC)
+        phase.error_message = None if approved else (
+            comment or "Phase requires changes before the pipeline can continue"
+        )
+
+        pipeline = await self.get(phase.pipeline_id)
+        if pipeline is not None:
+            if approved:
+                pipeline.error_message = None
+            else:
+                pipeline.status = PipelineStatus.FAILED
+                pipeline.error_message = phase.error_message
+                pipeline.completed_at = datetime.now(UTC)
 
         await self._db.commit()
         await self._db.refresh(phase)

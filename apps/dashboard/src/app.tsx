@@ -3,6 +3,7 @@ import { useShallow } from "zustand/react/shallow";
 import { queryClient } from "@/lib/query-client";
 import { useSocket } from "@/hooks/use-socket";
 import { MainLayout } from "@/components/layout/main-layout";
+import { BrainstormPanel } from "@/components/brainstorm/brainstorm-panel";
 import { PipelineView } from "@/components/pipeline/pipeline-view";
 import { AgentPanel } from "@/components/monitoring/agent-panel";
 import { CostBreakdown } from "@/components/monitoring/cost-breakdown";
@@ -12,6 +13,7 @@ import { TerminalPanel } from "@/components/terminal/terminal-panel";
 import { PreviewFrame } from "@/components/preview/preview-frame";
 import { ProjectHub } from "@/components/projects/project-hub";
 import { ChatSidebar } from "@/components/chat/chat-sidebar";
+import { useThemeSync } from "@/hooks/use-theme-sync";
 import { useUiStore } from "@/stores/ui-store";
 import { useEditorStore } from "@/stores/editor-store";
 import { useProjectStore } from "@/stores/project-store";
@@ -38,6 +40,8 @@ function ActivePanel(): React.JSX.Element {
   switch (activePanel) {
     case "pipeline":
       return <PipelineView />;
+    case "brainstorm":
+      return <BrainstormPanel />;
     case "monitoring":
       return <AgentPanel />;
     case "cost":
@@ -68,6 +72,7 @@ function ActivePanel(): React.JSX.Element {
 
 export function App(): React.JSX.Element {
   useSocket();
+  useThemeSync();
 
   return (
     <QueryClientProvider client={queryClient}>

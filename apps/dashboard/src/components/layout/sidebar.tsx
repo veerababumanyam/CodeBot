@@ -1,9 +1,11 @@
 import { useUiStore } from "@/stores/ui-store";
+import { cn } from "@/lib/utils";
 import { useProjectStore } from "@/stores/project-store";
 import { ProjectSwitcher } from "@/components/projects/project-switcher";
 
 const PANELS = [
   { key: "pipeline" as const, label: "Pipeline" },
+  { key: "brainstorm" as const, label: "Brainstorm" },
   { key: "monitoring" as const, label: "Monitoring" },
   { key: "editor" as const, label: "Editor" },
   { key: "terminal" as const, label: "Terminal" },
@@ -17,37 +19,36 @@ export function Sidebar(): React.JSX.Element {
   const activeProjectId = useProjectStore((s) => s.activeProjectId);
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
-      <div className="border-b border-gray-200 p-4 dark:border-gray-700">
+    <aside className="app-surface flex h-full w-72 flex-col border-r border-border text-foreground">
+      <div className="border-b border-border px-5 py-5">
         <div className="mb-2">
-          <img src="/logo.svg" alt="CodeBot" className="h-8 block dark:hidden" />
-          <img src="/logo-dark.svg" alt="CodeBot" className="h-8 hidden dark:block" />
+          <img src="/logo.svg" alt="CodeBot" className="block h-8 dark:hidden" />
+          <img src="/logo-dark.svg" alt="CodeBot" className="hidden h-8 dark:block" />
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-muted-foreground">
           AI Development Platform
         </p>
       </div>
 
       {/* Project switcher */}
-      <div className="border-b border-gray-200 p-2 dark:border-gray-700">
+      <div className="border-b border-border px-3 py-3">
         <ProjectSwitcher />
       </div>
 
       {/* Panel nav — only enabled when a project is active */}
-      <nav className="flex-1 space-y-1 p-2">
+      <nav className="flex-1 space-y-1 p-3">
         {PANELS.map((panel) => (
           <button
             key={panel.key}
             type="button"
             onClick={() => setActivePanel(panel.key)}
             disabled={!activeProjectId}
-            className={`flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              !activeProjectId
-                ? "cursor-not-allowed text-gray-300 dark:text-gray-600"
-                : activePanel === panel.key
-                  ? "bg-gray-100 text-blue-600 dark:bg-gray-800 dark:text-blue-400"
-                  : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-            }`}
+            className={cn(
+              "flex w-full items-center rounded-2xl px-3.5 py-3 text-sm font-medium transition-all",
+              !activeProjectId && "cursor-not-allowed text-muted-foreground/60",
+              activeProjectId && activePanel === panel.key && "bg-accent-muted text-accent shadow-[var(--theme-shadow-panel)]",
+              activeProjectId && activePanel !== panel.key && "text-foreground hover:bg-panel-muted hover:text-foreground",
+            )}
           >
             {panel.label}
           </button>

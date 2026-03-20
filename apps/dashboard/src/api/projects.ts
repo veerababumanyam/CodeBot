@@ -1,6 +1,22 @@
 import { api } from "./client";
 import type { Project } from "@/types/project";
 
+export interface ProjectCreatePayload {
+  name: string;
+  description: string;
+  prd_source: "text" | "file" | "url";
+  prd_content?: string;
+  prd_url?: string;
+  prd_file?: string;
+  source_name?: string;
+  source_media_type?: string;
+  project_type?: "greenfield" | "inflight" | "brownfield" | "improve";
+  repository_path?: string;
+  repository_url?: string;
+  tech_stack?: Record<string, unknown>;
+  settings?: Record<string, unknown>;
+}
+
 interface ResponseEnvelope<T> {
   status: "success";
   data: T;
@@ -32,7 +48,7 @@ export const projectApi = {
     );
   },
 
-  create(data: { name: string; description: string; project_type: string; prd_format: string }) {
+  create(data: ProjectCreatePayload) {
     return api.post<ResponseEnvelope<Project>>("/api/v1/projects", data);
   },
 

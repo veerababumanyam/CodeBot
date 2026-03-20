@@ -22,7 +22,7 @@ from codebot.api.deps import get_db
 from codebot.auth.jwt import create_access_token
 from codebot.config import settings
 from codebot.db.models.user import User, UserRole
-from codebot.main import app
+from codebot.main import fastapi_app
 from codebot.services.auth_service import AuthService
 
 
@@ -71,11 +71,11 @@ async def async_client(
     async def _override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield test_db_session
 
-    app.dependency_overrides[get_db] = _override_get_db
-    transport = ASGITransport(app=app)  # type: ignore[arg-type]
+    fastapi_app.dependency_overrides[get_db] = _override_get_db
+    transport = ASGITransport(app=fastapi_app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
-    app.dependency_overrides.clear()
+    fastapi_app.dependency_overrides.clear()
 
 
 @pytest_asyncio.fixture

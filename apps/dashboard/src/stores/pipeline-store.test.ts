@@ -8,12 +8,14 @@ function makePipeline(overrides: Partial<Pipeline> = {}): Pipeline {
     project_id: "proj-1",
     mode: "full",
     status: "pending",
-    current_stage: 0,
+    current_phase: "",
     total_stages: 11,
     stages: [],
     config: null,
-    created_at: "2026-01-01T00:00:00Z",
-    updated_at: "2026-01-01T00:00:00Z",
+    started_at: null,
+    completed_at: null,
+    total_tokens_used: 0,
+    total_cost_usd: 0,
     ...overrides,
   };
 }

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { cn } from "@/lib/utils";
 import { useProjectStore } from "@/stores/project-store";
 
 export function ProjectSwitcher(): React.JSX.Element {
@@ -34,19 +35,22 @@ export function ProjectSwitcher(): React.JSX.Element {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+        className="flex w-full items-center justify-between rounded-2xl border border-border bg-panel-muted px-3.5 py-3 text-sm text-foreground shadow-[var(--theme-shadow-panel)] transition hover:border-border-strong"
       >
         <div className="flex items-center gap-2 overflow-hidden">
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-blue-100 text-xs font-bold text-blue-600 dark:bg-blue-900 dark:text-blue-400">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-muted text-xs font-bold text-accent">
             {activeProject ? activeProject.name[0]?.toUpperCase() : "?"}
           </div>
-          <span className="truncate font-medium text-gray-900 dark:text-white">
+          <span className="truncate font-medium text-foreground">
             {activeProject?.name ?? "No Project"}
           </span>
         </div>
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}
+          className={cn(
+            "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+            open && "rotate-180",
+          )}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -61,10 +65,10 @@ export function ProjectSwitcher(): React.JSX.Element {
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 z-50 mt-1 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+        <div className="app-surface absolute left-0 right-0 z-50 mt-2 rounded-2xl py-2">
           {openProjects.length > 0 && (
             <>
-              <div className="px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-gray-400">
+              <div className="px-3 py-1.5 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
                 Open
               </div>
               {openProjects.map((project) => (
@@ -75,19 +79,20 @@ export function ProjectSwitcher(): React.JSX.Element {
                     setActiveProject(project.id);
                     setOpen(false);
                   }}
-                  className={`flex w-full items-center gap-2 px-3 py-2 text-sm ${
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors",
                     project.id === activeProjectId
-                      ? "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
-                      : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                  }`}
+                      ? "bg-accent-muted text-accent"
+                      : "text-foreground hover:bg-panel-muted",
+                  )}
                 >
-                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-gray-100 text-xs font-bold text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-panel text-xs font-bold text-muted-foreground">
                     {project.name[0]?.toUpperCase()}
                   </div>
                   <span className="truncate">{project.name}</span>
                 </button>
               ))}
-              <div className="my-1 border-t border-gray-100 dark:border-gray-800" />
+              <div className="my-2 border-t border-border" />
             </>
           )}
           <button
@@ -96,7 +101,7 @@ export function ProjectSwitcher(): React.JSX.Element {
               setActiveProject(null);
               setOpen(false);
             }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-panel-muted hover:text-foreground"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

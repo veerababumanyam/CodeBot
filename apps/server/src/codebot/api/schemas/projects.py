@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class ProjectCreate(BaseModel):
@@ -13,8 +13,46 @@ class ProjectCreate(BaseModel):
     description: str = ""
     prd_source: str = "text"
     prd_content: str = ""
+    prd_url: str | None = None
+    prd_file: str | None = None
+    source_name: str | None = None
+    source_media_type: str | None = None
+    project_type: str | None = None
+    repository_path: str | None = None
+    repository_url: str | None = None
     tech_stack: dict | None = None
     settings: dict | None = None
+
+    @field_validator("prd_source")
+    @classmethod
+    def validate_prd_source(cls, value: str) -> str:
+        """Normalize and validate the PRD source selector."""
+        normalized = value.strip().lower().replace("-", "_")
+        allowed = {"text", "url", "file"}
+        if normalized not in allowed:
+            raise ValueError(f"prd_source must be one of {sorted(allowed)}")
+        return normalized
+
+    @field_validator("project_type")
+    @classmethod
+    def validate_project_type(cls, value: str | None) -> str | None:
+        """Normalize optional project type values."""
+        if value is None:
+            return None
+        normalized = value.strip().lower().replace("-", "_")
+        allowed = {"greenfield", "inflight", "brownfield", "improve"}
+        if normalized not in allowed:
+            raise ValueError(f"project_type must be one of {sorted(allowed)}")
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_source_payload(self) -> "ProjectCreate":
+        """Ensure the selected PRD source has the required payload."""
+        if self.prd_source == "url" and not (self.prd_url or "").strip():
+            raise ValueError("prd_url is required when prd_source is 'url'")
+        if self.prd_source == "file" and not (self.prd_file or "").strip():
+            raise ValueError("prd_file is required when prd_source is 'file'")
+        return self
 
 
 class ProjectUpdate(BaseModel):

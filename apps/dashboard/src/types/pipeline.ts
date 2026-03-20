@@ -14,6 +14,8 @@ export type StageStatus =
   | "skipped"
   | "waiting";
 
+export type PipelineMode = "full" | "quick" | "review_only";
+
 export interface PipelineStage {
   id: string;
   name: string;
@@ -22,19 +24,26 @@ export interface PipelineStage {
   started_at: string | null;
   completed_at: string | null;
   agents: string[];
+  phase_type?: string;
+  requires_approval?: boolean;
+  approved_by?: string | null;
+  error_message?: string | null;
 }
 
 export interface Pipeline {
   id: string;
   project_id: string;
-  mode: "full" | "quick" | "review_only";
+  mode: PipelineMode;
   status: PipelineStatus;
-  current_stage: number;
+  current_phase: string;
   total_stages: number;
   stages: PipelineStage[];
   config: Record<string, unknown> | null;
-  created_at: string;
-  updated_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  total_tokens_used: number;
+  total_cost_usd: number;
+  error_message?: string | null;
 }
 
 export interface StageStartEvent {

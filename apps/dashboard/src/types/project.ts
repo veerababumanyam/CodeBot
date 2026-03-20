@@ -1,5 +1,6 @@
 export type ProjectStatus =
   | "created"
+  | "brainstorming"
   | "planning"
   | "in_progress"
   | "review"

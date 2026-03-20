@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { projectApi } from "@/api/projects";
+import { useRef, useState } from "react";
+import { projectApi, type ProjectCreatePayload } from "@/api/projects";
 import { useProjectStore } from "@/stores/project-store";
 import type { Project } from "@/types/project";
 
@@ -31,6 +31,7 @@ export function NewProjectWizard({
   onComplete,
   onCancel,
 }: NewProjectWizardProps): React.JSX.Element {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<Step>("basics");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +42,11 @@ export function NewProjectWizard({
   const [description, setDescription] = useState("");
   const [prdSource, setPrdSource] = useState<"text" | "file" | "url">("text");
   const [prdContent, setPrdContent] = useState("");
+  const [prdFile, setPrdFile] = useState<{
+    data: string;
+    name: string;
+    type: string;
+  } | null>(null);
   const [techStack, setTechStack] = useState<Record<string, string>>({
     language: "",
     framework: "",
@@ -60,6 +66,80 @@ export function NewProjectWizard({
     if (prevStep) setStep(prevStep.key);
   }
 
+  async function handleFileChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ): Promise<void> {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const isSupported = [".md", ".markdown", ".txt", ".pdf", ".docx"].some(
+      (extension) => file.name.toLowerCase().endsWith(extension),
+    );
+
+    if (!isSupported) {
+      setError("Unsupported file type. Use .md, .txt, .pdf, or .docx.");
+      event.target.value = "";
+      return;
+    }
+
+    const data = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+          return;
+        }
+        reject(new Error("Unable to read selected file"));
+      };
+      reader.onerror = () => reject(new Error("Unable to read selected file"));
+      reader.readAsDataURL(file);
+    });
+
+    setError(null);
+    setPrdFile({ data, name: file.name, type: file.type });
+    event.target.value = "";
+  }
+
+  function buildCreatePayload(): ProjectCreatePayload {
+    const stackObj = Object.fromEntries(
+      Object.entries(techStack).filter(([, value]) => value.trim() !== ""),
+    );
+    const normalizedPreset = preset === "review-only" ? "review_only" : preset;
+
+    const payload: ProjectCreatePayload = {
+      name,
+      description,
+      prd_source: prdSource,
+      project_type: "greenfield",
+      settings: {
+        kickoff_flow: "brainstorm",
+        pipeline_preset: normalizedPreset,
+      },
+    };
+
+    if (Object.keys(stackObj).length > 0) {
+      payload.tech_stack = stackObj;
+    }
+
+    if (prdSource === "text") {
+      payload.prd_content = prdContent.trim();
+    }
+
+    if (prdSource === "url") {
+      payload.prd_url = prdContent.trim();
+    }
+
+    if (prdSource === "file" && prdFile) {
+      payload.prd_file = prdFile.data;
+      payload.source_name = prdFile.name;
+      payload.source_media_type = prdFile.type;
+    }
+
+    return payload;
+  }
+
   async function handleQuickCreate(): Promise<void> {
     await handleSubmit();
   }
@@ -68,15 +148,7 @@ export function NewProjectWizard({
     setSubmitting(true);
     setError(null);
     try {
-      const stackObj = Object.fromEntries(
-        Object.entries(techStack).filter(([, v]) => v.trim() !== ""),
-      );
-      const res = await projectApi.create({
-        name,
-        description,
-        project_type: "greenfield",
-        prd_format: prdSource,
-      });
+      const res = await projectApi.create(buildCreatePayload());
       const project = res.data;
       addProject(project);
       onComplete(project);
@@ -87,7 +159,16 @@ export function NewProjectWizard({
     }
   }
 
-  const canProceed = step === "basics" ? name.trim().length > 0 : true;
+  const canProceed =
+    step === "basics"
+      ? name.trim().length > 0
+      : step === "prd"
+        ? prdSource === "text"
+          ? prdContent.trim().length > 0
+          : prdSource === "url"
+            ? prdContent.trim().length > 0
+            : prdFile !== null
+        : true;
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -255,13 +336,38 @@ export function NewProjectWizard({
               </div>
             )}
             {prdSource === "file" && (
-              <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 dark:border-gray-600">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Drag and drop a PRD file, or click to browse
-                </p>
-                <p className="mt-1 text-xs text-gray-400">
-                  Supports .md, .txt, .pdf
-                </p>
+              <div className="space-y-3 rounded-lg border-2 border-dashed border-gray-300 p-6 dark:border-gray-600">
+                <div className="flex flex-col items-center justify-center gap-2 text-center">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Upload a PRD document to seed the brainstorm
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Supports .md, .txt, .pdf, and .docx
+                  </p>
+                </div>
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                  >
+                    Browse files
+                  </button>
+                  {prdFile && (
+                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                      {prdFile.name}
+                    </span>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".md,.markdown,.txt,.pdf,.docx"
+                  onChange={(event) => {
+                    void handleFileChange(event);
+                  }}
+                  className="hidden"
+                />
               </div>
             )}
           </div>
