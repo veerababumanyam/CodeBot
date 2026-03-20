@@ -1,0 +1,27 @@
+security_auditor:
+  agent_type: SECURITY_AUDITOR
+  model: claude-sonnet-4
+  fallback_model: gpt-4.1
+  provider: anthropic
+  max_tokens: 8192
+  temperature: 0.1
+  tools:
+    - semgrep_scan
+    - trivy_scan
+    - gitleaks_scan
+    - dependency_checker
+    - cve_lookup
+    - fix_generator
+  context_tiers:
+    l0: 2000
+    l1: 12000
+    l2: 20000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 600
+  settings:
+    block_on_critical: true
+    block_on_high: true

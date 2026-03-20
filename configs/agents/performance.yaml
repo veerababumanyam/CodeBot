@@ -1,0 +1,27 @@
+performance:
+  agent_type: PERFORMANCE_TESTER
+  model: claude-sonnet-4
+  fallback_model: gpt-4.1
+  provider: anthropic
+  max_tokens: 8192
+  temperature: 0.2
+  tools:
+    - lighthouse
+    - webpack_analyzer
+    - load_tester
+    - profiler
+    - bundle_size_checker
+    - memory_profiler
+  context_tiers:
+    l0: 2000
+    l1: 12000
+    l2: 20000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 600
+  settings:
+    bundle_budget_kb: 200
+    performance_score_target: 90

@@ -1,0 +1,26 @@
+i18n_l10n:
+  agent_type: I18N_SPECIALIST
+  model: claude-sonnet-4
+  fallback_model: gpt-4.1
+  provider: anthropic
+  max_tokens: 8192
+  temperature: 0.2
+  tools:
+    - string_extractor
+    - i18n_configurator
+    - pseudo_localizer
+    - rtl_validator
+    - translation_validator
+  context_tiers:
+    l0: 2000
+    l1: 10000
+    l2: 20000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 300
+  settings:
+    min_completeness_score: 80
+    check_rtl: true

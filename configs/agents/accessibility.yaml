@@ -1,0 +1,26 @@
+accessibility:
+  agent_type: ACCESSIBILITY_AUDITOR
+  model: claude-sonnet-4
+  fallback_model: gpt-4.1
+  provider: anthropic
+  max_tokens: 8192
+  temperature: 0.2
+  tools:
+    - axe_core
+    - lighthouse
+    - color_contrast_checker
+    - aria_validator
+    - keyboard_nav_tester
+  context_tiers:
+    l0: 2000
+    l1: 10000
+    l2: 20000
+  retry_policy:
+    max_retries: 2
+    base_delay_seconds: 3
+    max_delay_seconds: 30
+    exponential_base: 2
+  timeout: 300
+  settings:
+    wcag_level: "AA"
+    min_contrast_ratio: 4.5
